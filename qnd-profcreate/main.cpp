@@ -1,5 +1,5 @@
 #include "main.h"
-//11
+
 ProfileMake::ProfileMake()
 {
 	GDALAllRegister(); //TODO See to registering relevant drivers only
@@ -26,12 +26,12 @@ ProfileMake::~ProfileMake()
 	delete P_Heights;
 }
 
-bool ProfileMake::PLoadDEM(std::string in_demloc)
+bool ProfileMake::PLoadDEM(std::string inDEMLoc)
 {
-	P_DEMLocation = in_demloc;
-	if (!PFileIsExist(in_demloc))
+	P_DEMLocation = inDEMLoc;
+	if (!PFileIsExist(inDEMLoc))
 	{
-		std::cout << "Error! Could not open DEM file: " << in_demloc << ". \nFile doesn't exist?\n\n";
+		std::cout << "Error! Could not open DEM file: " << inDEMLoc << ". \nFile doesn't exist?\n\n";
 		return false;
 	}
 	/*else
@@ -39,7 +39,7 @@ bool ProfileMake::PLoadDEM(std::string in_demloc)
 		std::cout << "Opening DEM file successes!\n\n";
 	}*/
 
-	const char * demloc = in_demloc.c_str();
+	const char * demloc = inDEMLoc.c_str();
 	P_DEM = (GDALDataset *)GDALOpen(demloc, GA_ReadOnly);
 
 	if (P_DEM == NULL)
@@ -77,154 +77,45 @@ bool ProfileMake::PLoadDEM(std::string in_demloc)
 	}
 	CPLFree(scanline);
 	GDALClose(P_DEM);
-	std::cout << "Successfully loaded DEM file: " << in_demloc << "\n\n";
+	std::cout << "Successfully loaded DEM file: " << inDEMLoc << "\n\n";
 	return true;
 }
 
-bool ProfileMake::PLoadKML(std::string in_kmlloc)
+bool ProfileMake::PLoadKML(std::string inKMLLoc)
 {
-	P_KMLLocation = in_kmlloc;
-	if (!PFileIsExist(in_kmlloc))
-	{
-		std::cout << "Error: Could not open KML file!\n\n";
-		return false;
-	}
-	/*else
-	{
-		std::cout << "Opening KML file successes!\n\n";
-	}*/
-
-	P_Path.open(in_kmlloc);
-	if (!P_Path.is_open())
-	{
-		std::cout << "Error: Could not load KML file!\n\n";
-		return false;
-	}
-	char cbuffer[500];
-	std::string sbuffer = "";
-
-#pragma region seeking_coordinates
-	while (sbuffer != "<coordinates>")
-	{
-		P_Path.getline(cbuffer, sizeof(cbuffer));
-		while (cbuffer[0] == '\t')
-		{
-			for (int i = 0; i < sizeof(cbuffer); i++)
-			{
-				cbuffer[i] = cbuffer[i + 1];
-			}
-		}
-		sbuffer = cbuffer;
-		if (P_Path.eof())
-		{
-			std::cout << "[DevWarning: Reached EOF]\n";
-			std::cout << "Error: Could not find coordinate data in KML file!\n";
-			return false;
-		}
-	}
-#pragma endregion seeking_coordinates
 	
-	while (1)
-	{
-		P_Path.getline(cbuffer, sizeof(cbuffer), ' ');			
-		if (cbuffer[0] == '\n')
-		{
-			//std::cout << "end!\n\n\n"; //test
-			break;
-		}
-		P_PathVertices++;
-	}
-
-	//Checks that there is a path
-	if (P_PathVertices < 2)
-	{
-		std::cout << "Error: The provided KML does not contain enough coordinate data to draw a path!\n";
-		return false;
-	}
-	P_Path.close();
-	if (!PExtractPath())
+	if (!P_Path.KLoadKML(inKMLLoc))
 	{
 		return false;
 	}
 
-	return true;
-}
+	P_X = new double[P_Path.KGetVertCount()];
+	P_Y = new double[P_Path.KGetVertCount()];
 
-bool ProfileMake::PExtractPath()
-{
-	P_Path.open(P_KMLLocation);
-	if (!P_Path.is_open())
+	//double ** vertsArrayPointer = P_Path.KGetPtrToVerts;
+
+	for (int i = 0; i < P_Path.KGetVertCount(); i++)
 	{
-		std::cout << "Error: Could not load KML file!\n\n";
-		std::cout << "[DevWarning: Failed at second loading.]\n";
-		return false;
+		//P_X[i] = P_Path.KGetPtrToVerts[i][0];
+		P_X[i] = P_Path.K_Verts[i][0];
+		//P_Y[i] = P_Path.KGetPtrToVerts[i][1];
+		P_Y[i] = P_Path.K_Verts[i][1];
 	}
 
-
-	char cbuffer[500];
-	std::string sbuffer = "";
-
-#pragma region seeking_coordinates
-
-	while (sbuffer != "<coordinates>")
+	P_PathVertices = P_Path.KGetVertCount();
+	if (isDebug)
 	{
-		P_Path.getline(cbuffer, sizeof(cbuffer));
-		while (cbuffer[0] == '\t')
+		std::cout << "verts: " << P_PathVertices << std::endl;
+		for (int i = 0; i < P_Path.KGetVertCount(); i++)
 		{
-			for (int i = 0; i < sizeof(cbuffer); i++)
-			{
-				cbuffer[i] = cbuffer[i + 1];
-			}
-		}
-		sbuffer = cbuffer;
-		if (P_Path.eof())
-		{
-			std::cout << "[DevWarning: Reached EOF]\n";
-			std::cout << "Error: Could not find coordinate data in KML file!\n";
-			std::cout << "[DevWarning: Failed at second loading.]\n";
-			return false;
+			std::cout << "values: " << P_X[i] << ", " << P_Y[i] << std::endl;
 		}
 	}
-#pragma endregion seeking_coordinates
-
-	P_X = new double[P_PathVertices];
-	P_Y = new double[P_PathVertices];
-
-	for (int i = 0; i < P_PathVertices; i++)
-	{
-		P_Path.getline(cbuffer, sizeof(cbuffer), ',');
-		
-		while (cbuffer[0] == '\t') //removing leading tabs
+		P_PathLength = new float[P_PathVertices - 1];
+		for (int i = 0; i < P_PathVertices - 1; i++)
 		{
-			for (int i = 0; i < sizeof(cbuffer); i++)
-			{
-				cbuffer[i] = cbuffer[i + 1];
-			}
+			P_PathLength[i] = PCalculateDistance(P_X[i], P_Y[i], P_X[i + 1], P_Y[i + 1]);
 		}
-		if (cbuffer[0] == '\n')
-		{
-			break;
-		}
-		P_X[i] = atof(cbuffer);
-		P_Path.getline(cbuffer, sizeof(cbuffer), ',');
-		P_Y[i] = atof(cbuffer);
-		P_Path.getline(cbuffer, sizeof(cbuffer), ' '); //gets the third value that is present in KML file coords, usually 0.
-	}
-	//test
-	/*std::cout << "verts: " << P_PathVertices << std::endl;
-	for (int i = 0; i < P_PathVertices; i++)
-	{
-		std::cout << "values: " << P_X[i] << ", " << P_Y[i] << std::endl;
-	}*/
-	//endtest
-
-	P_PathLength = new float[P_PathVertices - 1];
-	for (int i = 0; i < P_PathVertices - 1; i++)
-	{
-		P_PathLength[i] = PCalculateDistance(P_X[i], P_Y[i], P_X[i + 1], P_Y[i + 1]);
-	}
-	P_Path.close();
-
 	return true;
 }
 
@@ -300,7 +191,7 @@ void ProfileMake::PDisplayPathInfo()
 	}
 }
 
-void ProfileMake::PInterpolateProfile(float step)
+void ProfileMake::PInterpolateProfile(float step, bool maintainBends)
 {
 	int * newverts = new int[P_PathVertices - 1];
 	int newvertssum = P_PathVertices;
@@ -943,3 +834,4 @@ void ProfileMake::PConvertPathToUTM()
 	}
 
 }
+

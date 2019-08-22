@@ -10,6 +10,7 @@
 *.tif
 *.csv
 *.kml
+*.kmz
 *.bak
 
 # User-specific files (MonoDevelop/Xamarin Studio)

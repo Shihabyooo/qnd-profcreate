@@ -6,6 +6,7 @@
 #include <string>
 #include "gdal_priv.h"
 #include "cpl_conv.h"
+#include "KML_Parser.h"
 
 extern bool isDebug;
 
@@ -50,7 +51,7 @@ public:
 	void PDisplayDEMInfo();
 	void PDisplayPathInfo();
 
-	void PInterpolateProfile(float); //implement your profile interpolator algorithm here, float is step
+	void PInterpolateProfile(float, bool); //implement your profile interpolator algorithm here, float is step
 	bool PIsPathOOB(); //checks that profile is within DEM
 	bool PIsPointOOB(double, double);
 	int PCalculateProfile();
@@ -82,7 +83,7 @@ private:
 	std::string P_DEMLocation;
 	std::string P_OutuputLocation;
 
-	std::ifstream P_Path;
+	//std::ifstream P_Path;
 	std::ofstream P_Result;
 	
 	double * P_X;
@@ -106,4 +107,7 @@ private:
 
 	int P_PathVertices;
 	int P_PathVerticesI;
+
+	KMLParser P_Path;
+
 };

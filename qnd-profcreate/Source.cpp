@@ -2,6 +2,8 @@
 //#include <list>
 
 bool isDebug = false;
+bool maintainBendLocations = true; //when interpolating profile
+
 
 //Known issues:
 //When converting path to UTM, it doesn't retain the zone. Therefor, a path can be outside the bounds of dem, yet the IsOOB check
@@ -63,7 +65,7 @@ void main(int argc, char *argv[])
 			instance.PDisplayPathInfo();
 		}
 		std::cout << "\nInterpolating Profile\n\n";
-		instance.PInterpolateProfile(interp_steps);
+		instance.PInterpolateProfile(interp_steps, maintainBendLocations);
 
 		std::cout << "\nCalculating Profile\n\n";
 		instance.PCalculateProfile();
