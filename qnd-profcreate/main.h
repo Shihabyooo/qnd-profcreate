@@ -72,7 +72,7 @@ public:
 	//TODO When doing that, I suggest you do the two implementations as external classes (for modulerization sake).
 
 private:
-	bool PExtractPath();
+	//bool PExtractPath();
 	void PSetDEMInfo(); //carefull not to call this function outside PLoadDEM, because the DEM is unloaded at end of PLoadDem and... well....
 						//TODO Implement this one alongside PDisplayDEMInfo() later.
 	float PBilinearInterp(int, int, int);

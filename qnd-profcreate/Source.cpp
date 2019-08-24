@@ -31,6 +31,11 @@ void main(int argc, char *argv[])
 	std::cout << "\nDEM Info\n\n";
 	instance.PDisplayDEMInfo();
 
+
+	//TODO: Move calls to ProfileMake methods to its own function that recieves name of input file
+	//and returns false if any of the calls used bellow return false. In which case the loop just cycles
+	//to next kml.
+
 	for (int i = 1; i < argc; i++)
 	{
 		std::string pathKML, outputFile;

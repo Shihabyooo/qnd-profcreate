@@ -51,10 +51,6 @@ bool ProfileMake::PLoadDEM(std::string inDEMLoc)
 		std::cout << "Error! Could not open DEM file: " << inDEMLoc << ". \nFile doesn't exist?\n\n";
 		return false;
 	}
-	/*else
-	{
-		std::cout << "Opening DEM file successes!\n\n";
-	}*/
 
 	const char * demloc = inDEMLoc.c_str();
 	P_DEM = (GDALDataset *)GDALOpen(demloc, GA_ReadOnly);
@@ -85,11 +81,7 @@ bool ProfileMake::PLoadDEM(std::string inDEMLoc)
 
 		for (int j = 0; j < demx; j++)
 		{
-			P_Heights[i][j] = scanline[j]; 
-			//if (scanline[j] < 0.0)
-			//{
-			//	P_Heights[i][j] = 0.0; //A hack to work around the no_data_value that is sometimes set to weird values (-3.402823e+038)
-			//}
+			P_Heights[i][j] = scanline[j];
 		}
 	}
 	CPLFree(scanline);
@@ -111,8 +103,6 @@ bool ProfileMake::PLoadKML(std::string inKMLLoc)
 	P_Y = new double[P_Path.KGetVertCount()];
 
 	//double ** vertsArrayPointer = P_Path.KGetPtrToVerts;
-
-	//std::cout << "P_Path.KGetVertCount(): " << P_Path.KGetVertCount() << std::endl
 
 	for (int i = 0; i < P_Path.KGetVertCount(); i++)
 	{
@@ -141,9 +131,9 @@ bool ProfileMake::PLoadKML(std::string inKMLLoc)
 
 void ProfileMake::PDisplayDEMInfo()
 {
-	std::cout << "\n============";
-	std::cout << "\nDEM info\n";
-	std::cout << "============\n\n";
+	std::cout << "\n==================================";
+	std::cout << "\n\tDEM info\n";
+	std::cout << "==================================\n\n";
 	std::cout << "Coordinate System: " << P_DEMInfo.ProjectionReference <<std::endl;
 	std::cout << "Rasters in-file: " << P_DEMInfo.RasterCount << std::endl;
 	std::cout << "\nFor raster #1\n";
@@ -375,7 +365,7 @@ bool ProfileMake::PIsPointOOB(double x, double y)
 int ProfileMake::PCalculateProfile() //returning int for end state. 0: failure, 1: success, 2: success with gaps (for when implementing 
 										//choice to calculate profile for paths that are partially within the provided DEM's boundaries.
 {
-	//incase dem is in UTM
+	//in case dem is in UTM
 	if (P_DEMInfo.IsUTM)
 	{
 		PConvertPathToUTM();
