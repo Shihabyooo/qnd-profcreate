@@ -12,6 +12,7 @@ public:
 	bool KLoadKML(std::string);
 	double ** KGetPtrToVerts(); //doesn't work. For now letting external objects access K_Verts directly.
 	int KGetVertCount();
+	bool KUnloadKML();
 
 private:
 	bool KOpenKMLFile(std::string);
@@ -26,10 +27,9 @@ private:
 	std::streampos K_coordBeginPos;
 	int K_VertsCount;
 
-	//double * K_X, *K_Y;
 public: 
 	double ** K_Verts; //Probably not the smartest idea...
-
+	bool K_IsPathLoaded;
 
 
 };

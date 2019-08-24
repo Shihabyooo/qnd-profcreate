@@ -16,14 +16,31 @@ ProfileMake::ProfileMake()
 
 ProfileMake::~ProfileMake()
 {
-	delete P_X;
-	delete P_Y;
-	delete P_Xi;
-	delete P_Yi;
-	//delete P_Z; //TODO fix this. Deleting P_Z causes problems (Access Violation)!
-	delete P_PathLength;
-	//for (int i = 0; i < P_DEMInfo.x - 1; i++) delete[] P_Heights[i];
-	delete P_Heights;
+	//P_Path.~KMLParser();
+	if (P_X != NULL)
+		delete[] P_X;
+	if (P_Y != NULL)
+		delete[] P_Y;
+	if (P_Xi != NULL)
+		delete[] P_Xi;
+	if (P_Yi != NULL)
+		delete[] P_Yi;
+	if (P_Z != NULL)
+		delete[] P_Z;
+	if (P_PathLength != NULL)
+		delete[] P_PathLength;
+
+	int x = sizeof(P_Heights);
+	int y;
+	y = x + 0;
+	
+	if (P_Heights != NULL)
+	{
+		for (int i = 0; i < P_DEMInfo.y; i++)
+			if (P_Heights[i] != NULL)
+				delete[] P_Heights[i];
+		delete[] P_Heights;
+	}
 }
 
 bool ProfileMake::PLoadDEM(std::string inDEMLoc)
@@ -78,6 +95,7 @@ bool ProfileMake::PLoadDEM(std::string inDEMLoc)
 	CPLFree(scanline);
 	GDALClose(P_DEM);
 	std::cout << "Successfully loaded DEM file: " << inDEMLoc << "\n\n";
+	
 	return true;
 }
 
@@ -93,6 +111,8 @@ bool ProfileMake::PLoadKML(std::string inKMLLoc)
 	P_Y = new double[P_Path.KGetVertCount()];
 
 	//double ** vertsArrayPointer = P_Path.KGetPtrToVerts;
+
+	//std::cout << "P_Path.KGetVertCount(): " << P_Path.KGetVertCount() << std::endl
 
 	for (int i = 0; i < P_Path.KGetVertCount(); i++)
 	{
@@ -235,7 +255,6 @@ void ProfileMake::PDisplayPathInfo()
 //	P_IsInterpolated = true;
 //}
 
-
 void ProfileMake::PInterpolateProfile(float step, bool maintainBends)
 {
 	int newvertssum = P_PathVertices;
@@ -374,7 +393,7 @@ int ProfileMake::PCalculateProfile() //returning int for end state. 0: failure, 
 		std::cin.get();
 		exit(1);
 	}
-	P_Z = new float[P_PathVerticesI]; //allocating P_Z[i]
+	P_Z = new float[P_PathVerticesI]; //Remember that we use P_PathVerticesI here, not P_PathVertices.
 	int first_larger_x_order, first_larger_y_order;
 
 	for (int i = 0; i < P_PathVerticesI; i++) //TODO if this method is calcualted without interpolating profile, this method will not return any value
@@ -612,6 +631,40 @@ double ProfileMake::PCalculateDistance(double x1, double y1, double x2, double y
 	result = b * A * (sigma - dsigma);
 
 	return result;
+}
+
+void ProfileMake::PResetProfile()
+{
+	if (P_X != NULL)
+		delete[] P_X;
+	P_X = NULL;
+	if (P_Y != NULL)
+		delete[] P_Y;
+	P_Y = NULL;
+	if (P_Xi != NULL)
+		delete[] P_Xi;
+	P_Xi = NULL;
+	if (P_Yi != NULL)
+		delete[] P_Yi;
+	P_Yi = NULL;
+	if (P_Z != NULL)
+		delete[] P_Z; 
+	P_Z = NULL;
+	if (P_PathLength != NULL)
+		delete[] P_PathLength;
+	P_PathLength = NULL;
+	if (P_PathLengthI != NULL)
+		delete[] P_PathLengthI;
+	P_PathLengthI = NULL;
+	
+	P_IsInterpolated = false;
+	P_IsCalculated = false;
+	P_IsConverted = false;
+	
+	P_PathVertices = 0;
+	P_PathVerticesI = 0;
+
+	P_Path.KUnloadKML();
 }
 
 void ProfileMake::PSetDEMInfo()

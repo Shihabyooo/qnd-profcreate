@@ -1,5 +1,4 @@
 #include "main.h"
-//#include <list>
 
 bool isDebug = false;
 bool maintainBendLocations = true; //when interpolating profile
@@ -11,42 +10,34 @@ bool maintainBendLocations = true; //when interpolating profile
 
 void main(int argc, char *argv[])
 {
-	//populate a list with drains-to-process
-	//std::list<std::string> drainList;
 
-
+	//argc = 3;//test
+	//argv[1] = "ATEST_GEO.kml";//test
+	//argv[2] = "ATEST_GEO_GEART.kml";//test
+	
 	std::cout << "\n Enter Interpolation steps: ";
 	float interp_steps = 100.0f;
 	std::cin >> interp_steps;
+	
+	ProfileMake instance;
+	std::cout << "\nLoading DEM\n\n";
+	if (!instance.PLoadDEM("DEM.tif"))
+	{
+		std::cout << "\nPress enter to exit.";
+		std::cin.sync();
+		std::cin.get();
+		exit(0);
+	}
+	std::cout << "\nDEM Info\n\n";
+	instance.PDisplayDEMInfo();
 
 	for (int i = 1; i < argc; i++)
 	{
-
 		std::string pathKML, outputFile;
-		//pathKML = "Drain.kml";
-		//pathKML = "drain.kml"; //test
-
-		//if (argc > 1) 
-			pathKML = argv[i];
-		
+		pathKML = argv[i];
 		std::cout << "\n Processing file:" << pathKML << std::endl;;
-
 		outputFile = pathKML + ".csv";
-		
-		//TODO modify ProfileMake class and add reset functionality. Instantiate once outside loop here, and reset at end
-		//move DEM loading and displaying demdata outside as well (so it's only done once).
-
-		ProfileMake instance;
-
-		std::cout << "\nLoading DEM\n\n";
-		if (!instance.PLoadDEM("DEM.tif"))
-		{
-			std::cout << "\nPress enter to exit.";
-			std::cin.sync();
-			std::cin.get();
-			exit(0);
-		}
-
+			
 		std::cout << "\nLoading KML\n\n";
 		if (!instance.PLoadKML(pathKML))
 		{
@@ -55,9 +46,6 @@ void main(int argc, char *argv[])
 			std::cin.get();
 			exit(0);
 		}
-
-		std::cout << "\nDEM Info\n\n";
-		instance.PDisplayDEMInfo();
 
 		if (isDebug)
 		{
@@ -78,8 +66,13 @@ void main(int argc, char *argv[])
 
 		std::cout << "\nWriting\n\n";
 		instance.PWriteProfile(outputFile);
+		
+		//std::cout << "\nPrepping for Next Path\n\n";
+		instance.PResetProfile();
 
 	}
+
+
 	std::cout << "Press Enter to continue";
 	//std::cin.ignore();
 	//std::cin.ignore(); //dunno why, but for some reason the first cin.ignore executes immediatly. 

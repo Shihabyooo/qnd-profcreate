@@ -64,7 +64,8 @@ public:
 
 	double PCalculateDistance(double, double, double, double); //calculates distance for non-projected coords
 
-	void PReset();
+	void PResetProfile();
+	void PResetDEM();
 
 	//TODO Add getters method to transport the results outside this class to be used when implementing
 	//the designer and setting-out-sheets-er

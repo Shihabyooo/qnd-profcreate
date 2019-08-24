@@ -6,32 +6,40 @@ KMLParser::KMLParser()
 
 KMLParser::~KMLParser()
 {
+	if (K_Verts != NULL)
+	{
+		for (int i = 0; i < K_VertsCount; i++)
+			if (K_Verts[i] != NULL)
+			{
+				delete[] K_Verts[i];
+			}
+		delete[] K_Verts;
+	}
+
+	K_VertsCount = 0;
 }
 
 bool KMLParser::KLoadKML(std::string fileName)
 {
-
 	if (!KOpenKMLFile(fileName))
 	{
+		//std::cout << "Failed to load KML: " << fileName.c_str() << std::endl;
 		return false;
 	}
-
 	if (!KSeekCoordsPosition())
 	{
 		return false;
 	}
-
 	if (!KCountVertices())
 	{
 		return false;
 	}
-
 	if (!KExtractPath())
 	{
 		return false;
 	}
-
-
+	KCloseKMLFile();
+	K_IsPathLoaded = true;
 	return true;
 }
 
@@ -43,6 +51,26 @@ double ** KMLParser::KGetPtrToVerts()
 int KMLParser::KGetVertCount()
 {
 	return K_VertsCount;
+}
+
+bool KMLParser::KUnloadKML()
+{
+	if (!K_IsPathLoaded)
+		return false;
+	
+	for (int i = 0; i < K_VertsCount; i++)
+	{
+		delete K_Verts[i];
+		K_Verts[i] = NULL;
+	}
+	delete[] K_Verts;
+	K_Verts = NULL;
+
+	K_coordBeginPos = 0;
+	K_KMLfile.clear();
+	K_VertsCount = 0;
+	K_IsPathLoaded = false;
+	return true;
 }
 
 bool KMLParser::KOpenKMLFile(std::string fileName)
@@ -65,6 +93,7 @@ bool KMLParser::KSeekCoordsPosition()
 {
 	char cbuffer;
 	std::string sbuffer = "";
+	K_coordBeginPos = K_KMLfile.beg; //will have to nix this if I ever modified this method to a "seek next coords" in multi-featured KML files.
 
 	while (sbuffer != "coordinates")
 	{
