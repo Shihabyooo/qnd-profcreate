@@ -191,48 +191,121 @@ void ProfileMake::PDisplayPathInfo()
 	}
 }
 
+//void ProfileMake::PInterpolateProfile(float step, bool maintainBends)
+//{
+//	int * newverts = new int[P_PathVertices - 1];
+//	int newvertssum = P_PathVertices;
+//	
+//	for (int i = 0; i < P_PathVertices - 1; i++)
+//	{
+//		newverts [i] = floor(P_PathLength[i] / step);
+//		newvertssum = newvertssum + newverts[i];
+//	}
+//
+//
+//	P_Xi = new double[newvertssum];
+//	P_Yi = new double[newvertssum];
+//
+//	//calculate tempx, tempy here
+//	int currentid = 0;
+//	for (int i = 0; i < P_PathVertices - 1; i++)
+//	{
+//		P_Xi[currentid] = P_X[i];
+//		P_Yi[currentid] = P_Y[i];
+//		currentid++;
+//		for (int j = 0; j < newverts[i]; j++)
+//		{
+//			P_Xi[currentid] = (2 * P_X[i] * (1 - (step * (j + 1)) / P_PathLength[i]) + 2 * P_X[i + 1] * (step * (j + 1)) / P_PathLength[i])/2;
+//			P_Yi[currentid] = (2 * P_Y[i] * (1 - (step * (j + 1)) / P_PathLength[i]) + 2 * P_Y[i + 1] * (step * (j + 1)) / P_PathLength[i])/2;
+//			currentid++;
+//		}
+//	}
+//	P_Xi[newvertssum - 1] = P_X[P_PathVertices-1]; //copying last verts
+//	P_Yi[newvertssum - 1] = P_Y[P_PathVertices-1];
+//	P_PathVerticesI = newvertssum;
+//	
+//	P_PathLengthI = new float[P_PathVerticesI - 1];
+//
+//
+//	for (int i = 0; i < P_PathVerticesI - 1; i++)
+//		{
+//			P_PathLengthI[i] = PCalculateDistance(P_Xi[i], P_Yi[i], P_Xi[i + 1], P_Yi[i + 1]);
+//		}
+//	
+//	P_IsInterpolated = true;
+//}
+
+
 void ProfileMake::PInterpolateProfile(float step, bool maintainBends)
 {
-	int * newverts = new int[P_PathVertices - 1];
 	int newvertssum = P_PathVertices;
-	
+
+	float totalLength = 0.0f;
 	for (int i = 0; i < P_PathVertices - 1; i++)
 	{
-		newverts [i] = floor(P_PathLength[i] / step);
-		newvertssum = newvertssum + newverts[i];
+		totalLength += P_PathLength[i];
 	}
+
+	newvertssum = floor(totalLength / step) + 2; //the 2 are begining and ending verts
+
+	if (maintainBends)
+		newvertssum += P_PathVertices - 2;
 
 
 	P_Xi = new double[newvertssum];
 	P_Yi = new double[newvertssum];
 
-	//calculate tempx, tempy here
-	int currentid = 0;
-	for (int i = 0; i < P_PathVertices - 1; i++)
+	P_Xi[0] = P_X[0];
+	P_Yi[0] = P_Y[0];
+
+	int currentSegment = 0;
+	float lastBendChainage = 0.0f;
+
+	std::function<float(float, float, float, float)> interpolate = [&](float x0, float x1, float l, float dist)->float
+	{ //too many methods in this class already, plus I already have other methods with interpolate in the name. This is a small one, leave it as a lambda
+		return (dist * x1 / l) + ((l - dist) * x0 / l);
+	};
+
+	for (int i = 1; i < newvertssum - 1; i++)
 	{
-		P_Xi[currentid] = P_X[i];
-		P_Yi[currentid] = P_Y[i];
-		currentid++;
-		for (int j = 0; j < newverts[i]; j++)
+		if (i*step >= lastBendChainage + P_PathLength[currentSegment])
 		{
-			P_Xi[currentid] = (2 * P_X[i] * (1 - (step * (j + 1)) / P_PathLength[i]) + 2 * P_X[i + 1] * (step * (j + 1)) / P_PathLength[i])/2;
-			P_Yi[currentid] = (2 * P_Y[i] * (1 - (step * (j + 1)) / P_PathLength[i]) + 2 * P_Y[i + 1] * (step * (j + 1)) / P_PathLength[i])/2;
-			currentid++;
+			lastBendChainage += P_PathLength[currentSegment];
+			currentSegment++;
+
+			if (maintainBends)
+			{
+				P_Xi[i] = P_X[currentSegment];
+				P_Yi[i] = P_Y[currentSegment];
+				i++;
+				if (i >= newvertssum - 1)
+					break;
+			}
 		}
+
+		float distFromLastBend = (step * i) - lastBendChainage;
+
+		P_Xi[i] = interpolate(P_X[currentSegment], P_X[currentSegment + 1], P_PathLength[currentSegment], distFromLastBend);
+		P_Yi[i] = interpolate(P_Y[currentSegment], P_Y[currentSegment + 1], P_PathLength[currentSegment], distFromLastBend);
 	}
-	P_Xi[newvertssum - 1] = P_X[P_PathVertices-1]; //copying last verts
-	P_Yi[newvertssum - 1] = P_Y[P_PathVertices-1];
+
+	P_Xi[newvertssum - 1] = P_X[P_PathVertices - 1]; //copying last verts
+	P_Yi[newvertssum - 1] = P_Y[P_PathVertices - 1];
 	P_PathVerticesI = newvertssum;
-	
-	P_PathLengthI = new float[P_PathVerticesI - 1];
+
+	P_PathLengthI = new float[P_PathVerticesI - 1]; //useless? in the new logic?
+													//TODO remove after checking the rest of code
 
 
-	for (int i = 0; i < P_PathVerticesI - 1; i++)
-		{
-			P_PathLengthI[i] = PCalculateDistance(P_Xi[i], P_Yi[i], P_Xi[i + 1], P_Yi[i + 1]);
-		}
-	
-	P_IsInterpolated = true;
+	for (int i = 0; i < P_PathVerticesI - 1; i++) //TODO remove after checking the rest of code
+	{
+		P_PathLengthI[i] = PCalculateDistance(P_Xi[i], P_Yi[i], P_Xi[i + 1], P_Yi[i + 1]);
+	}
+
+	P_IsInterpolated = true; //Useless?
+
+
+
 }
 
 bool ProfileMake::PIsPathOOB() 

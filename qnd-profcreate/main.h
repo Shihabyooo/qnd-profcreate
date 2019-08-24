@@ -4,9 +4,11 @@
 #include <iomanip>
 #include <fstream>
 #include <string>
+#include <functional>
 #include "gdal_priv.h"
 #include "cpl_conv.h"
 #include "KML_Parser.h"
+
 
 extern bool isDebug;
 
