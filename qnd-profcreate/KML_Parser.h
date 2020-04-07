@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iostream>
 
+//TODO modify the naming scheme to remote this K letter prefix for methods and variables.
 class KMLParser
 {
 
@@ -30,6 +31,4 @@ private:
 public: 
 	double ** K_Verts; //Probably not the smartest idea...
 	bool K_IsPathLoaded;
-
-
 };
