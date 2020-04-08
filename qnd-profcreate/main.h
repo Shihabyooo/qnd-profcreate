@@ -8,6 +8,7 @@
 #include "gdal_priv.h"
 #include "cpl_conv.h"
 #include "KML_Parser.h"
+#include "SHP_Parser.h"
 
 //TODO modify the naming scheme to remote this P letter prefix for methods and variables.
 

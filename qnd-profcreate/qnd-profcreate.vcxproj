@@ -160,6 +160,7 @@
   <ItemGroup>
     <ClCompile Include="KML_Parser.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="SHP_Parser.cpp" />
     <ClCompile Include="Source.cpp" />
   </ItemGroup>
   <ItemGroup>
