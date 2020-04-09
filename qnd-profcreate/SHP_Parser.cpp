@@ -1,26 +1,21 @@
 #include "SHP_Parser.h"
-#include <vector>
+
 
 SHPParser::SHPParser()
 {
 	isPathLoaded = false;
+	verts = NULL;
+	vertsCount = NULL;
 }
 
 SHPParser::~SHPParser()
 {
-	std::cout << "!!!!!!!!!!!!!!!!!!! Destructor Called!" << std::endl; //test
-
 	if (verts != NULL) //TODO check if delete already checks for NULLity...
 	{
 		std::cout << "Deallocating verts array." << std::endl; //test
 		for (int i = 0; i < shapesCount; i++)
-		{
-			if (verts[i] != NULL)
-			{
-				delete[] verts[i];
-				verts[i] = NULL;
-			}
-		}
+			verts[i].~Array2D();
+
 		delete[] verts;
 		verts = NULL;
 	}
@@ -28,36 +23,47 @@ SHPParser::~SHPParser()
 	if (vertsCount != NULL)
 	{
 		std::cout << "Deallocating vertsCount array." << std::endl; //test
-		delete vertsCount;
+		delete[] vertsCount;
 		vertsCount = NULL;
 	}
-
-
-	//TODO remove the lines bellow! Only meant to test this fucntion outside Visual Studio
-	std::cout << "\n\nFinished destruction of SHPParser -- Press Enter to continue";
-	/*std::cin.sync();
-	std::cin.get();
-*/
 }
 
 bool SHPParser::LoadSHP(std::string fileName)
 {
-	std::string fileNamePrefix = RemoveFileExtension(fileName);
-	
-	if (!CheckFileExistance(fileNamePrefix))
-	{
-		std::cout << "ERROR! One or more of the required ShapeFile files is missing.";
-		return false;
+	try {
+		std::string fileNamePrefix = RemoveFileExtension(fileName);
+
+		if (!CheckFileExistance(fileNamePrefix))
+		{
+			std::cout << "ERROR! One or more of the required ShapeFile files is missing.";
+			return false;
+		}
+
+		std::cout << "Attempting to load parameters from SHX file." << std::endl; //test
+		if (!LoadSHPParameters(fileNamePrefix))
+		{
+			std::cout << "ERROR! Something went wrong while reading shapefile parameters from .SHX file." << std::endl; //TODO enrich this check
+			return false;
+		}
+		std::cout << "Succesfully loaded parameters from SHX file." << std::endl; //test
+
+		AllocateVertsArray();
+
+		std::cout << "Attempting to extract paths from SHP file." << std::endl; //test
+		if (!ExtractPaths(fileNamePrefix))
+		{
+			std::cout << "ERROR! Something went wrong while extracting the paths" << std::endl; //TODO enrich this check
+			return false;
+		}
+		std::cout << "Succesfully loaded paths from SHp file." << std::endl; //test
 	}
-	std::cout << "Attempting to load parameters from SHX file." << std::endl; //test
-	LoadSHPParameters(fileNamePrefix);
-
-	AllocateVertsArray();
-
-	if (!ExtractPaths(fileNamePrefix))
+	catch (const int exceptionInt)
 	{
-		std::cout << "ERROR! Something went wrong while extracting the paths" << std::endl; //TODO enrich this check
-		return false;
+		std::cout << "Caught exception code: " << exceptionInt << std::endl;
+	}
+	catch (const std::exception e)
+	{
+		std::cout << "Caught an exception..." << std::endl;
 	}
 
 	return true;
@@ -71,13 +77,13 @@ int SHPParser::GetVertsCount(int shapeNo)
 		return vertsCount[shapeNo];
 }
 
-std::string SHPParser::RemoveFileExtension(std::string fileName)
+const std::string SHPParser::RemoveFileExtension(const std::string fileName)
 {
-	std::cout << "In RemoveFileExtension()" << std::endl;	
+	std::cout << "In RemoveFileExtension()" << std::endl;
 	return fileName.substr(0, fileName.length() - 4);
 }
 
-bool SHPParser::CheckFileExistance(std::string fileNamePrefix)
+bool SHPParser::CheckFileExistance(const std::string fileNamePrefix)
 {
 	//In this method, we will check for the existence of all of our needed files. For now, we need the SHX and SHP files.
 	//We'll have each failure set a more global bool to false instead of immediatly returning to simulate an error log message (i.e. so the user can know which files are missing).
@@ -110,23 +116,23 @@ bool SHPParser::CheckFileExistance(std::string fileNamePrefix)
 void SHPParser::AllocateVertsArray()
 {
 	std::cout << "Allocating top level of verts array of length: " << shapesCount << std::endl; //test
-	verts = new Vertex*[shapesCount];
+	verts = new Array2D[shapesCount];
 
 	std::cout << "Allocating lower levels of verts array." << std::endl; //test
 	for (int i = 0; i < shapesCount; i++)
 	{	
-		std::cout << "\tAllocating path of vertscound: " <<vertsCount[i] << std::endl; //test
-		verts[i] = new Vertex[vertsCount[i]];
+		std::cout << "\tAllocating path of vertsCount: " <<vertsCount[i] << std::endl; //test
+		verts[i] = Array2D(vertsCount[i], 2);
 	}
 }
 
-bool SHPParser::LoadSHPParameters(std::string fileNamePrefix)
+bool SHPParser::LoadSHPParameters(const std::string fileNamePrefix)
 {
 	//This class is a single-pass-one, meaning we only scane the file once, load content into memory and be done with it. So we have no use for the SHX file's intended use of "fast seeking."
 	//We will only use it figure out how many shapes the SHP contains, and the vertex count of each shape
 
 	std::string shxFileName = fileNamePrefix + ".shx";
-	std::fstream shxFile;
+	std::ifstream shxFile;
 	std::cout << "Attempting to open " << shxFileName.c_str() << "\n";
 	shxFile.open(shxFileName, std::ios::binary);
 
@@ -151,7 +157,6 @@ bool SHPParser::LoadSHPParameters(std::string fileNamePrefix)
 		return false;
 	}
 
-
 	//Calculate the number of geometries in the SHP:
 	shxFile.seekg(24, shxFile.beg); //go to location of file length data in header
 	shxFile.read(byte, sizeof(byte)); //Read the shx file length
@@ -171,19 +176,16 @@ bool SHPParser::LoadSHPParameters(std::string fileNamePrefix)
 	}
 
 	//now that we know how many geometries our SHP has, we can allocate our vertsCount array.
-	vertsCount = new int(shapesCount);
+	vertsCount = new long int[shapesCount];
 
 	//Now to check the metadata of the actual geometries
 	shxFile.seekg(100, shxFile.beg); //the header is fixed at 100 bytes, we simply skip it since we don't have a use for anything other than the Shape Type and File Length
 
-	int counter = 0;
-	while (true) //fstream.eof() don't get set until we read past it, so we have to do the eof check inside.
+
+	for (int i = 0; i < shapesCount; i++)
 	{
 		shxFile.read(byte, sizeof(byte)); //the first 4 bytes of a record header contains its offset, no need for them now.
 		
-		if (shxFile.eof())
-			break;
-
 		//std::cout << "At loc " << shxFile.tellg() << ". Found record at offset: " << ByteToInt32(byte, true) << "\t"; //test
 
 		//Assuming each record has only one part (a requirement of this program), the coordinates of the record start 48 bytes from the record data start location.
@@ -193,25 +195,23 @@ bool SHPParser::LoadSHPParameters(std::string fileNamePrefix)
 
 		shxFile.read(byte, sizeof(byte)); //the second 4 bytes of a record header contains its length, we use this to calculate how many vertices a shape has.
 		//std::cout << "At loc " << shxFile.tellg() << ". of length: " << ByteToInt32(byte, true) << std::endl; //test
-		
-		int noOfVerts = ((2 * ByteToInt32(byte, true)) - 48) / 16; //Again: in theory, the result of the outer brackets should always be devisible by 16, giving perfect ints...
 
-		vertsCount[counter] = noOfVerts;
-		counter++;
+		long int noOfVerts = ((2 * ByteToInt32(byte, true)) - 48) / 16; //Again: in theory, the result of the outer brackets should always be devisible by 16, giving perfect ints...
+		vertsCount[i] = noOfVerts;
 	}
-	//TODO consider changing the While loop above to a for loop with shapeCount as limit
-
-	//for (int i = 0; i < shapesCount; i++) //test
-	//	std::cout << "Shape no. " << i << ", vertsCount: " << vertsCount[i] << std::endl; //test
+	
+	for (int i = 0; i < shapesCount; i++) //test
+		std::cout << "Shape no. " << i << ", vertsCount: " << vertsCount[i] << std::endl; //test
 
 	shxFile.close();
+	std::cout << "End of LoadSHPParameter()" << std::endl; //test
 	return true;
 }
 
-bool SHPParser::ExtractPaths(std::string fileNamePrefix)
+bool SHPParser::ExtractPaths(const std::string fileNamePrefix)
 {
 	std::string shpFileName = fileNamePrefix + ".shp";
-	std::fstream shpFile;
+	std::ifstream shpFile;
 	shpFile.open(shpFileName, std::ios::binary);
 
 	if (!shpFile.is_open())
@@ -226,9 +226,10 @@ bool SHPParser::ExtractPaths(std::string fileNamePrefix)
 
 	for (int i = 0; i < shapesCount; i++)
 	{
-		std::cout << "Current Loc: " << shpFile.tellg() << std::endl;
+		/*std::cout << "Current Loc: " << shpFile.tellg() << std::endl;
 		shpFile.seekg(5, std::ios::cur);
-		std::cout << "Current Loc: " << shpFile.tellg() << std::endl;
+		std::cout << "Current Loc: " << shpFile.tellg() << std::endl;*/
+
 		//At the beining of this loop, check that the parts number of the record (in32 starting from 36th Byte) is equal to 1.
 		//Skip the record header (which we assume fixed at 48 bytes for a single part geometry, though we could estimate the jump by 44 + 4 x partNo).
 		//Now start another loop with vertsCount[i] as limit
@@ -236,17 +237,22 @@ bool SHPParser::ExtractPaths(std::string fileNamePrefix)
 			//First double read will be assigned to verts[i][j][0];
 			//Second double read will be assigned to verts[i][j][1];
 
+
+
+		//test filling with fixed value
+		//verts[i].SetEntireArrayToFixedValue(777);
+		verts[i].DisplayArrayInCLI(); //test
 	}
 
 	shpFile.close();
 	return true;
 }
 
-long int SHPParser::ByteToInt32(char bytes[4], bool isBigEndian)
-{
+const long int SHPParser::ByteToInt32(const char bytes[4], bool isBigEndian)
+{	
 	if (isBigEndian)
-		return (bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | bytes[3];
+		return ((bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | bytes[3]);
 	else
-		return (bytes[3] << 24) | (bytes[2] << 16) | (bytes[1] << 8) | bytes[0];
+		return ((bytes[3] << 24) | (bytes[2] << 16) | (bytes[1] << 8) | bytes[0]);
 }
 

@@ -82,8 +82,6 @@ void main(int argc, char *argv[])
 
 
 	std::cout << "\n\nPress Enter to continue";
-	////std::cin.ignore();
-	////std::cin.ignore(); //dunno why, but for some reason the first cin.ignore executes immediatly. 
-	std::cin.sync();
-	std::cin.get();
+	//std::cin.sync();
+	//std::cin.get();
 }
