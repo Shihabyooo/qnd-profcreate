@@ -15,7 +15,6 @@ KMLParser::~KMLParser()
 			}
 		delete[] K_Verts;
 	}
-
 	K_VertsCount = 0;
 }
 
