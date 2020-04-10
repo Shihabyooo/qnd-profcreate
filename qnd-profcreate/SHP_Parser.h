@@ -1,17 +1,23 @@
+//Current known limitation:
+	//Files where records are of length > 127 will bug out.
+	//Assumes (and checks for, aborts otherwise) an SHP with only Polyline geometry.
+	//Assumes (and checks for, warns but doens't abort) geometries with single parts (but any number of vertices, up to limit that causes length bug above).
+	//Doesn't check the SHP's CRS.
+
+//Things to add:
+	//Implement and ByteToDouble() and switch uses of casting char* to double* to it instead.
+	//Rename "byte" to "bytes"
+	//Research and -accordingly- adjust handling of SHP files with geometries with more than 1 part.
+	//Fix ByteToInt32's issue with ints > 127.
+	//Allow the use of SHP files with point geometries (Will output a single path, with vertices going from first point to last inorder).
+	//Allow use of multiple geometries SHP files, in which only polylines will be considered.
+	//Parse DBF files and look for names to label the paths with (stored as std::string* or char**).
+	//Parse PRJ files and and save the CRS of the SHP (enum?) for use by ProfileMake when interpolating elevations (i.e. to determine whether conversion between UTM/GCS is needed).
+
 #pragma once
 #include <fstream>
 #include <iostream>
 #include "Array2D.h"
-
-//struct Vertex
-//{
-//public:
-//	Vertex() {};
-//	~Vertex() { std::cout << "Vertex delete called" << std::endl; };
-//
-//	double x;
-//	double y;
-//};
 
 class SHPParser
 {
@@ -21,14 +27,12 @@ public:
 
 	bool LoadSHP(std::string fileName);
 	int GetVertsCount(int shapeNo);	//returns -1 if shape doesn't exist or vertsCount array isn't allocated
-	bool UnLoadSHP();
+	void UnLoadSHP();
 
 private:
 	const std::string RemoveFileExtension(const std::string fileName);
 	bool CheckFileExistance(const std::string fileNamePrefix);
 	void AllocateVertsArray();
-	//bool OpenSHPFile(std::string fileNamePrefix);
-	//void CloseSHPFile();
 	bool LoadSHPParameters(const std::string fileNamePrefix);	//this method will load the SHX file, and fill out shapesCount and vertsCount. Future implementation: parse DBF file to look for path names.
 	bool ExtractPaths(const std::string fileNamePrefix);
 	const long int ByteToInt32(const char bytes[4], bool isBigEndian);

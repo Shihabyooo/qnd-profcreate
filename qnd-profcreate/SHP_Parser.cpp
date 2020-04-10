@@ -1,6 +1,5 @@
 #include "SHP_Parser.h"
 
-
 SHPParser::SHPParser()
 {
 	isPathLoaded = false;
@@ -10,22 +9,7 @@ SHPParser::SHPParser()
 
 SHPParser::~SHPParser()
 {
-	if (verts != NULL) //TODO check if delete already checks for NULLity...
-	{
-		//std::cout << "Deallocating verts array." << std::endl; //test
-		for (int i = 0; i < shapesCount; i++)
-			verts[i].~Array2D();
-
-		delete[] verts;
-		verts = NULL;
-	}
-
-	if (vertsCount != NULL)
-	{
-		//std::cout << "Deallocating vertsCount array." << std::endl; //test
-		delete[] vertsCount;
-		vertsCount = NULL;
-	}
+	UnLoadSHP();
 }
 
 bool SHPParser::LoadSHP(std::string fileName)
@@ -54,6 +38,8 @@ bool SHPParser::LoadSHP(std::string fileName)
 		std::cout << "ERROR! Something went wrong while extracting the paths" << std::endl; //TODO enrich this check
 		return false;
 	}
+	
+	isPathLoaded = true;
 	std::cout << "Succesfully loaded paths from SHP file." << std::endl; //test
 	return true;
 }
@@ -64,6 +50,27 @@ int SHPParser::GetVertsCount(int shapeNo)
 		return -1;
 	else
 		return vertsCount[shapeNo];
+}
+
+void SHPParser::UnLoadSHP()
+{
+	if (verts != NULL) //TODO check if delete already checks for NULLity...
+	{
+		for (int i = 0; i < shapesCount; i++)
+			verts[i].~Array2D();
+
+		delete[] verts;
+		verts = NULL;
+	}
+
+	if (vertsCount != NULL)
+	{
+		delete[] vertsCount;
+		vertsCount = NULL;
+	}
+	
+	shapesCount = 0;
+	isPathLoaded = false;
 }
 
 const std::string SHPParser::RemoveFileExtension(const std::string fileName)
@@ -253,4 +260,3 @@ const long int SHPParser::ByteToInt32(const char bytes[4], bool isBigEndian)
 	else
 		return ((bytes[3] << 24) | (bytes[2] << 16) | (bytes[1] << 8) | bytes[0]);
 }
-
