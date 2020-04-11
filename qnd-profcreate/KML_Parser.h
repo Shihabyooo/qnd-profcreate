@@ -2,7 +2,6 @@
 #include <fstream>
 #include <iostream>
 
-//TODO modify the naming scheme to remote this K letter prefix for methods and variables.
 class KMLParser
 {
 
@@ -10,25 +9,25 @@ public:
 	KMLParser();
 	~KMLParser();
 
-	bool KLoadKML(std::string);
-	double ** KGetPtrToVerts(); //doesn't work. For now letting external objects access K_Verts directly.
-	int KGetVertCount();
-	bool KUnloadKML();
+	bool LoadKML(std::string);
+	double ** GetPtrToVerts(); //doesn't work. For now letting external objects access verts directly.
+	int GetVertCount();
+	bool UnloadKML();
 
 private:
-	bool KOpenKMLFile(std::string);
-	void KCloseKMLFile();
-	bool KSeekCoordsPosition();
-	bool KCountVertices();
-	bool KExtractPath();
+	bool OpenKMLFile(std::string);
+	void CloseKMLFile();
+	bool SeekCoordsPosition();
+	bool CountVertices();
+	bool ExtractPath();
 
 
 private:
-	std::fstream K_KMLfile;
-	std::streampos K_coordBeginPos;
-	int K_VertsCount;
+	std::fstream kmlFile;
+	std::streampos coordBeginPos;
+	int vertsCount;
 
 public: 
-	double ** K_Verts; //Probably not the smartest idea...
-	bool K_IsPathLoaded;
+	double ** verts; //Probably not the smartest idea...
+	bool isPathLoaded;
 };

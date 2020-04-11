@@ -10,8 +10,6 @@
 #include "KML_Parser.h"
 #include "SHP_Parser.h"
 
-//TODO modify the naming scheme to remote this P letter prefix for methods and variables.
-
 extern bool isDebug;
 
 struct DEM_Info
@@ -47,27 +45,27 @@ public:
 	ProfileMake();
 	~ProfileMake();
 
-	bool PLoadDEM(std::string);
-	bool PLoadKML(std::string); //checks kml exists, valid, calculates P_PathVertices to dynamic allocate arrays for PExtractPath()
-	bool PLoadCSV(std::string);
-	bool PManualPath(double, double);
+	bool LoadDEM(std::string);
+	bool LoadKML(std::string); //checks kml exists, valid, calculates pathVerts to dynamic allocate arrays for PExtractPath()
+	bool LoadCSV(std::string);
+	bool ManualPath(double, double);
 	
-	void PDisplayDEMInfo();
-	void PDisplayPathInfo();
+	void DisplayDEMInfo();
+	void DisplayPathInfo();
 
-	void PInterpolateProfile(float, bool); //implement your profile interpolator algorithm here, float is step
-	bool PIsPathOOB(); //checks that profile is within DEM
-	bool PIsPointOOB(double, double);
-	int PCalculateProfile();
-	void PCalculatePoint(double, double); //mainly for testing purposes. Might implement later in PCalculateProfile() to simplify it.
+	void InterpolateProfile(float, bool); //implement your profile interpolator algorithm here, float is step
+	bool IsPathOOB(); //checks that profile is within DEM
+	bool IsPointOOB(double, double);
+	int CalculateProfile();
+	void CalculatePoint(double, double); //mainly for testing purposes. Might implement later in CalculateProfile() to simplify it.
 	
 
-	bool PWriteProfile(std::string);
+	bool WriteProfile(std::string);
 
-	double PCalculateDistance(double, double, double, double); //calculates distance for non-projected coords
+	double CalculateDistance(double, double, double, double); //calculates distance for non-projected coords
 
-	void PResetProfile();
-	void PResetDEM();
+	void ResetProfile();
+	void ResetDEM();
 
 	//TODO Add getters method to transport the results outside this class to be used when implementing
 	//the designer and setting-out-sheets-er
@@ -75,22 +73,26 @@ public:
 
 private:
 	//bool PExtractPath();
-	void PSetDEMInfo(); //carefull not to call this function outside PLoadDEM, because the DEM is unloaded at end of PLoadDem and... well....
-						//TODO Implement this one alongside PDisplayDEMInfo() later.
-	float PBilinearInterp(int, int, int);
-	float PBicubicInterp(int, int, int);
-	bool PFileIsExist(std::string);
-	double* PToUTM(double, double);
-	void PConvertPathToUTM();
+	void SetDEMInfo(); //carefull not to call this function outside LoadDEM, because the DEM is unloaded at end of LoadDEM and... well....
+						//TODO Implement this one alongside DisplayDEMInfo() later.
+	float BilinearInterp(int, int, int);
+	float BicubicInterp(int, int, int);
+	bool FileIsExist(std::string);
+	double* ToUTM(double, double);
+	void ConvertPathToUTM();
 
 
-	std::string P_KMLLocation;
-	std::string P_DEMLocation;
-	std::string P_OutuputLocation;
+	std::string kmlLocation;
+	std::string demLocation;
+	std::string outputLocation;
 
 	//std::ifstream P_Path;
-	std::ofstream P_Result;
+	std::ofstream result;
 	
+
+	//TODO rewrite this method to use Array2D(numberofPathVerts, 2) for non-interpolated paths and Array2D(numberOfPathVerts, 3) for interpolated paths (the three columns are x, y and z) instead
+	//of the mess bellow.
+
 	double * P_X;
 	double * P_Y;
 	double * P_Xi;
@@ -99,19 +101,19 @@ private:
 	float * P_PathLength; //why is this a thing? Answer: conserve computational resources.
 	float * P_PathLengthI;
 
-	bool P_IsInterpolated;
-	bool P_IsCalculated;
-	bool P_IsConverted;
+	bool isInterpolated;
+	bool isCalculated;
+	bool isConverted;
 	//bool P_IsUTM; //redundant. Value is stored in DEMInfo struct
 	
-	float ** P_Heights;
+	float ** heightsGrid;
 
-	GDALDataset * P_DEM;
-	GDALRasterBand * P_DEMBand;
-	DEM_Info P_DEMInfo;
+	GDALDataset * demDataset;
+	GDALRasterBand * demBand;
+	DEM_Info demInfo;
 
-	int P_PathVertices;
-	int P_PathVerticesI;
+	int pathVerts;
+	int pathVerts_i;
 
 	KMLParser P_Path;
 

@@ -3,14 +3,14 @@
 ProfileMake::ProfileMake()
 {
 	GDALAllRegister(); //TODO See to registering relevant drivers only
-	P_KMLLocation = "input.kml";
-	P_DEMLocation = "input.tif";
-	P_OutuputLocation = "output.csv";
-	P_PathVertices = 0;
-	P_PathVerticesI = 0;
-	P_IsInterpolated = false;
-	P_IsCalculated = false;
-	P_IsConverted = false;
+	kmlLocation = "input.kml";
+	demLocation = "input.tif";
+	outputLocation = "output.csv";
+	pathVerts = 0;
+	pathVerts_i = 0;
+	isInterpolated = false;
+	isCalculated = false;
+	isConverted = false;
 	//P_IsUTM = false;
 }
 
@@ -30,144 +30,144 @@ ProfileMake::~ProfileMake()
 	if (P_PathLength != NULL)
 		delete[] P_PathLength;
 
-	int x = sizeof(P_Heights);
+	int x = sizeof(heightsGrid);
 	int y;
 	y = x + 0;
 	
-	if (P_Heights != NULL)
+	if (heightsGrid != NULL)
 	{
-		for (int i = 0; i < P_DEMInfo.y; i++)
-			if (P_Heights[i] != NULL)
-				delete[] P_Heights[i];
-		delete[] P_Heights;
+		for (int i = 0; i < demInfo.y; i++)
+			if (heightsGrid[i] != NULL)
+				delete[] heightsGrid[i];
+		delete[] heightsGrid;
 	}
 }
 
-bool ProfileMake::PLoadDEM(std::string inDEMLoc)
+bool ProfileMake::LoadDEM(std::string inDEMLoc)
 {
-	P_DEMLocation = inDEMLoc;
-	if (!PFileIsExist(inDEMLoc))
+	demLocation = inDEMLoc;
+	if (!FileIsExist(inDEMLoc))
 	{
 		std::cout << "Error! Could not open DEM file: " << inDEMLoc << ". \nFile doesn't exist?\n\n";
 		return false;
 	}
 
 	const char * demloc = inDEMLoc.c_str();
-	P_DEM = (GDALDataset *)GDALOpen(demloc, GA_ReadOnly);
+	demDataset = (GDALDataset *)GDALOpen(demloc, GA_ReadOnly);
 
-	if (P_DEM == NULL)
+	if (demDataset == NULL)
 	{
 		std::cout << "Error! Could not load DEM file.\n\n";
 		return false;
 	}
 	
-	P_DEMBand = P_DEM->GetRasterBand(1); //Should consider checking that this is a greyscale (single band) dem first.
+	demBand = demDataset->GetRasterBand(1); //Should consider checking that this is a greyscale (single band) dem first.
 	
-	PSetDEMInfo();
+	SetDEMInfo();
 	
-	int demx = P_DEM->GetRasterXSize();
-	int demy = P_DEM->GetRasterYSize();
+	int demx = demDataset->GetRasterXSize();
+	int demy = demDataset->GetRasterYSize();
 	
 
-	P_Heights = new float*[demy]; 
+	heightsGrid = new float*[demy]; 
 	float * scanline;
-	int demxsize = P_DEMBand->GetXSize();
+	int demxsize = demBand->GetXSize();
 	scanline = (float *)CPLMalloc(sizeof(float) * demxsize);
 
 	for (int i = 0; i < demy; i++)
 	{
-		P_Heights[i] = new float[demx]; 
-		P_DEMBand->RasterIO(GF_Read, 0, i, demxsize, 1, scanline, demxsize, 1, GDT_Float32, 0, 0);
+		heightsGrid[i] = new float[demx]; 
+		demBand->RasterIO(GF_Read, 0, i, demxsize, 1, scanline, demxsize, 1, GDT_Float32, 0, 0);
 
 		for (int j = 0; j < demx; j++)
 		{
-			P_Heights[i][j] = scanline[j];
+			heightsGrid[i][j] = scanline[j];
 		}
 	}
 	CPLFree(scanline);
-	GDALClose(P_DEM);
+	GDALClose(demDataset);
 	std::cout << "Successfully loaded DEM file: " << inDEMLoc << "\n\n";
 	
 	return true;
 }
 
-bool ProfileMake::PLoadKML(std::string inKMLLoc)
+bool ProfileMake::LoadKML(std::string inKMLLoc)
 {
 	
-	if (!P_Path.KLoadKML(inKMLLoc))
+	if (!P_Path.LoadKML(inKMLLoc))
 	{
 		return false;
 	}
 
-	P_X = new double[P_Path.KGetVertCount()];
-	P_Y = new double[P_Path.KGetVertCount()];
+	P_X = new double[P_Path.GetVertCount()];
+	P_Y = new double[P_Path.GetVertCount()];
 
-	//double ** vertsArrayPointer = P_Path.KGetPtrToVerts;
+	//double ** vertsArrayPointer = P_Path.GetPtrToVerts;
 
-	for (int i = 0; i < P_Path.KGetVertCount(); i++)
+	for (int i = 0; i < P_Path.GetVertCount(); i++)
 	{
-		//P_X[i] = P_Path.KGetPtrToVerts[i][0];
-		P_X[i] = P_Path.K_Verts[i][0];
-		//P_Y[i] = P_Path.KGetPtrToVerts[i][1];
-		P_Y[i] = P_Path.K_Verts[i][1];
+		//P_X[i] = P_Path.GetPtrToVerts[i][0];
+		P_X[i] = P_Path.verts[i][0];
+		//P_Y[i] = P_Path.GetPtrToVerts[i][1];
+		P_Y[i] = P_Path.verts[i][1];
 	}
 
-	P_PathVertices = P_Path.KGetVertCount();
+	pathVerts = P_Path.GetVertCount();
 	if (isDebug)
 	{
-		std::cout << "verts: " << P_PathVertices << std::endl;
-		for (int i = 0; i < P_Path.KGetVertCount(); i++)
+		std::cout << "verts: " << pathVerts << std::endl;
+		for (int i = 0; i < P_Path.GetVertCount(); i++)
 		{
 			std::cout << "values: " << P_X[i] << ", " << P_Y[i] << std::endl;
 		}
 	}
-		P_PathLength = new float[P_PathVertices - 1];
-		for (int i = 0; i < P_PathVertices - 1; i++)
+		P_PathLength = new float[pathVerts - 1];
+		for (int i = 0; i < pathVerts - 1; i++)
 		{
-			P_PathLength[i] = PCalculateDistance(P_X[i], P_Y[i], P_X[i + 1], P_Y[i + 1]);
+			P_PathLength[i] = CalculateDistance(P_X[i], P_Y[i], P_X[i + 1], P_Y[i + 1]);
 		}
 	return true;
 }
 
-void ProfileMake::PDisplayDEMInfo()
+void ProfileMake::DisplayDEMInfo()
 {
 	std::cout << "\n==================================";
 	std::cout << "\n\tDEM info\n";
 	std::cout << "==================================\n\n";
-	std::cout << "Coordinate System: " << P_DEMInfo.ProjectionReference <<std::endl;
-	std::cout << "Rasters in-file: " << P_DEMInfo.RasterCount << std::endl;
+	std::cout << "Coordinate System: " << demInfo.ProjectionReference <<std::endl;
+	std::cout << "Rasters in-file: " << demInfo.RasterCount << std::endl;
 	std::cout << "\nFor raster #1\n";
-	std::cout << "Resolution: " << P_DEMInfo.x << " by " << P_DEMInfo.y << " pixels.\n";
-	std::cout << "Data type: " << P_DEMInfo.RasterDataType << std::endl;
-	std::cout << "Block size: " << P_DEMInfo.BlockSize_x << " by " << P_DEMInfo.BlockSize_y << " pixels.\n";
-	std::cout << "Color interpretation: " << P_DEMInfo.ColorInterpretation << std::endl;
-	std::cout << "Minimum value: " << P_DEMInfo.z_min << std::endl;
-	std::cout << "Maximum value: " << P_DEMInfo.z_max << std::endl;
-	if (P_DEMInfo.ColorEntryCount > 0)
+	std::cout << "Resolution: " << demInfo.x << " by " << demInfo.y << " pixels.\n";
+	std::cout << "Data type: " << demInfo.RasterDataType << std::endl;
+	std::cout << "Block size: " << demInfo.BlockSize_x << " by " << demInfo.BlockSize_y << " pixels.\n";
+	std::cout << "Color interpretation: " << demInfo.ColorInterpretation << std::endl;
+	std::cout << "Minimum value: " << demInfo.z_min << std::endl;
+	std::cout << "Maximum value: " << demInfo.z_max << std::endl;
+	if (demInfo.ColorEntryCount > 0)
 	{
-		std::cout << "Color table entries: " << P_DEMInfo.ColorEntryCount << std::endl;
+		std::cout << "Color table entries: " << demInfo.ColorEntryCount << std::endl;
 	}
 	else
 	{
 		std::cout << "Color table entries: N/A\n";
 	}
 	std::cout << "\nRaster Geographical Transforms:\n";
-	std::cout << "Origin coordinates: " <<std::setprecision(14)<< P_DEMInfo.originx << ", " << P_DEMInfo.originy << "\n";
-	std::cout << "Pixel Size: " << std::setprecision(14) << P_DEMInfo.PixelSize_x << " by " << P_DEMInfo.PixelSize_y << "\n";
-	std::cout << "[Unsupported]: " << P_DEMInfo.geotransform_2 << ", " << P_DEMInfo.geotransform_4 << "\n"; //TODO geotransform 2 and 4
+	std::cout << "Origin coordinates: " <<std::setprecision(14)<< demInfo.originx << ", " << demInfo.originy << "\n";
+	std::cout << "Pixel Size: " << std::setprecision(14) << demInfo.PixelSize_x << " by " << demInfo.PixelSize_y << "\n";
+	std::cout << "[Unsupported]: " << demInfo.geotransform_2 << ", " << demInfo.geotransform_4 << "\n"; //TODO geotransform 2 and 4
 	std::cout << "[Border coordinates NW -> NE -> SE -> SW\n";
-	std::cout << P_DEMInfo.NW_x << ", " << P_DEMInfo.NW_y << std::endl;
-	std::cout << P_DEMInfo.NE_x << ", " << P_DEMInfo.NE_y << std::endl;
-	std::cout << P_DEMInfo.SE_x << ", " << P_DEMInfo.SE_y << std::endl;
-	std::cout << P_DEMInfo.SW_x << ", " << P_DEMInfo.SW_y << std::endl;
+	std::cout << demInfo.NW_x << ", " << demInfo.NW_y << std::endl;
+	std::cout << demInfo.NE_x << ", " << demInfo.NE_y << std::endl;
+	std::cout << demInfo.SE_x << ", " << demInfo.SE_y << std::endl;
+	std::cout << demInfo.SW_x << ", " << demInfo.SW_y << std::endl;
 }
 
-void ProfileMake::PDisplayPathInfo()
+void ProfileMake::DisplayPathInfo()
 {
 	float tempdist = 0, tempz = 0;
-	if (!P_IsInterpolated)
+	if (!isInterpolated)
 	{
-		for (int i = 0; i < P_PathVertices; i++)
+		for (int i = 0; i < pathVerts; i++)
 		{
 			if (i == 0)
 			{
@@ -177,14 +177,14 @@ void ProfileMake::PDisplayPathInfo()
 			{
 				tempdist = tempdist + P_PathLength[i - 1];
 			}
-			if (P_IsCalculated == true) tempz = P_Z[i];
+			if (isCalculated == true) tempz = P_Z[i];
 
 			std::cout << " " << std::fixed << std::setprecision(7) << P_X[i] << "	" << P_Y[i] << "	" << std::setprecision(2) << tempdist << "		" << tempz << std::endl;
 		}
 	}
 	else
 	{
-		for (int i = 0; i < P_PathVerticesI; i++)
+		for (int i = 0; i < pathVerts_i; i++)
 		{
 			if (i == 0)
 			{
@@ -194,19 +194,19 @@ void ProfileMake::PDisplayPathInfo()
 			{
 				tempdist = tempdist + P_PathLengthI[i - 1];
 			}
-			if (P_IsCalculated == true) tempz = P_Z[i];
+			if (isCalculated == true) tempz = P_Z[i];
 
 			std::cout << " " << std::fixed << std::setprecision(7) <<P_Xi[i] << "	" << P_Yi[i] << "	" << std::setprecision(2) << tempdist << "		" << tempz << std::endl;
 		}
 	}
 }
 
-//void ProfileMake::PInterpolateProfile(float step, bool maintainBends)
+//void ProfileMake::InterpolateProfile(float step, bool maintainBends)
 //{
-//	int * newverts = new int[P_PathVertices - 1];
-//	int newvertssum = P_PathVertices;
+//	int * newverts = new int[pathVerts - 1];
+//	int newvertssum = pathVerts;
 //	
-//	for (int i = 0; i < P_PathVertices - 1; i++)
+//	for (int i = 0; i < pathVerts - 1; i++)
 //	{
 //		newverts [i] = floor(P_PathLength[i] / step);
 //		newvertssum = newvertssum + newverts[i];
@@ -218,7 +218,7 @@ void ProfileMake::PDisplayPathInfo()
 //
 //	//calculate tempx, tempy here
 //	int currentid = 0;
-//	for (int i = 0; i < P_PathVertices - 1; i++)
+//	for (int i = 0; i < pathVerts - 1; i++)
 //	{
 //		P_Xi[currentid] = P_X[i];
 //		P_Yi[currentid] = P_Y[i];
@@ -230,27 +230,27 @@ void ProfileMake::PDisplayPathInfo()
 //			currentid++;
 //		}
 //	}
-//	P_Xi[newvertssum - 1] = P_X[P_PathVertices-1]; //copying last verts
-//	P_Yi[newvertssum - 1] = P_Y[P_PathVertices-1];
-//	P_PathVerticesI = newvertssum;
+//	P_Xi[newvertssum - 1] = P_X[pathVerts-1]; //copying last verts
+//	P_Yi[newvertssum - 1] = P_Y[pathVerts-1];
+//	pathVerts_i = newvertssum;
 //	
-//	P_PathLengthI = new float[P_PathVerticesI - 1];
+//	P_PathLengthI = new float[pathVerts_i - 1];
 //
 //
-//	for (int i = 0; i < P_PathVerticesI - 1; i++)
+//	for (int i = 0; i < pathVerts_i - 1; i++)
 //		{
-//			P_PathLengthI[i] = PCalculateDistance(P_Xi[i], P_Yi[i], P_Xi[i + 1], P_Yi[i + 1]);
+//			P_PathLengthI[i] = CalculateDistance(P_Xi[i], P_Yi[i], P_Xi[i + 1], P_Yi[i + 1]);
 //		}
 //	
-//	P_IsInterpolated = true;
+//	isInterpolated = true;
 //}
 
-void ProfileMake::PInterpolateProfile(float step, bool maintainBends)
+void ProfileMake::InterpolateProfile(float step, bool maintainBends)
 {
-	int newvertssum = P_PathVertices;
+	int newvertssum = pathVerts;
 
 	float totalLength = 0.0f;
-	for (int i = 0; i < P_PathVertices - 1; i++)
+	for (int i = 0; i < pathVerts - 1; i++)
 	{
 		totalLength += P_PathLength[i];
 	}
@@ -258,7 +258,7 @@ void ProfileMake::PInterpolateProfile(float step, bool maintainBends)
 	newvertssum = floor(totalLength / step) + 2; //the 2 are begining and ending verts
 
 	if (maintainBends)
-		newvertssum += P_PathVertices - 2;
+		newvertssum += pathVerts - 2;
 
 
 	P_Xi = new double[newvertssum];
@@ -298,50 +298,50 @@ void ProfileMake::PInterpolateProfile(float step, bool maintainBends)
 		P_Yi[i] = interpolate(P_Y[currentSegment], P_Y[currentSegment + 1], P_PathLength[currentSegment], distFromLastBend);
 	}
 
-	P_Xi[newvertssum - 1] = P_X[P_PathVertices - 1]; //copying last verts
-	P_Yi[newvertssum - 1] = P_Y[P_PathVertices - 1];
-	P_PathVerticesI = newvertssum;
+	P_Xi[newvertssum - 1] = P_X[pathVerts - 1]; //copying last verts
+	P_Yi[newvertssum - 1] = P_Y[pathVerts - 1];
+	pathVerts_i = newvertssum;
 
-	P_PathLengthI = new float[P_PathVerticesI - 1]; //useless? in the new logic?
+	P_PathLengthI = new float[pathVerts_i - 1]; //useless? in the new logic?
 													//TODO remove after checking the rest of code
 
 
-	for (int i = 0; i < P_PathVerticesI - 1; i++) //TODO remove after checking the rest of code
+	for (int i = 0; i < pathVerts_i - 1; i++) //TODO remove after checking the rest of code
 	{
-		P_PathLengthI[i] = PCalculateDistance(P_Xi[i], P_Yi[i], P_Xi[i + 1], P_Yi[i + 1]);
+		P_PathLengthI[i] = CalculateDistance(P_Xi[i], P_Yi[i], P_Xi[i + 1], P_Yi[i + 1]);
 	}
 
-	P_IsInterpolated = true; //Useless?
+	isInterpolated = true; //Useless?
 
 
 
 }
 
-bool ProfileMake::PIsPathOOB() 
+bool ProfileMake::IsPathOOB() 
 {
 	double *tempx, *tempy;
 	int tempverts;
 
-	if (P_IsInterpolated)
+	if (isInterpolated)
 	{
 		tempx = P_Xi;
 		tempy = P_Yi;
-		tempverts = P_PathVerticesI;
+		tempverts = pathVerts_i;
 	}
 	else
 	{
 		tempx = P_Xi; //TODO check whether this is correct. Shouldn't this be P_X and P_Y?
 		tempy = P_Yi;
-		tempverts = P_PathVertices;
+		tempverts = pathVerts;
 	}
 
 	for (int i = 0; i < tempverts; i++ )
 	{
-		if (tempx[i] < P_DEMInfo.NW_x || tempx[i] > P_DEMInfo.SE_x)
+		if (tempx[i] < demInfo.NW_x || tempx[i] > demInfo.SE_x)
 		{
 			return true;
 		}
-		if (tempy[i] > P_DEMInfo.NW_y || tempy[i] < P_DEMInfo.SE_y)
+		if (tempy[i] > demInfo.NW_y || tempy[i] < demInfo.SE_y)
 		{
 			return true;
 		}
@@ -350,30 +350,30 @@ bool ProfileMake::PIsPathOOB()
 	return false;
 }
 
-bool ProfileMake::PIsPointOOB(double x, double y)
+bool ProfileMake::IsPointOOB(double x, double y)
 {
-	if (x < P_DEMInfo.NW_x || x > P_DEMInfo.SE_x)
+	if (x < demInfo.NW_x || x > demInfo.SE_x)
 	{
 		return false;
 	}
-	if (y > P_DEMInfo.NW_y || y < P_DEMInfo.SE_y)
+	if (y > demInfo.NW_y || y < demInfo.SE_y)
 	{
 		return false;
 	}
 }
 
-int ProfileMake::PCalculateProfile() //returning int for end state. 0: failure, 1: success, 2: success with gaps (for when implementing 
+int ProfileMake::CalculateProfile() //returning int for end state. 0: failure, 1: success, 2: success with gaps (for when implementing 
 										//choice to calculate profile for paths that are partially within the provided DEM's boundaries.
 {
 	//in case dem is in UTM
-	if (P_DEMInfo.IsUTM)
+	if (demInfo.IsUTM)
 	{
-		PConvertPathToUTM();
-		P_IsConverted = true;
+		ConvertPathToUTM();
+		isConverted = true;
 	}
 
 	//check if profile is out of bounds
-	if (PIsPathOOB())
+	if (IsPathOOB())
 	{
 		std::cout << "Error: Loaded path is outside the boundry of the loaded DEM!\n";
 		//return;
@@ -383,41 +383,41 @@ int ProfileMake::PCalculateProfile() //returning int for end state. 0: failure, 
 		std::cin.get();
 		exit(1);
 	}
-	P_Z = new float[P_PathVerticesI]; //Remember that we use P_PathVerticesI here, not P_PathVertices.
+	P_Z = new float[pathVerts_i]; //Remember that we use pathVerts_i here, not pathVerts.
 	int first_larger_x_order, first_larger_y_order;
 
-	for (int i = 0; i < P_PathVerticesI; i++) //TODO if this method is calcualted without interpolating profile, this method will not return any value
+	for (int i = 0; i < pathVerts_i; i++) //TODO if this method is calcualted without interpolating profile, this method will not return any value
 												//TODO fix this part
 	{
-		for (int j = 0; j < P_DEMInfo.y; j++)
+		for (int j = 0; j < demInfo.y; j++)
 		{
-			if (P_Yi[i] > P_DEMInfo.originy + j * P_DEMInfo.PixelSize_y)
+			if (P_Yi[i] > demInfo.originy + j * demInfo.PixelSize_y)
 			{
 				first_larger_y_order = j;
 				break;
 			}
 		}
-		for (int k = 0; k < P_DEMInfo.x; k++)
+		for (int k = 0; k < demInfo.x; k++)
 		{
-			if (P_Xi[i] < P_DEMInfo.originx + k * P_DEMInfo.PixelSize_x)
+			if (P_Xi[i] < demInfo.originx + k * demInfo.PixelSize_x)
 			{
 				first_larger_x_order = k;
 				break;
 			}
 		}
 
-		P_Z[i] = PBicubicInterp(first_larger_x_order, first_larger_y_order, i);
+		P_Z[i] = BicubicInterp(first_larger_x_order, first_larger_y_order, i);
 
 	}
-	P_IsCalculated = true;
+	isCalculated = true;
 	
 	return 1;
 }
 
-void ProfileMake::PCalculatePoint(double x, double y)
+void ProfileMake::CalculatePoint(double x, double y)
 {
 	//check if profile is out of bounds
-	if (!PIsPointOOB(x, y))
+	if (!IsPointOOB(x, y))
 	{
 		std::cout << "Point is outside the DEM boundries!\n";
 		return;
@@ -430,22 +430,22 @@ void ProfileMake::PCalculatePoint(double x, double y)
 	double A, B; //used as temp holders to clean up bilinear interp forumla
 	//std::cout << "test1\n" << std::endl; //test
 
-		for (int j = 0; j < P_DEMInfo.y; j++)
+		for (int j = 0; j < demInfo.y; j++)
 		{
-			if (y > P_DEMInfo.originy + j * P_DEMInfo.PixelSize_y)
+			if (y > demInfo.originy + j * demInfo.PixelSize_y)
 			{
-				boundingy[0] = P_DEMInfo.originy + (j - 1) * P_DEMInfo.PixelSize_y;
-				boundingy[1] = P_DEMInfo.originy + j * P_DEMInfo.PixelSize_y;
+				boundingy[0] = demInfo.originy + (j - 1) * demInfo.PixelSize_y;
+				boundingy[1] = demInfo.originy + j * demInfo.PixelSize_y;
 				first_larger_y_order = j;
 				break;
 			}
 		}
-		for (int k = 0; k < P_DEMInfo.x; k++)
+		for (int k = 0; k < demInfo.x; k++)
 		{
-			if (x < P_DEMInfo.originx + k * P_DEMInfo.PixelSize_x)
+			if (x < demInfo.originx + k * demInfo.PixelSize_x)
 			{
-				boundingx[0] = P_DEMInfo.originx + (k - 1) * P_DEMInfo.PixelSize_x;
-				boundingx[1] = P_DEMInfo.originx + k * P_DEMInfo.PixelSize_x;
+				boundingx[0] = demInfo.originx + (k - 1) * demInfo.PixelSize_x;
+				boundingx[1] = demInfo.originx + k * demInfo.PixelSize_x;
 				first_larger_x_order = k;
 				break;
 			}
@@ -453,15 +453,15 @@ void ProfileMake::PCalculatePoint(double x, double y)
 		
 		//std::cout << "test2\n" << std::endl; //test
 		//std::cout << "setting boundingz\n"; //test
-		boundingz[0] = P_Heights[first_larger_y_order - 1][first_larger_x_order - 1]; //flipped x and y
-		boundingz[1] = P_Heights[first_larger_y_order - 1][first_larger_x_order];
-		boundingz[2] = P_Heights[first_larger_y_order][first_larger_x_order];
-		boundingz[3] = P_Heights[first_larger_y_order][first_larger_x_order - 1];
+		boundingz[0] = heightsGrid[first_larger_y_order - 1][first_larger_x_order - 1]; //flipped x and y
+		boundingz[1] = heightsGrid[first_larger_y_order - 1][first_larger_x_order];
+		boundingz[2] = heightsGrid[first_larger_y_order][first_larger_x_order];
+		boundingz[3] = heightsGrid[first_larger_y_order][first_larger_x_order - 1];
 
-	/*	boundingz[0] = P_Heights[254][0]; 
-		boundingz[1] = P_Heights[P_DEMInfo.y-10][P_DEMInfo.x-10];
-		boundingz[2] = P_Heights[P_DEM->GetRasterXSize()][P_DEM->GetRasterYSize()];
-		boundingz[3] = P_Heights[256][283];*/
+	/*	boundingz[0] = heightsGrid[254][0]; 
+		boundingz[1] = heightsGrid[demInfo.y-10][demInfo.x-10];
+		boundingz[2] = heightsGrid[demDataset->GetRasterXSize()][demDataset->GetRasterYSize()];
+		boundingz[3] = heightsGrid[256][283];*/
 
 
 		// x1 = boundingx[0]
@@ -497,18 +497,18 @@ void ProfileMake::PCalculatePoint(double x, double y)
 	
 }
 
-bool ProfileMake::PWriteProfile(std::string out_csv)
+bool ProfileMake::WriteProfile(std::string out_csv)
 {
 
-	if (!PFileIsExist(out_csv))
+	if (!FileIsExist(out_csv))
 	{
 		std::cout << "Attempting to create output file\n";
 	}
 
-	P_Result.open(out_csv); //TODO Enrich this.
+	result.open(out_csv); //TODO Enrich this.
 	//add open test here
 
-	if (P_Result.is_open())
+	if (result.is_open())
 	{
 		std::cout << "File creation is successfull\n";
 	}
@@ -519,28 +519,28 @@ bool ProfileMake::PWriteProfile(std::string out_csv)
 	}
 
 	std::cout << "\nWriting results to disk\n"; //test
-	P_Result << "Longitude,Latitude,Chainage,Height" << std::endl;
+	result << "Longitude,Latitude,Chainage,Height" << std::endl;
 	
 	float _chainage = 0.0f;
-	for (int i = 0; i < P_PathVerticesI; i++)
+	for (int i = 0; i < pathVerts_i; i++)
 	{
-		P_Result << std::setprecision(10) << P_Xi[i] << "," << P_Yi[i] << ",";
+		result << std::setprecision(10) << P_Xi[i] << "," << P_Yi[i] << ",";
 		
-		if (i > 0) _chainage += PCalculateDistance(P_Xi[i-1], P_Yi[i-1], P_Xi[i], P_Yi[i]);
-		//P_Result << std::fixed<< std::setprecision(3) << PCalculateDistance(P_Xi[0], P_Yi[0], P_Xi[i], P_Yi[i]); //OK, this was a GENIUS move! </sarcasm>
-		P_Result << std::fixed << std::setprecision(3) <<  _chainage;
-		P_Result << "," << std::setprecision(4) << P_Z[i] << std::endl;
+		if (i > 0) _chainage += CalculateDistance(P_Xi[i-1], P_Yi[i-1], P_Xi[i], P_Yi[i]);
+		//result << std::fixed<< std::setprecision(3) << CalculateDistance(P_Xi[0], P_Yi[0], P_Xi[i], P_Yi[i]); //OK, this was a GENIUS move! </sarcasm>
+		result << std::fixed << std::setprecision(3) <<  _chainage;
+		result << "," << std::setprecision(4) << P_Z[i] << std::endl;
 	}
 
-	P_Result.close();
+	result.close();
 	return true;
 }
 
-double ProfileMake::PCalculateDistance(double x1, double y1, double x2, double y2)
+double ProfileMake::CalculateDistance(double x1, double y1, double x2, double y2)
 {
 	double result = 0;
 	//distance calculation for UTM coords is very simple, doing it here and returning value immediatly.
-	if (P_IsConverted)
+	if (isConverted)
 	{
 		result = sqrt(pow(abs(x1 - x2), 2.0) + pow(abs(y1 - y2), 2.0));
 		if (isDebug) std::cout << "Calculating distance for UTM, result= " << result << std::endl; //test
@@ -578,7 +578,7 @@ double ProfileMake::PCalculateDistance(double x1, double y1, double x2, double y
 	if (abs(x1 - x2)*3600 < 0.0001 && abs(y1 - y1)*3600 < 0.0001) //hack for when the two points are ~the same
 															//otherwise, the algorithm sends weird values (NAN)
 	{
-		if (isDebug) std::cout << "\n[DevWarning: In PCalculateDistance(), trigered near-points check, returning 0.0]\n"; //test
+		if (isDebug) std::cout << "\n[DevWarning: In CalculateDistance(), trigered near-points check, returning 0.0]\n"; //test
 		return 0.0;
 	}
 
@@ -623,7 +623,7 @@ double ProfileMake::PCalculateDistance(double x1, double y1, double x2, double y
 	return result;
 }
 
-void ProfileMake::PResetProfile()
+void ProfileMake::ResetProfile()
 {
 	if (P_X != NULL)
 		delete[] P_X;
@@ -647,97 +647,97 @@ void ProfileMake::PResetProfile()
 		delete[] P_PathLengthI;
 	P_PathLengthI = NULL;
 	
-	P_IsInterpolated = false;
-	P_IsCalculated = false;
-	P_IsConverted = false;
+	isInterpolated = false;
+	isCalculated = false;
+	isConverted = false;
 	
-	P_PathVertices = 0;
-	P_PathVerticesI = 0;
+	pathVerts = 0;
+	pathVerts_i = 0;
 
-	P_Path.KUnloadKML();
+	P_Path.UnloadKML();
 }
 
-void ProfileMake::PSetDEMInfo()
+void ProfileMake::SetDEMInfo()
 {
 	double temptransform[6];
 	int min, max;
 	double tempminmax[2];
 	
-	if (P_DEM->GetProjectionRef() != NULL)
+	if (demDataset->GetProjectionRef() != NULL)
 		{
-			P_DEMInfo.ProjectionReference = P_DEM->GetProjectionRef();
+			demInfo.ProjectionReference = demDataset->GetProjectionRef();
 		}
 
-	P_DEMInfo.x = P_DEMBand->GetXSize();
-	P_DEMInfo.y = P_DEMBand->GetYSize();
+	demInfo.x = demBand->GetXSize();
+	demInfo.y = demBand->GetYSize();
 
-	P_DEM->GetGeoTransform(temptransform);
-	P_DEMInfo.originx = temptransform[0];
-	P_DEMInfo.originy = temptransform[3];
-	P_DEMInfo.PixelSize_x = temptransform[1];
-	P_DEMInfo.PixelSize_y = temptransform[5];
-	P_DEMInfo.geotransform_2 = temptransform[2]; //TODO change these values when you fix the related name thingy.
-	P_DEMInfo.geotransform_4 = temptransform[4];
-	P_DEMInfo.z_min = P_DEMBand->GetMinimum(&min);
-	P_DEMInfo.z_max = P_DEMBand->GetMaximum(&max);
+	demDataset->GetGeoTransform(temptransform);
+	demInfo.originx = temptransform[0];
+	demInfo.originy = temptransform[3];
+	demInfo.PixelSize_x = temptransform[1];
+	demInfo.PixelSize_y = temptransform[5];
+	demInfo.geotransform_2 = temptransform[2]; //TODO change these values when you fix the related name thingy.
+	demInfo.geotransform_4 = temptransform[4];
+	demInfo.z_min = demBand->GetMinimum(&min);
+	demInfo.z_max = demBand->GetMaximum(&max);
 	if (!(min && max))
 	{
-		GDALComputeRasterMinMax((GDALRasterBandH)P_DEMBand, true, tempminmax);
-		P_DEMInfo.z_min = tempminmax[0];
-		P_DEMInfo.z_max = tempminmax[1];
+		GDALComputeRasterMinMax((GDALRasterBandH)demBand, true, tempminmax);
+		demInfo.z_min = tempminmax[0];
+		demInfo.z_max = tempminmax[1];
 	}
-	P_DEMBand->GetBlockSize(&P_DEMInfo.BlockSize_x, &P_DEMInfo.BlockSize_y);
-	P_DEMInfo.RasterCount = P_DEM->GetRasterCount();
-	P_DEMInfo.RasterDataType = GDALGetDataTypeName(P_DEMBand->GetRasterDataType());
-	P_DEMInfo.OverviewCount = P_DEMBand->GetOverviewCount();
-	P_DEMInfo.ColorInterpretation = GDALGetColorInterpretationName(P_DEMBand->GetColorInterpretation());
+	demBand->GetBlockSize(&demInfo.BlockSize_x, &demInfo.BlockSize_y);
+	demInfo.RasterCount = demDataset->GetRasterCount();
+	demInfo.RasterDataType = GDALGetDataTypeName(demBand->GetRasterDataType());
+	demInfo.OverviewCount = demBand->GetOverviewCount();
+	demInfo.ColorInterpretation = GDALGetColorInterpretationName(demBand->GetColorInterpretation());
 	
-	if (P_DEMBand->GetColorTable() != NULL)
+	if (demBand->GetColorTable() != NULL)
 	{
-		P_DEMInfo.ColorEntryCount = P_DEMBand->GetColorTable()->GetColorEntryCount();
+		demInfo.ColorEntryCount = demBand->GetColorTable()->GetColorEntryCount();
 	}
 	else
 	{
-		P_DEMInfo.ColorEntryCount = -1;
+		demInfo.ColorEntryCount = -1;
 	}
 
 
 	//setting corner coords
 	//Necessary?
-	P_DEMInfo.NW_x = P_DEMInfo.originx;
-	P_DEMInfo.NW_y = P_DEMInfo.originy;
+	demInfo.NW_x = demInfo.originx;
+	demInfo.NW_y = demInfo.originy;
 
-	P_DEMInfo.NE_x = P_DEMInfo.originx + P_DEMInfo.x * P_DEMInfo.PixelSize_x;
-	P_DEMInfo.NE_y = P_DEMInfo.originy;
+	demInfo.NE_x = demInfo.originx + demInfo.x * demInfo.PixelSize_x;
+	demInfo.NE_y = demInfo.originy;
 
-	P_DEMInfo.SE_x = P_DEMInfo.originx + P_DEMInfo.x * P_DEMInfo.PixelSize_x;
-	P_DEMInfo.SE_y = P_DEMInfo.originy + P_DEMInfo.y * P_DEMInfo.PixelSize_y;
+	demInfo.SE_x = demInfo.originx + demInfo.x * demInfo.PixelSize_x;
+	demInfo.SE_y = demInfo.originy + demInfo.y * demInfo.PixelSize_y;
 
-	P_DEMInfo.SW_x = P_DEMInfo.originx;
-	P_DEMInfo.SW_y = P_DEMInfo.originy + P_DEMInfo.y * P_DEMInfo.PixelSize_y;
+	demInfo.SW_x = demInfo.originx;
+	demInfo.SW_y = demInfo.originy + demInfo.y * demInfo.PixelSize_y;
 
 	//checking whether its geographic or utm
 	//note this implementation is risky, based on a very simple and short observation
 
 	std::string tempstring;
 
-	tempstring = P_DEMInfo.ProjectionReference;
+	tempstring = demInfo.ProjectionReference;
 
 	//std::cout << "\n ********************* tempstring: " << tempstring.substr(0,6) << std::endl; //test
 	if (tempstring.substr(0, 6) == "PROJCS")
 	{
-		P_DEMInfo.IsUTM = true;
-		//P_DEMInfo.IsDecimal = false;
+		demInfo.IsUTM = true;
+		//demInfo.IsDecimal = false;
 	}
 	else
 	{
-		P_DEMInfo.IsUTM = false;
-		//P_DEMInfo.IsDecimal = true;
+		demInfo.IsUTM = false;
+		//demInfo.IsDecimal = true;
 	}
 
 }
 
-float ProfileMake::PBilinearInterp(int first_larger_x, int first_larger_y, int point_order)
+float ProfileMake::BilinearInterp(int first_larger_x, int first_larger_y, int point_order)
 {
 	//TODO Check this implementation
 	double A, B;
@@ -750,24 +750,24 @@ float ProfileMake::PBilinearInterp(int first_larger_x, int first_larger_y, int p
 
 	for (int i = 0; i < 2; i++)
 	{
-		boundingx[i] = P_DEMInfo.originx + (first_larger_x - 1 + i) * P_DEMInfo.PixelSize_x;
-		boundingy[i] = P_DEMInfo.originy + (first_larger_y - 1 + i) * P_DEMInfo.PixelSize_y;
+		boundingx[i] = demInfo.originx + (first_larger_x - 1 + i) * demInfo.PixelSize_x;
+		boundingy[i] = demInfo.originy + (first_larger_y - 1 + i) * demInfo.PixelSize_y;
 	}
 
-	boundingz[0] = P_Heights[first_larger_y - 1][first_larger_x - 1];
-	boundingz[1] = P_Heights[first_larger_y - 1][first_larger_x];
-	boundingz[2] = P_Heights[first_larger_y][first_larger_x];
-	boundingz[3] = P_Heights[first_larger_y][first_larger_x - 1];
+	boundingz[0] = heightsGrid[first_larger_y - 1][first_larger_x - 1];
+	boundingz[1] = heightsGrid[first_larger_y - 1][first_larger_x];
+	boundingz[2] = heightsGrid[first_larger_y][first_larger_x];
+	boundingz[3] = heightsGrid[first_larger_y][first_larger_x - 1];
 
-	A = boundingz[0] * PCalculateDistance(boundingx[1], boundingy[0], P_Xi[point_order], boundingy[0]) / PCalculateDistance(boundingx[1], boundingy[0], boundingx[0], boundingy[0]) + boundingz[1] * PCalculateDistance(P_Xi[point_order], boundingy[0], boundingx[0], boundingy[0]) / PCalculateDistance(boundingx[1], boundingy[0], boundingx[0], boundingy[0]);
-	B = boundingz[2] * PCalculateDistance(boundingx[1], boundingy[1], P_Xi[point_order], boundingy[1]) / PCalculateDistance(boundingx[1], boundingy[1], boundingx[0], boundingy[1]) + boundingz[3] * PCalculateDistance(P_Xi[point_order], boundingy[1], boundingx[0], boundingy[1]) / PCalculateDistance(boundingx[1], boundingy[1], boundingx[0], boundingy[1]);
-	result_depth = A * PCalculateDistance(boundingx[0], boundingy[1], boundingx[0], P_Yi[point_order]) / PCalculateDistance(boundingx[0], boundingy[0], boundingx[0], boundingy[1]);
-	result_depth = result_depth + B *  PCalculateDistance(boundingx[0], P_Yi[point_order], boundingx[0], boundingy[0]) / PCalculateDistance(boundingx[0], boundingy[0], boundingx[0], boundingy[1]);
+	A = boundingz[0] * CalculateDistance(boundingx[1], boundingy[0], P_Xi[point_order], boundingy[0]) / CalculateDistance(boundingx[1], boundingy[0], boundingx[0], boundingy[0]) + boundingz[1] * CalculateDistance(P_Xi[point_order], boundingy[0], boundingx[0], boundingy[0]) / CalculateDistance(boundingx[1], boundingy[0], boundingx[0], boundingy[0]);
+	B = boundingz[2] * CalculateDistance(boundingx[1], boundingy[1], P_Xi[point_order], boundingy[1]) / CalculateDistance(boundingx[1], boundingy[1], boundingx[0], boundingy[1]) + boundingz[3] * CalculateDistance(P_Xi[point_order], boundingy[1], boundingx[0], boundingy[1]) / CalculateDistance(boundingx[1], boundingy[1], boundingx[0], boundingy[1]);
+	result_depth = A * CalculateDistance(boundingx[0], boundingy[1], boundingx[0], P_Yi[point_order]) / CalculateDistance(boundingx[0], boundingy[0], boundingx[0], boundingy[1]);
+	result_depth = result_depth + B *  CalculateDistance(boundingx[0], P_Yi[point_order], boundingx[0], boundingy[0]) / CalculateDistance(boundingx[0], boundingy[0], boundingx[0], boundingy[1]);
 	
 	return result_depth;
 }
 
-float ProfileMake::PBicubicInterp(int first_larger_x, int first_larger_y, int point_order)
+float ProfileMake::BicubicInterp(int first_larger_x, int first_larger_y, int point_order)
 {
 	//reference:
 	//http://www.paulinternet.nl/?page=bicubic
@@ -782,17 +782,17 @@ float ProfileMake::PBicubicInterp(int first_larger_x, int first_larger_y, int po
 
 	for (int i = 0; i < 4; i++)
 	{
-		boundingx[i] = P_DEMInfo.originx + (first_larger_x - 2 + i) * P_DEMInfo.PixelSize_x;
-		boundingy[i] = P_DEMInfo.originy + (first_larger_y - 2 + i) * P_DEMInfo.PixelSize_y;
+		boundingx[i] = demInfo.originx + (first_larger_x - 2 + i) * demInfo.PixelSize_x;
+		boundingy[i] = demInfo.originy + (first_larger_y - 2 + i) * demInfo.PixelSize_y;
 		for (int j = 0; j < 4; j++)
 		{
-			boundingz[i][j] = P_Heights[first_larger_y- 2 + j][first_larger_x - 2 + i];
+			boundingz[i][j] = heightsGrid[first_larger_y- 2 + j][first_larger_x - 2 + i];
 		}
 	}
 
 	for (int i = 0; i < 4; i++)
 	{
-		if (!P_IsInterpolated) //Note the original Pcalculateprofile method still hasn't implemented this check. This is a preemptive strike.
+		if (!isInterpolated) //Note the original CalculateProfile method still hasn't implemented this check. This is a preemptive strike.
 		{
 			pointx = abs((P_X[point_order] - boundingx[i]) / boundingx[i]);
 		}
@@ -803,7 +803,7 @@ float ProfileMake::PBicubicInterp(int first_larger_x, int first_larger_y, int po
 		temp_value[i] = boundingz[i][1] + 0.5 * pointx * (boundingz[i][2] - boundingz[i][0] + pointx * (2 * boundingz[i][0] - 5 * boundingz[i][1] + 4 * boundingz[i][2] - boundingz[i][3] + pointx*(3*(boundingz[i][1] - boundingz[i][2])+boundingz[i][3] - boundingz[i][0])));
 	}
 
-	if (!P_IsInterpolated) //Note the original Pcalculateprofile method still hasn't implemented this check. This is a preemptive strike.
+	if (!isInterpolated) //Note the original CalculateProfile method still hasn't implemented this check. This is a preemptive strike.
 	{
 		pointy = abs((P_Y[point_order] - boundingy[1]) / boundingy[1]);
 	}
@@ -816,7 +816,7 @@ float ProfileMake::PBicubicInterp(int first_larger_x, int first_larger_y, int po
 	return result_depth;
 }
 
-bool ProfileMake::PFileIsExist(std::string location)
+bool ProfileMake::FileIsExist(std::string location)
 {
 	std::cout << "Attempting to open " << location << std::endl;
 	std::ifstream file_to_check;
@@ -834,7 +834,7 @@ bool ProfileMake::PFileIsExist(std::string location)
 	}
 }
 
-double * ProfileMake::PToUTM(double lng, double lat)
+double * ProfileMake::ToUTM(double lng, double lat)
 {
 	//converting this http://www.movable-type.co.uk/scripts/latlong-utm-mgrs.html
 	// to c++
@@ -905,11 +905,11 @@ double * ProfileMake::PToUTM(double lng, double lat)
 	coords[0] = y;
 	coords[1] = x;
 
-	if (isDebug) std::cout << "\n in PtoUTM, returning coords: " << coords[0] << " and " << coords[1];//test
+	if (isDebug) std::cout << "\n in ToUTM, returning coords: " << coords[0] << " and " << coords[1];//test
 	return coords;
 }
 
-void ProfileMake::PConvertPathToUTM()
+void ProfileMake::ConvertPathToUTM()
 {
 
 	double *tempx, *tempy;
@@ -919,23 +919,23 @@ void ProfileMake::PConvertPathToUTM()
 	if (isDebug) std::cout << "\nConverting path to UTM\n"; //test
 
 
-	if (P_IsInterpolated)
+	if (isInterpolated)
 	{
 		tempx = P_Xi;
 		tempy = P_Yi;
-		tempverts = P_PathVerticesI;
+		tempverts = pathVerts_i;
 	}
 	else
 	{
 		tempx = P_Xi;
 		tempy = P_Yi;
-		tempverts = P_PathVertices;
+		tempverts = pathVerts;
 	}
 
 
 	for (int i = 0; i < tempverts; i++)
 	{
-		tempreturn = PToUTM(tempx[i], tempy[i]);
+		tempreturn = ToUTM(tempx[i], tempy[i]);
 		tempx[i] = tempreturn[1];
 		tempy[i] = tempreturn[0];
 	}
@@ -943,7 +943,7 @@ void ProfileMake::PConvertPathToUTM()
 	if (isDebug)
 	{
 		std::cout << "\nConverted path\n";
-		for (int i = 0; i < P_PathVerticesI; i++)
+		for (int i = 0; i < pathVerts_i; i++)
 		{
 			std::cout << P_Xi[i] << ", " << P_Yi[i] << std::endl;
 		}

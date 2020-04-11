@@ -6,76 +6,76 @@ KMLParser::KMLParser()
 
 KMLParser::~KMLParser()
 {
-	if (K_Verts != NULL)
+	if (verts != NULL)
 	{
-		for (int i = 0; i < K_VertsCount; i++)
-			if (K_Verts[i] != NULL)
+		for (int i = 0; i < vertsCount; i++)
+			if (verts[i] != NULL)
 			{
-				delete[] K_Verts[i];
+				delete[] verts[i];
 			}
-		delete[] K_Verts;
+		delete[] verts;
 	}
-	K_VertsCount = 0;
+	vertsCount = 0;
 }
 
-bool KMLParser::KLoadKML(std::string fileName)
+bool KMLParser::LoadKML(std::string fileName)
 {
-	if (!KOpenKMLFile(fileName))
+	if (!OpenKMLFile(fileName))
 	{
 		//std::cout << "Failed to load KML: " << fileName.c_str() << std::endl;
 		return false;
 	}
-	if (!KSeekCoordsPosition())
+	if (!SeekCoordsPosition())
 	{
 		return false;
 	}
-	if (!KCountVertices())
+	if (!CountVertices())
 	{
 		return false;
 	}
-	if (!KExtractPath())
+	if (!ExtractPath())
 	{
 		return false;
 	}
-	KCloseKMLFile();
-	K_IsPathLoaded = true;
+	CloseKMLFile();
+	isPathLoaded = true;
 	return true;
 }
 
-double ** KMLParser::KGetPtrToVerts()
+double ** KMLParser::GetPtrToVerts()
 {
-	return K_Verts;
+	return verts;
 }
 
-int KMLParser::KGetVertCount()
+int KMLParser::GetVertCount()
 {
-	return K_VertsCount;
+	return vertsCount;
 }
 
-bool KMLParser::KUnloadKML()
+bool KMLParser::UnloadKML()
 {
-	if (!K_IsPathLoaded)
+	if (!isPathLoaded)
 		return false;
 	
-	for (int i = 0; i < K_VertsCount; i++)
+	for (int i = 0; i < vertsCount; i++)
 	{
-		delete K_Verts[i];
-		K_Verts[i] = NULL;
+		delete verts[i];
+		verts[i] = NULL;
 	}
-	delete[] K_Verts;
-	K_Verts = NULL;
+	delete[] verts;
+	verts = NULL;
 
-	K_coordBeginPos = 0;
-	K_KMLfile.clear();
-	K_VertsCount = 0;
-	K_IsPathLoaded = false;
+	coordBeginPos = 0;
+	kmlFile.clear();
+	vertsCount = 0;
+	isPathLoaded = false;
 	return true;
 }
 
-bool KMLParser::KOpenKMLFile(std::string fileName)
+bool KMLParser::OpenKMLFile(std::string fileName)
 {
-	K_KMLfile.open(fileName, std::ios::in | std::ios::binary);
-	if (!K_KMLfile.is_open())
+	kmlFile.open(fileName, std::ios::in | std::ios::binary);
+	if (!kmlFile.is_open())
 	{
 		std::cout << "Error: Could not load KML file!\n\n";
 		return false;
@@ -83,63 +83,63 @@ bool KMLParser::KOpenKMLFile(std::string fileName)
 	return true;
 }
 
-void KMLParser::KCloseKMLFile()
+void KMLParser::CloseKMLFile()
 {
-	K_KMLfile.close();
+	kmlFile.close();
 }
 
-bool KMLParser::KSeekCoordsPosition()
+bool KMLParser::SeekCoordsPosition()
 {
 	char cbuffer;
 	std::string sbuffer = "";
-	K_coordBeginPos = K_KMLfile.beg; //will have to nix this if I ever modified this method to a "seek next coords" in multi-featured KML files.
+	coordBeginPos = kmlFile.beg; //will have to nix this if I ever modified this method to a "seek next coords" in multi-featured KML files.
 
 	while (sbuffer != "coordinates")
 	{
-		K_KMLfile.get(cbuffer);
+		kmlFile.get(cbuffer);
 
 		if (cbuffer == '<')
 		{
 			sbuffer = "";
-			K_KMLfile.get(cbuffer);
+			kmlFile.get(cbuffer);
 
 			while (cbuffer != '>')
 			{
 				sbuffer += cbuffer;
-				K_KMLfile.get(cbuffer);
+				kmlFile.get(cbuffer);
 			}
 			//std::cout << "Sbuffer: " << sbuffer.c_str() << std::endl; //test
 
 		}
-		if (K_KMLfile.eof())
+		if (kmlFile.eof())
 		{
 			std::cout << "[DevWarning: Reached EOF]\n";
 			std::cout << "Error: Could not find coordinate data in KML file!\n";
 			return false;
 		}
 	}
-	K_coordBeginPos = K_KMLfile.tellg();
+	coordBeginPos = kmlFile.tellg();
 	return true;
 }
 
-bool KMLParser::KCountVertices()
+bool KMLParser::CountVertices()
 {
 	char cbuffer = '1';
 	while (cbuffer != '<' && cbuffer != '/')
 	{
-		K_KMLfile.get(cbuffer);
+		kmlFile.get(cbuffer);
 		if (cbuffer == ' ' || cbuffer == '<')
 		{
 			//hack to get around how software differ in terminating blocks
 			//check that following the space is a number
-			K_KMLfile.get(cbuffer);
+			kmlFile.get(cbuffer);
 			if (cbuffer != '<' && cbuffer != '\n')
 			{
-				K_VertsCount++;
+				vertsCount++;
 			}
 		}
 
-		if (K_KMLfile.eof())
+		if (kmlFile.eof())
 		{
 			std::cout << "[DevWarning: Reached EOF]\n";
 			std::cout << "Error: Could not extract coordinate data in KML file!\n";
@@ -149,17 +149,17 @@ bool KMLParser::KCountVertices()
 	return true;
 }
 
-bool KMLParser::KExtractPath()
+bool KMLParser::ExtractPath()
 {
-	K_KMLfile.seekg(K_coordBeginPos, std::ios::beg);
+	kmlFile.seekg(coordBeginPos, std::ios::beg);
 
-	/*K_X = new double[K_VertsCount];
-	K_Y = new double[K_VertsCount];*/
+	/*K_X = new double[vertsCount];
+	K_Y = new double[vertsCount];*/
 
-	K_Verts = new double * [K_VertsCount];
-	for (int i = 0; i < K_VertsCount; i++)
+	verts = new double * [vertsCount];
+	for (int i = 0; i < vertsCount; i++)
 	{
-		K_Verts[i] = new double[2];
+		verts[i] = new double[2];
 	}
 
 
@@ -167,30 +167,30 @@ bool KMLParser::KExtractPath()
 	//char cbuffer2[100];
 	std::string sbuffer;
 	char cbuffer;
-	for (int i = 0; i < K_VertsCount; i++)
+	for (int i = 0; i < vertsCount; i++)
 	{
 		sbuffer = "";
-		K_KMLfile.get(cbuffer);
+		kmlFile.get(cbuffer);
 		while (cbuffer != ',')
 		{
 			sbuffer += cbuffer;
-			K_KMLfile.get(cbuffer);
+			kmlFile.get(cbuffer);
 		}
-		K_Verts[i][0] = atof(sbuffer.c_str());
+		verts[i][0] = atof(sbuffer.c_str());
 
 		sbuffer = "";
-		K_KMLfile.get(cbuffer);
+		kmlFile.get(cbuffer);
 		while (cbuffer != ',' && cbuffer != ' ' && cbuffer != '\n')
 		{
 			sbuffer += cbuffer;
-			K_KMLfile.get(cbuffer);
+			kmlFile.get(cbuffer);
 		}
-		K_Verts[i][1] = atof(sbuffer.c_str());
+		verts[i][1] = atof(sbuffer.c_str());
 
 		if (cbuffer == ',')
 		{
 			while (cbuffer != ' ' && cbuffer != '\n')
-				K_KMLfile.get(cbuffer);
+				kmlFile.get(cbuffer);
 		}
 
 	}
