@@ -21,7 +21,6 @@ private:
 	bool CountVertices();
 	bool ExtractPath();
 
-
 private:
 	std::fstream kmlFile;
 	std::streampos coordBeginPos;

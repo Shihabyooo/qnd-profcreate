@@ -6,8 +6,8 @@ ProfileMake::ProfileMake()
 	kmlLocation = "input.kml";
 	demLocation = "input.tif";
 	outputLocation = "output.csv";
-	pathVerts = 0;
-	pathVerts_i = 0;
+	//pathVerts = 0;
+	//pathVerts_i = 0;
 	isInterpolated = false;
 	isCalculated = false;
 	isConverted = false;
@@ -17,30 +17,34 @@ ProfileMake::ProfileMake()
 ProfileMake::~ProfileMake()
 {
 	//P_Path.~KMLParser();
-	if (P_X != NULL)
-		delete[] P_X;
-	if (P_Y != NULL)
-		delete[] P_Y;
-	if (P_Xi != NULL)
-		delete[] P_Xi;
-	if (P_Yi != NULL)
-		delete[] P_Yi;
-	if (P_Z != NULL)
-		delete[] P_Z;
-	if (P_PathLength != NULL)
-		delete[] P_PathLength;
+	//if (P_X != NULL)
+	//	delete[] P_X;
+	//if (P_Y != NULL)
+	//	delete[] P_Y;
+	//if (P_Xi != NULL)
+	//	delete[] P_Xi;
+	//if (P_Yi != NULL)
+	//	delete[] P_Yi;
+	//if (P_Z != NULL)
+	//	delete[] P_Z;
+	//if (P_PathLength != NULL)
+	//	delete[] P_PathLength;
 
-	int x = sizeof(heightsGrid);
-	int y;
-	y = x + 0;
+	int x = sizeof(heightsGrid); //?????
+	int y; //?????
+	y = x + 0; //?????
 	
-	if (heightsGrid != NULL)
+	/*if (heightsGrid != NULL)
 	{
 		for (int i = 0; i < demInfo.y; i++)
 			if (heightsGrid[i] != NULL)
 				delete[] heightsGrid[i];
 		delete[] heightsGrid;
-	}
+	}*/
+
+	profile.~Array2D();
+	profile_i.~Array2D();
+	heightsGrid.~Array2D();
 }
 
 bool ProfileMake::LoadDEM(std::string inDEMLoc)
@@ -52,11 +56,12 @@ bool ProfileMake::LoadDEM(std::string inDEMLoc)
 		return false;
 	}
 
-	const char * demloc = inDEMLoc.c_str();
-	demDataset = (GDALDataset *)GDALOpen(demloc, GA_ReadOnly);
+	//const char * demloc = inDEMLoc.c_str();
+	demDataset = (GDALDataset *)GDALOpen(inDEMLoc.c_str(), GA_ReadOnly);
 
 	if (demDataset == NULL)
 	{
+		//TODO review GDAL docs for CPLError() and see if you can use it to display a more informative error message.
 		std::cout << "Error! Could not load DEM file.\n\n";
 		return false;
 	}
@@ -64,30 +69,41 @@ bool ProfileMake::LoadDEM(std::string inDEMLoc)
 	demBand = demDataset->GetRasterBand(1); //Should consider checking that this is a greyscale (single band) dem first.
 	
 	SetDEMInfo();
-	
+	DisplayDEMInfo();
+
 	int demx = demDataset->GetRasterXSize();
 	int demy = demDataset->GetRasterYSize();
 	
+	std::cout << "demX: " << demx << ", demY: " << demy << std::endl; //test
 
-	heightsGrid = new float*[demy]; 
-	float * scanline;
+	//heightsGrid = new float*[demy]; 
+	heightsGrid = Array2D(demy, demx); 
+
+	double * scanline;
 	int demxsize = demBand->GetXSize();
-	scanline = (float *)CPLMalloc(sizeof(float) * demxsize);
+	scanline = (double *)CPLMalloc(sizeof(double) * demxsize);
+
 
 	for (int i = 0; i < demy; i++)
 	{
-		heightsGrid[i] = new float[demx]; 
-		demBand->RasterIO(GF_Read, 0, i, demxsize, 1, scanline, demxsize, 1, GDT_Float32, 0, 0);
+		std::cout << i << std::endl; //test 
+		//heightsGrid[i] = new float[demx]; 
+		demBand->RasterIO(GF_Read, 0, i, demxsize, 1, scanline, demxsize, 1, GDT_Float64, 0, 0);
 
 		for (int j = 0; j < demx; j++)
 		{
 			heightsGrid[i][j] = scanline[j];
 		}
+		//heightsGrid.DisplayArrayInCLI(); //test
 	}
+
+
 	CPLFree(scanline);
 	GDALClose(demDataset);
 	std::cout << "Successfully loaded DEM file: " << inDEMLoc << "\n\n";
 	
+
+	//heightsGrid.DisplayArrayInCLI(); //test
 	return true;
 }
 
@@ -99,33 +115,46 @@ bool ProfileMake::LoadKML(std::string inKMLLoc)
 		return false;
 	}
 
-	P_X = new double[P_Path.GetVertCount()];
-	P_Y = new double[P_Path.GetVertCount()];
+	//P_X = new double[P_Path.GetVertCount()];
+	//P_Y = new double[P_Path.GetVertCount()];
+
+	profile = Array2D(P_Path.GetVertCount(), 4);
 
 	//double ** vertsArrayPointer = P_Path.GetPtrToVerts;
 
 	for (int i = 0; i < P_Path.GetVertCount(); i++)
 	{
 		//P_X[i] = P_Path.GetPtrToVerts[i][0];
-		P_X[i] = P_Path.verts[i][0];
+		//P_X[i] = P_Path.verts[i][0];
+		profile[i][0] = P_Path.verts[i][0];
 		//P_Y[i] = P_Path.GetPtrToVerts[i][1];
-		P_Y[i] = P_Path.verts[i][1];
+		//P_Y[i] = P_Path.verts[i][1];
+		profile[i][1] = P_Path.verts[i][1];
 	}
 
-	pathVerts = P_Path.GetVertCount();
+	//pathVerts = P_Path.GetVertCount();
+	
+
+
+	//P_PathLength = new float[pathVerts - 1];
+	profile[0][3] = 0.0f;
+	for (int i = 1; i < profile.Rows(); i++)
+	{
+		profile[i][3] = CalculateDistance(profile[i - 1][0], profile[i - 1][1], profile[i][0], profile[i][1]);
+		//P_PathLength[i] = CalculateDistance(P_X[i], P_Y[i], P_X[i + 1], P_Y[i + 1]);
+	}
+
 	if (isDebug)
 	{
-		std::cout << "verts: " << pathVerts << std::endl;
-		for (int i = 0; i < P_Path.GetVertCount(); i++)
+		//std::cout << "verts: " << pathVerts << std::endl;
+		/*for (int i = 0; i < P_Path.GetVertCount(); i++)
 		{
 			std::cout << "values: " << P_X[i] << ", " << P_Y[i] << std::endl;
-		}
+		}*/
+		std::cout << "Input path" << std::endl;
+		profile.DisplayArrayInCLI();
 	}
-		P_PathLength = new float[pathVerts - 1];
-		for (int i = 0; i < pathVerts - 1; i++)
-		{
-			P_PathLength[i] = CalculateDistance(P_X[i], P_Y[i], P_X[i + 1], P_Y[i + 1]);
-		}
+
 	return true;
 }
 
@@ -167,7 +196,7 @@ void ProfileMake::DisplayPathInfo()
 	float tempdist = 0, tempz = 0;
 	if (!isInterpolated)
 	{
-		for (int i = 0; i < pathVerts; i++)
+		/*for (int i = 0; i < pathVerts; i++)
 		{
 			if (i == 0)
 			{
@@ -180,11 +209,12 @@ void ProfileMake::DisplayPathInfo()
 			if (isCalculated == true) tempz = P_Z[i];
 
 			std::cout << " " << std::fixed << std::setprecision(7) << P_X[i] << "	" << P_Y[i] << "	" << std::setprecision(2) << tempdist << "		" << tempz << std::endl;
-		}
+		}*/
+		profile_i.DisplayArrayInCLI();
 	}
 	else
 	{
-		for (int i = 0; i < pathVerts_i; i++)
+		/*for (int i = 0; i < pathVerts_i; i++)
 		{
 			if (i == 0)
 			{
@@ -197,7 +227,8 @@ void ProfileMake::DisplayPathInfo()
 			if (isCalculated == true) tempz = P_Z[i];
 
 			std::cout << " " << std::fixed << std::setprecision(7) <<P_Xi[i] << "	" << P_Yi[i] << "	" << std::setprecision(2) << tempdist << "		" << tempz << std::endl;
-		}
+		}*/
+		profile.DisplayArrayInCLI();
 	}
 }
 
@@ -247,82 +278,104 @@ void ProfileMake::DisplayPathInfo()
 
 void ProfileMake::InterpolateProfile(float step, bool maintainBends)
 {
-	int newvertssum = pathVerts;
+	//int newvertssum = pathVerts;
+	int newVertsSum = profile.Rows();
 
 	float totalLength = 0.0f;
-	for (int i = 0; i < pathVerts - 1; i++)
+	//for (int i = 0; i < pathVerts - 1; i++)
+	for (int i = 1; i < profile.Rows(); i++)
 	{
-		totalLength += P_PathLength[i];
+		//totalLength += P_PathLength[i];
+		totalLength += profile[i][3];
 	}
 
-	newvertssum = floor(totalLength / step) + 2; //the 2 are begining and ending verts
-
+	newVertsSum = floor(totalLength / step) + 2; //the 2 are begining and ending verts
+	
 	if (maintainBends)
-		newvertssum += pathVerts - 2;
+		newVertsSum += profile.Rows() - 2;
+	
+	std::cout << "newVertsSum: " << newVertsSum << std::endl; //test
+
+	//P_Xi = new double[newvertssum];
+	//P_Yi = new double[newvertssum];
+
+	//P_Xi[0] = P_X[0];
+	//P_Yi[0] = P_Y[0];
+
+	profile_i = Array2D(newVertsSum, 4);
+	profile_i[0][0] = profile[0][0];
+	profile_i[0][1] = profile[0][1];
 
 
-	P_Xi = new double[newvertssum];
-	P_Yi = new double[newvertssum];
-
-	P_Xi[0] = P_X[0];
-	P_Yi[0] = P_Y[0];
-
-	int currentSegment = 0;
+	int currentSegment = 1;
 	float lastBendChainage = 0.0f;
 
-	std::function<float(float, float, float, float)> interpolate = [&](float x0, float x1, float l, float dist)->float
+	std::function<double(double, double, double, double) > interpolate = [&](double x0, double x1, double l, double dist)->double
 	{ //too many methods in this class already, plus I already have other methods with interpolate in the name. This is a small one, leave it as a lambda
 		return (dist * x1 / l) + ((l - dist) * x0 / l);
-	};
+	}; //TODO consider rewriting this to take double[2] and do both xy interpolation at once.
 
-	for (int i = 1; i < newvertssum - 1; i++)
+	for (int i = 1; i < profile_i.Rows() - 1; i++)
 	{
-		if (i*step >= lastBendChainage + P_PathLength[currentSegment])
+		//if (i*step >= lastBendChainage + P_PathLength[currentSegment])
+		if (i*step >= lastBendChainage + profile[currentSegment][3])
 		{
-			lastBendChainage += P_PathLength[currentSegment];
+			//lastBendChainage += P_PathLength[currentSegment];
+			lastBendChainage += profile[currentSegment - 1][3];
 			currentSegment++;
-
+			//std::cout << "ping" << std::endl;//test
 			if (maintainBends)
 			{
-				P_Xi[i] = P_X[currentSegment];
-				P_Yi[i] = P_Y[currentSegment];
+				/*P_Xi[i] = P_X[currentSegment];
+				P_Yi[i] = P_Y[currentSegment];*/
+				profile_i[i][0] = profile[i][0];
+				profile_i[i][1] = profile[i][1];
 				i++;
-				if (i >= newvertssum - 1)
+				if (i >= profile_i.Rows() - 1)
 					break;
 			}
 		}
 
 		float distFromLastBend = (step * i) - lastBendChainage;
 
-		P_Xi[i] = interpolate(P_X[currentSegment], P_X[currentSegment + 1], P_PathLength[currentSegment], distFromLastBend);
-		P_Yi[i] = interpolate(P_Y[currentSegment], P_Y[currentSegment + 1], P_PathLength[currentSegment], distFromLastBend);
+		//P_Xi[i] = interpolate(P_X[currentSegment], P_X[currentSegment + 1], P_PathLength[currentSegment], distFromLastBend);
+		//P_Yi[i] = interpolate(P_Y[currentSegment], P_Y[currentSegment + 1], P_PathLength[currentSegment], distFromLastBend);
+		profile_i[i][0] = interpolate(profile[currentSegment - 1][0], profile[currentSegment][0], profile[currentSegment][3], distFromLastBend);
+		profile_i[i][1] = interpolate(profile[currentSegment - 1][1], profile[currentSegment][1], profile[currentSegment][3], distFromLastBend);
+		
 	}
 
-	P_Xi[newvertssum - 1] = P_X[pathVerts - 1]; //copying last verts
-	P_Yi[newvertssum - 1] = P_Y[pathVerts - 1];
-	pathVerts_i = newvertssum;
+	//P_Xi[newvertssum - 1] = P_X[pathVerts - 1]; //copying last verts
+	//P_Yi[newvertssum - 1] = P_Y[pathVerts - 1];
+	//pathVerts_i = newvertssum;
 
-	P_PathLengthI = new float[pathVerts_i - 1]; //useless? in the new logic?
-													//TODO remove after checking the rest of code
+	profile_i[newVertsSum - 1][0] = profile[profile.Rows() - 1][0]; //copying last verts
+	profile_i[newVertsSum - 1][1] = profile[profile.Rows() - 1][1];
+
+	//for (int i = 0; i < pathVerts_i - 1; i++) //TODO remove after checking the rest of code
+	//{
+	//	P_PathLengthI[i] = CalculateDistance(P_Xi[i], P_Yi[i], P_Xi[i + 1], P_Yi[i + 1]);
+	//}
 
 
-	for (int i = 0; i < pathVerts_i - 1; i++) //TODO remove after checking the rest of code
-	{
-		P_PathLengthI[i] = CalculateDistance(P_Xi[i], P_Yi[i], P_Xi[i + 1], P_Yi[i + 1]);
-	}
+	for (int i = 1; i < profile_i.Rows(); i++) //TODO remove after checking the rest of code
+		profile_i[i][3] = CalculateDistance(profile_i[i][0], profile_i[i][1], profile_i[i - 1][0], profile_i[i - 1][1]);
 
 	isInterpolated = true; //Useless?
 
-
+	if (isDebug)
+		profile_i.DisplayArrayInCLI();
 
 }
 
 bool ProfileMake::IsPathOOB() 
 {
+	//TODO reimplement this method.
+
 	double *tempx, *tempy;
 	int tempverts;
 
-	if (isInterpolated)
+	/*if (isInterpolated)
 	{
 		tempx = P_Xi;
 		tempy = P_Yi;
@@ -330,8 +383,8 @@ bool ProfileMake::IsPathOOB()
 	}
 	else
 	{
-		tempx = P_Xi; //TODO check whether this is correct. Shouldn't this be P_X and P_Y?
-		tempy = P_Yi;
+		tempx = P_X;
+		tempy = P_Y;
 		tempverts = pathVerts;
 	}
 
@@ -345,7 +398,7 @@ bool ProfileMake::IsPathOOB()
 		{
 			return true;
 		}
-	}
+	}*/
 
 	return false;
 }
@@ -373,7 +426,7 @@ int ProfileMake::CalculateProfile() //returning int for end state. 0: failure, 1
 	}
 
 	//check if profile is out of bounds
-	if (IsPathOOB())
+	if (IsPathOOB()) //TODO remove the exit, return a custom error code, modify calling function to handle the code accordingly
 	{
 		std::cout << "Error: Loaded path is outside the boundry of the loaded DEM!\n";
 		//return;
@@ -383,15 +436,18 @@ int ProfileMake::CalculateProfile() //returning int for end state. 0: failure, 1
 		std::cin.get();
 		exit(1);
 	}
-	P_Z = new float[pathVerts_i]; //Remember that we use pathVerts_i here, not pathVerts.
+	
+	//P_Z = new float[pathVerts_i]; //Remember that we use pathVerts_i here, not pathVerts.
+	
 	int first_larger_x_order, first_larger_y_order;
 
-	for (int i = 0; i < pathVerts_i; i++) //TODO if this method is calcualted without interpolating profile, this method will not return any value
-												//TODO fix this part
+	//for (int i = 0; i < pathVerts_i; i++)
+	for (int i = 0; i < profile_i.Rows(); i++)
 	{
 		for (int j = 0; j < demInfo.y; j++)
 		{
-			if (P_Yi[i] > demInfo.originy + j * demInfo.PixelSize_y)
+			//if (P_Yi[i] > demInfo.originy + j * demInfo.PixelSize_y)
+			if (profile_i[i][1] > demInfo.originy + j * demInfo.PixelSize_y)
 			{
 				first_larger_y_order = j;
 				break;
@@ -399,19 +455,24 @@ int ProfileMake::CalculateProfile() //returning int for end state. 0: failure, 1
 		}
 		for (int k = 0; k < demInfo.x; k++)
 		{
-			if (P_Xi[i] < demInfo.originx + k * demInfo.PixelSize_x)
+			//if (P_Xi[i] < demInfo.originx + k * demInfo.PixelSize_x)
+			if (profile_i[i][0] < demInfo.originx + k * demInfo.PixelSize_x)
 			{
 				first_larger_x_order = k;
 				break;
 			}
 		}
 
-		P_Z[i] = BicubicInterp(first_larger_x_order, first_larger_y_order, i);
+		//P_Z[i] = BicubicInterp(first_larger_x_order, first_larger_y_order, i);
+		profile_i[i][2] = BicubicInterp(first_larger_x_order, first_larger_y_order, i);
 
 	}
 	isCalculated = true;
 	
-	return 1;
+	if (isDebug)
+		profile_i.DisplayArrayInCLI();
+
+	return 0;
 }
 
 void ProfileMake::CalculatePoint(double x, double y)
@@ -521,15 +582,19 @@ bool ProfileMake::WriteProfile(std::string out_csv)
 	std::cout << "\nWriting results to disk\n"; //test
 	result << "Longitude,Latitude,Chainage,Height" << std::endl;
 	
-	float _chainage = 0.0f;
-	for (int i = 0; i < pathVerts_i; i++)
+	//float _chainage = 0.0f;
+	//for (int i = 0; i < pathVerts_i; i++)
+	for (int i = 0; i < profile_i.Rows(); i++)
 	{
-		result << std::setprecision(10) << P_Xi[i] << "," << P_Yi[i] << ",";
+		//result << std::setprecision(10) << P_Xi[i] << "," << P_Yi[i] << ",";
+		result << std::setprecision(10) << profile_i[i][0] << "," << profile_i[i][1] << ",";
 		
-		if (i > 0) _chainage += CalculateDistance(P_Xi[i-1], P_Yi[i-1], P_Xi[i], P_Yi[i]);
+		//if (i > 0) _chainage += CalculateDistance(P_Xi[i-1], P_Yi[i-1], P_Xi[i], P_Yi[i]);
 		//result << std::fixed<< std::setprecision(3) << CalculateDistance(P_Xi[0], P_Yi[0], P_Xi[i], P_Yi[i]); //OK, this was a GENIUS move! </sarcasm>
-		result << std::fixed << std::setprecision(3) <<  _chainage;
-		result << "," << std::setprecision(4) << P_Z[i] << std::endl;
+		//result << std::fixed << std::setprecision(3) <<  _chainage;
+		//result << "," << std::setprecision(4) << P_Z[i] << std::endl;
+		result << std::fixed << std::setprecision(3) << profile_i[i][3];
+		result << "," << std::setprecision(4) << profile_i[i][2] << std::endl;
 	}
 
 	result.close();
@@ -625,7 +690,7 @@ double ProfileMake::CalculateDistance(double x1, double y1, double x2, double y2
 
 void ProfileMake::ResetProfile()
 {
-	if (P_X != NULL)
+	/*if (P_X != NULL)
 		delete[] P_X;
 	P_X = NULL;
 	if (P_Y != NULL)
@@ -645,14 +710,14 @@ void ProfileMake::ResetProfile()
 	P_PathLength = NULL;
 	if (P_PathLengthI != NULL)
 		delete[] P_PathLengthI;
-	P_PathLengthI = NULL;
+	P_PathLengthI = NULL;*/
 	
 	isInterpolated = false;
 	isCalculated = false;
 	isConverted = false;
 	
-	pathVerts = 0;
-	pathVerts_i = 0;
+	/*pathVerts = 0;
+	pathVerts_i = 0;*/
 
 	P_Path.UnloadKML();
 }
@@ -759,11 +824,16 @@ float ProfileMake::BilinearInterp(int first_larger_x, int first_larger_y, int po
 	boundingz[2] = heightsGrid[first_larger_y][first_larger_x];
 	boundingz[3] = heightsGrid[first_larger_y][first_larger_x - 1];
 
-	A = boundingz[0] * CalculateDistance(boundingx[1], boundingy[0], P_Xi[point_order], boundingy[0]) / CalculateDistance(boundingx[1], boundingy[0], boundingx[0], boundingy[0]) + boundingz[1] * CalculateDistance(P_Xi[point_order], boundingy[0], boundingx[0], boundingy[0]) / CalculateDistance(boundingx[1], boundingy[0], boundingx[0], boundingy[0]);
+	/*A = boundingz[0] * CalculateDistance(boundingx[1], boundingy[0], P_Xi[point_order], boundingy[0]) / CalculateDistance(boundingx[1], boundingy[0], boundingx[0], boundingy[0]) + boundingz[1] * CalculateDistance(P_Xi[point_order], boundingy[0], boundingx[0], boundingy[0]) / CalculateDistance(boundingx[1], boundingy[0], boundingx[0], boundingy[0]);
 	B = boundingz[2] * CalculateDistance(boundingx[1], boundingy[1], P_Xi[point_order], boundingy[1]) / CalculateDistance(boundingx[1], boundingy[1], boundingx[0], boundingy[1]) + boundingz[3] * CalculateDistance(P_Xi[point_order], boundingy[1], boundingx[0], boundingy[1]) / CalculateDistance(boundingx[1], boundingy[1], boundingx[0], boundingy[1]);
 	result_depth = A * CalculateDistance(boundingx[0], boundingy[1], boundingx[0], P_Yi[point_order]) / CalculateDistance(boundingx[0], boundingy[0], boundingx[0], boundingy[1]);
-	result_depth = result_depth + B *  CalculateDistance(boundingx[0], P_Yi[point_order], boundingx[0], boundingy[0]) / CalculateDistance(boundingx[0], boundingy[0], boundingx[0], boundingy[1]);
+	result_depth = result_depth + B *  CalculateDistance(boundingx[0], P_Yi[point_order], boundingx[0], boundingy[0]) / CalculateDistance(boundingx[0], boundingy[0], boundingx[0], boundingy[1]);*/
 	
+	A = boundingz[0] * CalculateDistance(boundingx[1], boundingy[0], profile_i[point_order][0], boundingy[0]) / CalculateDistance(boundingx[1], boundingy[0], boundingx[0], boundingy[0]) + boundingz[1] * CalculateDistance(profile_i[point_order][0], boundingy[0], boundingx[0], boundingy[0]) / CalculateDistance(boundingx[1], boundingy[0], boundingx[0], boundingy[0]);
+	B = boundingz[2] * CalculateDistance(boundingx[1], boundingy[1], profile_i[point_order][0], boundingy[1]) / CalculateDistance(boundingx[1], boundingy[1], boundingx[0], boundingy[1]) + boundingz[3] * CalculateDistance(profile_i[point_order][0], boundingy[1], boundingx[0], boundingy[1]) / CalculateDistance(boundingx[1], boundingy[1], boundingx[0], boundingy[1]);
+	result_depth = A * CalculateDistance(boundingx[0], boundingy[1], boundingx[0], profile_i[point_order][1]) / CalculateDistance(boundingx[0], boundingy[0], boundingx[0], boundingy[1]);
+	result_depth = result_depth + B * CalculateDistance(boundingx[0], profile_i[point_order][1], boundingx[0], boundingy[0]) / CalculateDistance(boundingx[0], boundingy[0], boundingx[0], boundingy[1]);
+
 	return result_depth;
 }
 
@@ -792,24 +862,27 @@ float ProfileMake::BicubicInterp(int first_larger_x, int first_larger_y, int poi
 
 	for (int i = 0; i < 4; i++)
 	{
-		if (!isInterpolated) //Note the original CalculateProfile method still hasn't implemented this check. This is a preemptive strike.
-		{
-			pointx = abs((P_X[point_order] - boundingx[i]) / boundingx[i]);
-		}
-		else
-		{
-			pointx = abs((P_Xi[point_order] - boundingx[i]) / boundingx[i]);
-		}
+		//if (!isInterpolated) //Note the original CalculateProfile method still hasn't implemented this check. This is a preemptive strike.
+		//{
+		//	pointx = abs((P_X[point_order] - boundingx[i]) / boundingx[i]);
+		//}
+		//else
+		//{
+		//	pointx = abs((P_Xi[point_order] - boundingx[i]) / boundingx[i]);
+		//}
+
+		pointx = abs((profile_i[point_order][0] - boundingx[i]) / boundingx[i]);
+
 		temp_value[i] = boundingz[i][1] + 0.5 * pointx * (boundingz[i][2] - boundingz[i][0] + pointx * (2 * boundingz[i][0] - 5 * boundingz[i][1] + 4 * boundingz[i][2] - boundingz[i][3] + pointx*(3*(boundingz[i][1] - boundingz[i][2])+boundingz[i][3] - boundingz[i][0])));
 	}
 
 	if (!isInterpolated) //Note the original CalculateProfile method still hasn't implemented this check. This is a preemptive strike.
 	{
-		pointy = abs((P_Y[point_order] - boundingy[1]) / boundingy[1]);
+		pointy = abs((profile_i[point_order][1] - boundingy[1]) / boundingy[1]);
 	}
 	else
 	{
-		pointy = abs((P_Yi[point_order] - boundingy[1]) / boundingy[1]);
+		pointy = abs((profile_i[point_order][1] - boundingy[1]) / boundingy[1]);
 	}
 	result_depth = temp_value[1]+ 0.5 * pointy * (temp_value[2]- temp_value[0]+ pointy * (2 * temp_value[0] - 5 * temp_value[1]+ 4 * temp_value[2]- temp_value[3]+ pointy*(3 * (temp_value[1]- temp_value[2]) + temp_value[3]- temp_value[0])));
 
@@ -912,14 +985,14 @@ double * ProfileMake::ToUTM(double lng, double lat)
 void ProfileMake::ConvertPathToUTM()
 {
 
-	double *tempx, *tempy;
-	int tempverts;
+	//double *tempx, *tempy;
+	//int tempverts;
 	double * tempreturn;
 
 	if (isDebug) std::cout << "\nConverting path to UTM\n"; //test
+	
 
-
-	if (isInterpolated)
+	/*if (isInterpolated)
 	{
 		tempx = P_Xi;
 		tempy = P_Yi;
@@ -930,23 +1003,24 @@ void ProfileMake::ConvertPathToUTM()
 		tempx = P_Xi;
 		tempy = P_Yi;
 		tempverts = pathVerts;
-	}
+	}*/
 
 
-	for (int i = 0; i < tempverts; i++)
+	for (int i = 0; i < profile_i.Rows(); i++)
 	{
-		tempreturn = ToUTM(tempx[i], tempy[i]);
-		tempx[i] = tempreturn[1];
-		tempy[i] = tempreturn[0];
+		tempreturn = ToUTM(profile_i[i][0], profile_i[i][1]);
+		profile_i[i][0] = tempreturn[1];
+		profile_i[i][1] = tempreturn[0];
 	}
 
 	if (isDebug)
 	{
 		std::cout << "\nConverted path\n";
-		for (int i = 0; i < pathVerts_i; i++)
+		/*for (int i = 0; i < pathVerts_i; i++)
 		{
 			std::cout << P_Xi[i] << ", " << P_Yi[i] << std::endl;
-		}
+		}*/
+		profile_i.DisplayArrayInCLI();
 	}
 
 }
