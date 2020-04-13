@@ -91,6 +91,7 @@ public:
 	double Determinant();
 	bool SwapRows(unsigned int firstRow, unsigned int secondRow);
 	bool SwapColumns(int firstColumn, int secondColumn);	//TODO implement this
+	void Overlay(const Array2D &arr2, int rowOffset, int columnOffset); //Add another Array2D of non-equal size to this Array2D element by element. If the second Array2D is larger, elements outside the boundary will be clipped. rowOffset and columnOffset determine which elements of the first Array2D the first element of the second Array2D will be added to.
 
 	//debugging aid
 	void DisplayArrayInCLI(int displayPrecision = 4);
