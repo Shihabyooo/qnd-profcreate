@@ -14,10 +14,6 @@ ProfileMake::ProfileMake()
 
 ProfileMake::~ProfileMake()
 {
-	int x = sizeof(heightsGrid); //?????
-	int y; //?????
-	y = x + 0; //?????
-	
 	profile.~Array2D();
 	profile_i.~Array2D();
 	heightsGrid.~Array2D();
@@ -81,11 +77,13 @@ bool ProfileMake::LoadKML(std::string inKMLLoc)
 	if (!P_Path.LoadKML(inKMLLoc))
 		return false;
 
-	for (int i = 0; i < P_Path.GetVertCount(); i++)
-	{
-		profile[i][0] = P_Path.verts[i][0];
-		profile[i][1] = P_Path.verts[i][1];
-	}
+	//for (int i = 0; i < P_Path.GetVertCount(); i++)
+	//{
+	//	profile[i][0] = P_Path.verts[i][0];
+	//	profile[i][1] = P_Path.verts[i][1];
+	//}
+	profile = Array2D(P_Path.GetVertCount(), 4);
+	profile.Overlay(P_Path.verts[0], 0, 0);
 
 	profile[0][3] = 0.0f;
 	for (int i = 1; i < profile.Rows(); i++)

@@ -1,6 +1,7 @@
 #pragma once
 #include <fstream>
 #include <iostream>
+#include "Array2D.h"
 
 class KMLParser
 {
@@ -12,8 +13,8 @@ public:
 	bool LoadKML(std::string);
 	double ** GetPtrToVerts(); //doesn't work. For now letting external objects access verts directly.
 	int GetVertCount();
-	bool UnloadKML();
-
+	void UnloadKML();
+	
 private:
 	bool OpenKMLFile(std::string);
 	void CloseKMLFile();
@@ -25,8 +26,10 @@ private:
 	std::fstream kmlFile;
 	std::streampos coordBeginPos;
 	int vertsCount;
+	int pathsCount;
 
 public: 
-	double ** verts; //Probably not the smartest idea...
+	//double ** verts; //Probably not the smartest idea...
+	Array2D * verts;
 	bool isPathLoaded;
 };

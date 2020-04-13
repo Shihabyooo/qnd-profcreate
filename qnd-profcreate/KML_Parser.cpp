@@ -2,11 +2,14 @@
 
 KMLParser::KMLParser()
 {
+	verts = NULL;
+	vertsCount = 0;
+	pathsCount = 0;
 }
 
 KMLParser::~KMLParser()
 {
-	if (verts != NULL)
+	/*if (verts != NULL)
 	{
 		for (int i = 0; i < vertsCount; i++)
 			if (verts[i] != NULL)
@@ -14,8 +17,9 @@ KMLParser::~KMLParser()
 				delete[] verts[i];
 			}
 		delete[] verts;
-	}
-	vertsCount = 0;
+	}*/
+
+	UnloadKML();
 }
 
 bool KMLParser::LoadKML(std::string fileName)
@@ -42,34 +46,48 @@ bool KMLParser::LoadKML(std::string fileName)
 	return true;
 }
 
-double ** KMLParser::GetPtrToVerts()
-{
-	return verts;
-}
+//double ** KMLParser::GetPtrToVerts()
+//{
+//	return verts;
+//}
 
 int KMLParser::GetVertCount()
 {
 	return vertsCount;
 }
 
-bool KMLParser::UnloadKML()
+void KMLParser::UnloadKML()
 {
-	if (!isPathLoaded)
-		return false;
+	/*if (!isPathLoaded)
+		return false;*/
 	
-	for (int i = 0; i < vertsCount; i++)
+	/*for (int i = 0; i < vertsCount; i++)
 	{
 		delete verts[i];
 		verts[i] = NULL;
 	}
 	delete[] verts;
 	verts = NULL;
+*/
 
-	coordBeginPos = 0;
-	kmlFile.clear();
+	std::cout << "Unloading KML" << std::endl; //test
+
+	if (verts != NULL)
+	{
+		for (int i = 0; i < pathsCount; i++)
+		{
+			std::cout << "Test" << std::endl; //test
+			verts[i].~Array2D();
+		}
+		delete[] verts;
+		verts = NULL;
+	}
+
 	vertsCount = 0;
+	coordBeginPos = 0;
+	pathsCount = 0;
+	//kmlFile.clear();
 	isPathLoaded = false;
-	return true;
 }
 
 bool KMLParser::OpenKMLFile(std::string fileName)
@@ -156,12 +174,15 @@ bool KMLParser::ExtractPath()
 	/*K_X = new double[vertsCount];
 	K_Y = new double[vertsCount];*/
 
-	verts = new double * [vertsCount];
+	/*verts = new double * [vertsCount];
 	for (int i = 0; i < vertsCount; i++)
 	{
 		verts[i] = new double[2];
-	}
+	}*/
 
+	pathsCount = 1; //TODO modify this once you start reworking this class to extract and hold multiple paths.
+	verts = new Array2D[pathsCount]; 
+	verts[0] = Array2D(vertsCount, 2);
 
 
 	//char cbuffer2[100];
@@ -176,7 +197,8 @@ bool KMLParser::ExtractPath()
 			sbuffer += cbuffer;
 			kmlFile.get(cbuffer);
 		}
-		verts[i][0] = atof(sbuffer.c_str());
+		//verts[i][0] = atof(sbuffer.c_str());
+		verts[0][i][0] = atof(sbuffer.c_str());
 
 		sbuffer = "";
 		kmlFile.get(cbuffer);
@@ -185,7 +207,8 @@ bool KMLParser::ExtractPath()
 			sbuffer += cbuffer;
 			kmlFile.get(cbuffer);
 		}
-		verts[i][1] = atof(sbuffer.c_str());
+		//verts[i][1] = atof(sbuffer.c_str());
+		verts[0][i][1] = atof(sbuffer.c_str());
 
 		if (cbuffer == ',')
 		{
@@ -194,6 +217,13 @@ bool KMLParser::ExtractPath()
 		}
 
 	}
+
+
+	//test
+	std::cout << "KML path: " << std::endl;
+	//verts[0].DisplayArrayInCLI();
+	std::cout << verts[0][0][0] << "\t" << verts[0][0][1] << std::endl;
+	std::cout << verts[0][1][0] << "\t" << verts[0][1][1] << std::endl;
 
 	return true;
 

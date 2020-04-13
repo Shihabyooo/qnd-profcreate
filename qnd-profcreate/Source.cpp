@@ -18,7 +18,7 @@ void main(int argc, char *argv[])
 	/*SHPParser shp;
 	shp.LoadSHP("2.shp");*/
 	//std::string demLocation = "DEM.tif";
-	std::string demLocation = "WDEM.tif"; //test
+	std::string demLocation = "dem_GCS.tif"; //test
 
 	argc = 2;//test
 	argv[1] = "2.kml";//test
@@ -43,6 +43,7 @@ void main(int argc, char *argv[])
 	{
 		std::string geometryPath = argv[i];
 		GenerateProfile(geometryPath, interpolationStep);
+		std::cout << "Finished extracting profile for " << geometryPath << std::endl;
 	}
 
 
@@ -88,6 +89,6 @@ void GenerateProfile(std::string geometryPath, int interpolationSteps)
 	std::cout << "\nWriting\n\n";
 	instance.WriteProfile(outputPath);
 
-	//std::cout << "\nPrepping for Next Path\n\n";
+	std::cout << "\nPrepping for Next Path\n\n";
 	instance.ResetProfile();
 }
