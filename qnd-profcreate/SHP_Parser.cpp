@@ -44,7 +44,7 @@ bool SHPParser::LoadSHP(std::string fileName)
 	return true;
 }
 
-int SHPParser::GetVertsCount(int shapeNo)
+int SHPParser::GetVertsCount(int shapeNo) const
 {
 	if (shapeNo < 0 || shapeNo > shapesCount || vertsCount == NULL)	//We test that: shapeNo is within shapesCount and the vertsCount is allocated
 		return -1;
@@ -54,7 +54,7 @@ int SHPParser::GetVertsCount(int shapeNo)
 
 void SHPParser::UnLoadSHP()
 {
-	if (verts != NULL) //TODO check if delete already checks for NULLity...
+	if (verts != NULL) //Doesn't delete already check for NULLity?
 	{
 		for (int i = 0; i < shapesCount; i++)
 			verts[i].~Array2D();
@@ -73,12 +73,12 @@ void SHPParser::UnLoadSHP()
 	isPathLoaded = false;
 }
 
-const std::string SHPParser::RemoveFileExtension(const std::string fileName)
+const std::string SHPParser::RemoveFileExtension(const std::string fileName) const
 {
 	return fileName.substr(0, fileName.length() - 4);
 }
 
-bool SHPParser::CheckFileExistance(const std::string fileNamePrefix)
+bool SHPParser::CheckFileExistance(const std::string fileNamePrefix) const
 {
 	//In this method, we will check for the existence of all of our needed files. For now, we need the SHX and SHP files.
 	//We'll have each failure set a more global bool to false instead of immediatly returning to simulate an error log message (i.e. so the user can know which files are missing).
@@ -139,9 +139,9 @@ bool SHPParser::LoadSHPParameters(const std::string fileNamePrefix)
 	//We now check that our Shape Type is a polyline by checking that bytes 32-35 of the header are equal to 3 (the code for polylines).
 	shxFile.seekg(32, shxFile.beg);
 	shxFile.read(byte, sizeof(byte));
-	//std::cout << "The type code of the contained geometry is: " << ByteToInt32(byte, false) << std::endl; //test
+	//std::cout << "The type code of the contained geometry is: " << BytesToInt32(byte, false) << std::endl; //test
 
-	if (ByteToInt32(byte, false) != 3)
+	if (BytesToInt32(byte, false) != 3)
 	{
 		std::cout << "ERROR! The provided SHP does not contain a polyline geometry." << std::endl;
 		shxFile.close();
@@ -155,7 +155,7 @@ bool SHPParser::LoadSHPParameters(const std::string fileNamePrefix)
 	//The shx file length is measured in WORDs, the file length include the header's size (fixed 100 bytes). Each geometry record afterwards is at a fixed 8 bytes (2 x 4bytes int32).
 	//i.e. the number of geometries in the shape file = ((2 * file length) - 100) / 8
 
-	shapesCount = ((2 * ByteToInt32(byte, true)) - 100) / 8; //in theory, the result of the outer brackets should always be devisible by 16, giving perfect ints...
+	shapesCount = ((2 * BytesToInt32(byte, true)) - 100) / 8; //in theory, the result of the outer brackets should always be devisible by 16, giving perfect ints...
 	std::cout << "No. of records found: " << shapesCount << std::endl; //test
 
 	if (shapesCount < 1) //if there are no shapes in the SHP, there is no point in continuting this process.
@@ -184,7 +184,7 @@ bool SHPParser::LoadSHPParameters(const std::string fileNamePrefix)
 
 		shxFile.read(byte, sizeof(byte)); //the second 4 bytes of a record header contains its length, we use this to calculate how many vertices a shape has.
 
-		long int noOfVerts = ((2 * ByteToInt32(byte, true)) - 48) / 16; //Again: in theory, the result of the outer brackets should always be devisible by 16, giving perfect ints...
+		long int noOfVerts = ((2 * BytesToInt32(byte, true)) - 48) / 16; //Again: in theory, the result of the outer brackets should always be devisible by 16, giving perfect ints...
 		vertsCount[i] = noOfVerts;
 	}
 	
@@ -228,7 +228,7 @@ bool SHPParser::ExtractPaths(const std::string fileNamePrefix)
 		
 		shpFile.seekg(36, std::ios::cur); //now we are at the NumParts (int32) position of the record's header
 		shpFile.read(byte, sizeof(byte));
-		noOfParts = ByteToInt32(byte, false);
+		noOfParts = BytesToInt32(byte, false);
 
 		if (noOfParts > 1)
 			std::cout << "WARNING! No. of parts in geometry " << i << "are greater than one." << std::endl;
@@ -253,10 +253,10 @@ bool SHPParser::ExtractPaths(const std::string fileNamePrefix)
 	return true;
 }
 
-const long int SHPParser::ByteToInt32(const char bytes[4], bool isBigEndian)
+long int SHPParser::BytesToInt32(const char bytes[4], bool isBigEndian) const
 {	
 	if (isBigEndian)
-		return ((bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | bytes[3]);
+		return ((unsigned char)(bytes[0] << 24) | (unsigned char)(bytes[1] << 16) | (unsigned char)(bytes[2] << 8) | (unsigned char)bytes[3]);
 	else
-		return ((bytes[3] << 24) | (bytes[2] << 16) | (bytes[1] << 8) | bytes[0]);
+		return ((unsigned char)(bytes[3] << 24) | (unsigned char)(bytes[2] << 16) | (unsigned char)(bytes[1] << 8) | (unsigned char)bytes[0]);
 }
