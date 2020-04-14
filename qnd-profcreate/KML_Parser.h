@@ -33,6 +33,10 @@ public:
 	bool LoadKML(std::string);
 	void UnloadKML();
 	
+	Array2D const * const GetPathByID(int id);
+	bool IsPathLoaded();
+	int GetPathVertexCountByID(int id);
+
 private:
 	bool OpenKMLFile(std::string);
 	void CloseKMLFile();
@@ -44,15 +48,12 @@ private:
 	void ExtractNameFromKMLElement(KMLElement * element, int pathID);
 	bool ExtractCoordinatesFromKMLElement(KMLElement * element, int pathID);
 
-
 private:
 	std::fstream kmlFile;
 
 	std::string * pathsNames;
 	int pathsCount = 0;
 	
-
-public: 
 	Array2D * verts;
 	bool isPathLoaded;
 };

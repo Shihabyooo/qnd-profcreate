@@ -82,8 +82,10 @@ bool ProfileMake::LoadKML(std::string inKMLLoc)
 	//	profile[i][0] = P_Path.verts[i][0];
 	//	profile[i][1] = P_Path.verts[i][1];
 	//}
-	profile = Array2D(P_Path.verts[0].Rows(), 4);
-	profile.Overlay(P_Path.verts[0], 0, 0);
+
+	profile = Array2D(P_Path.GetPathVertexCountByID(0), 4);
+	profile.Overlay(*P_Path.GetPathByID(0), 0, 0);
+
 
 	profile[0][3] = 0.0f;
 	for (int i = 1; i < profile.Rows(); i++)

@@ -49,6 +49,27 @@ void KMLParser::UnloadKML()
 	isPathLoaded = false;
 }
 
+Array2D const * const KMLParser::GetPathByID(int id)
+{
+	if (id >= pathsCount)
+		return NULL;
+	else
+		return &verts[id];
+}
+
+bool KMLParser::IsPathLoaded()
+{
+	return isPathLoaded;
+}
+
+int KMLParser::GetPathVertexCountByID(int id)
+{
+	if (id >= pathsCount)
+		return 0;
+	else
+		return verts[id].Rows();
+}
+
 bool KMLParser::OpenKMLFile(std::string fileName)
 {
 	kmlFile.open(fileName, std::ios::in | std::ios::binary);
