@@ -1,16 +1,16 @@
 #include "main.h"
 
 bool isDebug = true;
-bool maintainBendLocations = false; //when interpolating profile
+bool maintainBendLocations = false; //for when interpolating profile
 
 
 //Known issues:
 //When converting path to UTM, it doesn't retain the zone. Therefor, a path can be outside the bounds of dem, yet the IsOOB check
 //would still pass if easting and northing is withing east/north of DEM.
 
-ProfileMake instance;
+ProfileMaker instance;
 
-void GenerateProfile(std::string geometryPath, int interpolationSteps);
+void GenerateProfile(std::string geometryPath, float interpolationSteps);
 
 
 void main(int argc, char *argv[])
@@ -52,7 +52,7 @@ void main(int argc, char *argv[])
 	//std::cin.get();
 }
 
-void GenerateProfile(std::string geometryPath, int interpolationSteps)
+void GenerateProfile(std::string geometryPath, float interpolationSteps)
 {
 	std::string outputPath;
 

@@ -12,7 +12,7 @@
 	//Allow the use of SHP files with point geometries (Will output a single path, with vertices going from first point to last inorder).
 	//Allow use of multiple geometries SHP files, in which only polylines will be considered.
 	//Parse DBF files and look for names to label the paths with (stored as std::string* or char**).
-	//Parse PRJ files and and save the CRS of the SHP (enum?) for use by ProfileMake when interpolating elevations (i.e. to determine whether conversion between UTM/GCS is needed).
+	//Parse PRJ files and and save the CRS of the SHP (enum?) for use by ProfileMaker when interpolating elevations (i.e. to determine whether conversion between UTM/GCS is needed).
 
 #pragma once
 #include <fstream>
