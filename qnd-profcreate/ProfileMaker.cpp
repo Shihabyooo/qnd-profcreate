@@ -3,11 +3,12 @@
 
 ProfileMaker::ProfileMaker()
 {
-	//GDALAllRegister();
 	GDALRegister_GTiff();
-	kmlLocation = "input.kml";
-	demLocation = "input.tif";
-	outputLocation = "output.csv";
+	kmlParser = NULL;
+	shpParser = NULL;
+	geometryParser = NULL;
+	//csvParser = NULL;
+
 	isInterpolated = false;
 	isCalculated = false;
 	isConverted = false;
@@ -18,11 +19,20 @@ ProfileMaker::~ProfileMaker()
 	profile.~Array2D();
 	profile_i.~Array2D();
 	heightsGrid.~Array2D();
+
+	if (kmlParser != NULL)
+		delete kmlParser;
+
+	if (shpParser != NULL)
+		delete shpParser;
+
+	/*if (csvParser != NULL)
+		delete csvParser;*/
 }
 
 bool ProfileMaker::LoadDEM(std::string inDEMLoc)
 {
-	demLocation = inDEMLoc;
+	//demLocation = inDEMLoc;
 	if (!FileIsExist(inDEMLoc))
 	{
 		std::cout << "Error! Could not open DEM file: " << inDEMLoc << ". \nFile doesn't exist?\n\n";
@@ -66,33 +76,127 @@ bool ProfileMaker::LoadDEM(std::string inDEMLoc)
 
 	CPLFree(scanline);
 	GDALClose(demDataset);
+	demDataset = NULL;
 	std::cout << "Successfully loaded DEM file: " << inDEMLoc << "\n\n";
 
 	//heightsGrid.DisplayArrayInCLI(); //test
 	return true;
 }
 
-bool ProfileMaker::LoadKML(std::string inKMLLoc)
+bool ProfileMaker::LoadGeometry(std::string geometryPath)
 {
+	//determine geometry type
+	FileFormat format = DetermineFileFormat(geometryPath);
 
-	if (!P_Path.LoadKML(inKMLLoc))
+	if (geometryParser != NULL)
+	{
+		geometryParser->UnLoadGeometry();
+		
+		if (geometryParser->parserSupportedFormat != format)
+		{
+			delete geometryParser;
+			geometryParser = NULL;
+		}
+	}
+	else
+	{
+		switch (format)
+		{
+		case shapeFile:
+			//return LoadSHP(geometryPath);
+			shpParser = new SHPParser();
+			geometryParser = shpParser;
+			break;
+		case kml:
+			//return LoadKML(geometryPath);
+			kmlParser = new KMLParser();
+			geometryParser = kmlParser;
+			break;
+		case csv:
+			////return LoadCSV(geometryPath);
+			//csvParser = new CSVParser();
+			//geometryParser = csvParser;
+			break;
+		default:
+			std::cout << "ERROR! Loaded filel format is not supported" << std::endl;
+			return false;
+			break;
+		}
+	}
+	
+	if (!geometryParser->LoadGeometry(geometryPath))
 		return false;
 
-	//for (int i = 0; i < P_Path.GetVertCount(); i++)
-	//{
-	//	profile[i][0] = P_Path.verts[i][0];
-	//	profile[i][1] = P_Path.verts[i][1];
-	//}
+	profile = Array2D(geometryParser->GetPathByID(0)->Rows(), 4);
+	profile.Overlay(*geometryParser->GetPathByID(0), 0, 0);
 
-	profile = Array2D(P_Path.GetPathVertexCountByID(0), 4);
-	profile.Overlay(*P_Path.GetPathByID(0), 0, 0);
+	profile[0][3] = 0.0f;
+	for (int i = 1; i < profile.Rows(); i++)
+		profile[i][3] = CalculateDistance(profile[i - 1][0], profile[i - 1][1], profile[i][0], profile[i][1]);
+
+	if (isDebug)
+	{
+		std::cout << "Input path" << std::endl;
+		profile.DisplayArrayInCLI();
+	}
+
+	return true;
+
+}
+
+bool ProfileMaker::LoadKML(std::string inKMLLoc)
+{
+	if (kmlParser == NULL)
+		kmlParser = new KMLParser();
+	else
+		kmlParser->UnLoadGeometry();
+
+	if (!kmlParser ->LoadGeometry(inKMLLoc))
+		return false;
+	
+	profile = Array2D(kmlParser->GetPathByID(0)->Rows(), 4);
+	profile.Overlay(*kmlParser->GetPathByID(0), 0, 0);
+
+	profile[0][3] = 0.0f;
+	for (int i = 1; i < profile.Rows(); i++)
+		profile[i][3] = CalculateDistance(profile[i - 1][0], profile[i - 1][1], profile[i][0], profile[i][1]);
+	
+	if (isDebug)
+	{
+		std::cout << "Input path" << std::endl;
+		profile.DisplayArrayInCLI();
+	}
+
+	return true;
+}
+
+bool ProfileMaker::LoadCSV(std::string)
+{
+	//if (csvParser == NULL)
+	//	csvParser = new CSVParser();
+	//else
+	//	csvParser->UnloadCSV();
+
+	return true;
+}
+
+bool ProfileMaker::LoadSHP(std::string inSHPLoc)
+{
+	if (shpParser == NULL)
+		shpParser = new SHPParser();
+	else
+		shpParser->UnLoadGeometry();
+
+	if (!shpParser->LoadGeometry(inSHPLoc))
+		return false;
+
+	profile = Array2D(shpParser->GetPathByID(0)->Rows(), 4);
+	profile.Overlay(*shpParser->GetPathByID(0), 0, 0);
 
 
 	profile[0][3] = 0.0f;
 	for (int i = 1; i < profile.Rows(); i++)
-	{
 		profile[i][3] = CalculateDistance(profile[i - 1][0], profile[i - 1][1], profile[i][0], profile[i][1]);
-	}
 
 	if (isDebug)
 	{
@@ -138,7 +242,7 @@ void ProfileMaker::DisplayDEMInfo()
 
 void ProfileMaker::DisplayPathInfo()
 {
-	if (!isInterpolated)
+	if (isInterpolated)
 		profile_i.DisplayArrayInCLI();
 	else
 		profile.DisplayArrayInCLI();
@@ -498,11 +602,18 @@ void ProfileMaker::ResetProfile()
 	isCalculated = false;
 	isConverted = false;
 
-	P_Path.UnloadKML();
+	//kmlParser.UnloadKML();
 }
 
 void ProfileMaker::SetDEMInfo()
 {
+
+	if (demDataset == NULL)
+	{
+		std::cout << "ERROR! SetDEMInfo() called without a valid loaded demDataset" << std::endl;
+		return;
+	}
+
 	double temptransform[6];
 	int min, max;
 	double tempminmax[2];
@@ -576,6 +687,36 @@ void ProfileMaker::SetDEMInfo()
 	{
 		demInfo.IsUTM = false;
 		//demInfo.IsDecimal = true;
+	}
+}
+
+FileFormat ProfileMaker::DetermineFileFormat(std::string geometryPath)
+{
+	//TODO consider having a const public method in each of the geometry parsing classes that only checks if the provided string is of said file type, which you loop over them here.
+
+	std::string extension = geometryPath.substr(geometryPath.length() - 4, 4);
+	std::cout << "file extension: " << extension << std::endl; //test
+
+	if (extension == ".kml" || extension == ".KML")
+	{
+		return FileFormat::kml;
+	}
+	else if (extension == ".kmz" || extension == ".KMZ")
+	{
+		std::cout << "WARNING! compressed KMZ format is not supported yet. Please recreate your path in uncompressed kml format and try again." << std::endl;
+		return FileFormat::unsupported;
+	}
+	else if (extension == ".shp" || extension == ".SHP")
+	{
+		return FileFormat::shapeFile;
+	}
+	else if (extension == ".csv" || extension == ".CSV")
+	{
+		return FileFormat::csv;
+	}
+	else
+	{
+		return FileFormat::unsupported;
 	}
 }
 

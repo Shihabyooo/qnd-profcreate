@@ -21,7 +21,7 @@ void main(int argc, char *argv[])
 	std::string demLocation = "dem_GCS.tif"; //test
 
 	argc = 2;//test
-	argv[1] = "2.kml";//test
+	argv[1] = "2.shp";//test
 	//argv[2] = "ATEST_GEO_GEART.kml";//test
 	
 	std::cout << "\n Enter Interpolation steps: ";
@@ -59,8 +59,8 @@ void GenerateProfile(std::string geometryPath, float interpolationSteps)
 	std::cout << "\n Processing file:" << geometryPath << std::endl;;
 	outputPath = geometryPath + ".csv";
 
-	std::cout << "\nLoading KML\n\n";
-	if (!instance.LoadKML(geometryPath))
+	std::cout << "\nLoading geometry\n\n";
+	if (!instance.LoadGeometry(geometryPath))
 	{
 		std::cout << "\nPress enter to exit.";
 		std::cin.sync();

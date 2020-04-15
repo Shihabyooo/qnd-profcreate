@@ -8,8 +8,17 @@
 #include "Array2D.h"
 #include "KML_Parser.h"
 #include "SHP_Parser.h"
+#include "Globals.h"
 
-struct DEM_Info
+
+//Geometry Parsing:
+	//Each file format has its own class to handle parsing. ProfileMaker -initially- has pointers to each parser class initialized to NULL.
+	//LoadGeoemetry() is the abstract interface to for these parsers, which -through DetermineGeometryFileFormat()- figures out the format, whether it's supported, and if yes, call appropriate LoadXXX().
+	//Each LoadXXX begins by checking whether the pointer to its parser class is null, if so (and this means this is the first time a geometry of this file format is load) initialize it, if not, and 
+	//that means a geometry of this fileformat was loaded prior, then we unload it (by calling the approprate UnloadXXX() defined within the parser class.
+
+
+struct DEMInfo
 {
 	int x, y;
 	int RasterCount;
@@ -34,6 +43,8 @@ struct DEM_Info
 	bool WGS84;
 };
 
+
+
 class ProfileMaker
 {
 public:
@@ -41,8 +52,8 @@ public:
 	~ProfileMaker();
 
 	bool LoadDEM(std::string);
-	bool LoadKML(std::string); //checks kml exists, valid, calculates pathVerts to dynamic allocate arrays for PExtractPath()
-	bool LoadCSV(std::string);
+	bool LoadGeometry(std::string);
+
 	bool ManualPath(double, double);
 
 	void DisplayDEMInfo();
@@ -63,16 +74,23 @@ public:
 	void ResetDEM();
 
 private:
-	void SetDEMInfo(); //carefull not to call this function outside LoadDEM, because the DEM is unloaded at end of LoadDEM and... well...
+	void SetDEMInfo();
+	FileFormat DetermineFileFormat(std::string geometryPath);
+	bool LoadKML(std::string); //checks kml exists, valid, calculates pathVerts to dynamic allocate arrays for PExtractPath()
+	bool LoadCSV(std::string);
+	bool LoadSHP(std::string);
+
+	//void UnloadGeometry();
+
 	float BilinearInterp(int, int, int);
 	float BicubicInterp(int, int, int);
 	bool FileIsExist(std::string);
 	double* ToUTM(double, double);
 	void ConvertPathToUTM();
 
-	std::string kmlLocation;
-	std::string demLocation;
-	std::string outputLocation;
+	//std::string kmlLocation;
+	//std::string demLocation;
+	//std::string outputLocation;
 
 	std::ofstream result;
 
@@ -87,8 +105,10 @@ private:
 
 	GDALDataset * demDataset;
 	GDALRasterBand * demBand;
-	DEM_Info demInfo;
+	DEMInfo demInfo;
 
-	KMLParser P_Path;
-	SHPParser shpParser;
+	KMLParser * kmlParser;
+	SHPParser * shpParser;
+	//CSVParser * csvParser;
+	FileParser * geometryParser;
 };
