@@ -50,6 +50,9 @@
     <ClInclude Include="ProfileMaker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Globals.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\.gitattributes" />

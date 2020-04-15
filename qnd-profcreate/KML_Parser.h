@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 #include "Array2D.h"
-
+#include "Globals.h"
 
 #define KML_POLYLINE_TAG "<LineString>"
 #define KML_NAME_TAG "<name>"
@@ -24,18 +24,17 @@ public:
 	long long int dataLength;
 };
 
-class KMLParser
+class KMLParser : public FileParser
 {
 public:
 	KMLParser();
 	~KMLParser();
 
-	bool LoadKML(std::string);
-	void UnloadKML();
+	bool LoadGeometry(std::string);
+	void UnLoadGeometry();
 	
 	Array2D const * const GetPathByID(int id);
 	bool IsPathLoaded();
-	int GetPathVertexCountByID(int id);
 
 private:
 	bool OpenKMLFile(std::string);
@@ -48,12 +47,14 @@ private:
 	void ExtractNameFromKMLElement(KMLElement * element, int pathID);
 	bool ExtractCoordinatesFromKMLElement(KMLElement * element, int pathID);
 
+public:
+	const FileFormat parserSupportedFormat = FileFormat::kml;
+
 private:
 	std::fstream kmlFile;
-
-	std::string * pathsNames;
-	int pathsCount = 0;
-	
-	Array2D * verts;
 	bool isPathLoaded;
+
+	Array2D * verts;
+	std::string * pathsNames;
+	long int pathsCount = 0;
 };

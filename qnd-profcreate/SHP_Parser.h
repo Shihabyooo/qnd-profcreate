@@ -18,31 +18,41 @@
 #include <fstream>
 #include <iostream>
 #include "Array2D.h"
+#include "Globals.h"
 
-class SHPParser
+class SHPParser : public FileParser
 {
 public:
 	SHPParser();
 	~SHPParser();
 
-	bool LoadSHP(std::string fileName);
-	int GetVertsCount(int shapeNo) const;	//returns -1 if shape doesn't exist or vertsCount array isn't allocated
-	void UnLoadSHP();
+	bool LoadGeometry(std::string fileName);
+	void UnLoadGeometry();
+
+	Array2D const * const GetPathByID(int id);
+	bool IsPathLoaded();
+
+	//int GetVertsCount(int shapeNo) const;	//returns -1 if shape doesn't exist or vertsCount array isn't allocated
+											//useless? GetPathByID(int)->Rows() already provides that info.
 
 private:
 	const std::string RemoveFileExtension(const std::string fileName) const;
 	bool CheckFileExistance(const std::string fileNamePrefix) const;
 	void AllocateVertsArray();
-	bool LoadSHPParameters(const std::string fileNamePrefix);	//this method will load the SHX file, and fill out shapesCount and vertsCount. Future implementation: parse DBF file to look for path names.
+	bool LoadSHPParameters(const std::string fileNamePrefix);	//this method will load the SHX file, and fill out pathsCount and vertsCount. Future implementation: parse DBF file to look for path names.
 	bool ExtractPaths(const std::string fileNamePrefix);
 	long int BytesToInt32(const char bytes[4], bool isBigEndian) const;
 	double BytesToDouble(char byte[8], bool isBigEndian) const;	//for Future implementation. For now, I'm sticking to static_cast<double> when reading the file.
 
+public: 
+	const FileFormat parserSupportedFormat = FileFormat::shapeFile;
+
 private:
-	//Vertex ** verts;
-	Array2D * verts;
+
 	bool isPathLoaded;
 
-	long int * vertsCount;	//array containing vertex count for each shape, the topmost level is the shape number/ID, the second is the vertex order, the third is the vertex coord (east and north).
-	long int shapesCount;	//array containing the number of shapes the SHP file has
+	Array2D * verts;
+	std::string * pathsNames;
+	long int pathsCount = 0;
+	long int * vertsCount;
 };

@@ -9,10 +9,10 @@ KMLParser::KMLParser()
 
 KMLParser::~KMLParser()
 {
-	UnloadKML();
+	UnLoadGeometry();
 }
 
-bool KMLParser::LoadKML(std::string fileName)
+bool KMLParser::LoadGeometry(std::string fileName)
 {
 	if (!OpenKMLFile(fileName))
 	{
@@ -31,9 +31,9 @@ bool KMLParser::LoadKML(std::string fileName)
 	return true;
 }
 
-void KMLParser::UnloadKML()
+void KMLParser::UnLoadGeometry()
 {
-	std::cout << "Unloading KML" << std::endl; //test
+	//std::cout << "Unloading KML" << std::endl; //test
 
 	if (verts != NULL)
 	{
@@ -44,14 +44,14 @@ void KMLParser::UnloadKML()
 		verts = NULL;
 	}
 
-	pathsCount = 0;
+	pathsCount = 0;	
 	kmlFile.clear();
 	isPathLoaded = false;
 }
 
 Array2D const * const KMLParser::GetPathByID(int id)
 {
-	if (id >= pathsCount)
+	if (id >= pathsCount || !isPathLoaded)
 		return NULL;
 	else
 		return &verts[id];
@@ -60,14 +60,6 @@ Array2D const * const KMLParser::GetPathByID(int id)
 bool KMLParser::IsPathLoaded()
 {
 	return isPathLoaded;
-}
-
-int KMLParser::GetPathVertexCountByID(int id)
-{
-	if (id >= pathsCount)
-		return 0;
-	else
-		return verts[id].Rows();
 }
 
 bool KMLParser::OpenKMLFile(std::string fileName)

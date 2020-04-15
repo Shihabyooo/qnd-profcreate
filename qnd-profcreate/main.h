@@ -11,9 +11,8 @@
 //#include "KML_Parser.h"
 //#include "SHP_Parser.h"
 #include "ProfileMaker.h"
+#include "Globals.h"
 
 
 //TODO make LoadKML() and the undefined LoadCSV private and add LoadSHP to them, add a public method called LoadGeometry that takes a string (file location), determines file format, and
 //calls appropriate method.
-
-extern bool isDebug;
