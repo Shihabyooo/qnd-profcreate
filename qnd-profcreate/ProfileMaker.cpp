@@ -11,7 +11,6 @@ ProfileMaker::ProfileMaker()
 
 	isInterpolated = false;
 	isCalculated = false;
-	isConverted = false;
 }
 
 ProfileMaker::~ProfileMaker()
@@ -32,7 +31,6 @@ ProfileMaker::~ProfileMaker()
 
 bool ProfileMaker::LoadDEM(std::string inDEMLoc)
 {
-	//demLocation = inDEMLoc;
 	if (!FileIsExist(inDEMLoc))
 	{
 		std::cout << "Error! Could not open DEM file: " << inDEMLoc << ". \nFile doesn't exist?\n\n";
@@ -67,7 +65,6 @@ bool ProfileMaker::LoadDEM(std::string inDEMLoc)
 	//TODO the loop bellow bugs out in large rasters, fix this!
 	for (int i = 0; i < demy; i++)
 	{
-		//std::cout << i << std::endl; //test 
 		demBand->RasterIO(GF_Read, 0, i, demxsize, 1, scanline, demxsize, 1, GDT_Float64, 0, 0);
 
 		for (int j = 0; j < demx; j++)
@@ -79,7 +76,6 @@ bool ProfileMaker::LoadDEM(std::string inDEMLoc)
 	demDataset = NULL;
 	std::cout << "Successfully loaded DEM file: " << inDEMLoc << "\n\n";
 
-	//heightsGrid.DisplayArrayInCLI(); //test
 	return true;
 }
 
@@ -88,32 +84,31 @@ bool ProfileMaker::LoadGeometry(std::string geometryPath)
 	//determine geometry type
 	FileFormat format = DetermineFileFormat(geometryPath);
 
+	//check status of geometryParser pointer, cleanup accordingely
 	if (geometryParser != NULL)
-	{
-		geometryParser->UnLoadGeometry();
-		
-		if (geometryParser->parserSupportedFormat != format)
-		{
+	{		
+		if (geometryParser->parserSupportedFormat != format) //There was a previously allocated FileParser, and it wasn't of the FileFormat of the current file. So, we delete our old parser
+		{													//instance (since we don't store pointers to all alive parsers instances, only currently used instance).
 			delete geometryParser;
 			geometryParser = NULL;
 		}
+		else //this means we have an instantiated FileParser, and it is of the same format as the one we already have, so no need to delete anything, just prepare the parser for a new file
+			geometryParser->UnLoadGeometry();
 	}
-	else
+	
+	if (geometryParser == NULL) //This is a seperate if to accomodate the case of "if (geometryParser->parserSupportedFormat != format)" above.
 	{
 		switch (format)
 		{
 		case shapeFile:
-			//return LoadSHP(geometryPath);
 			shpParser = new SHPParser();
 			geometryParser = shpParser;
 			break;
 		case kml:
-			//return LoadKML(geometryPath);
 			kmlParser = new KMLParser();
 			geometryParser = kmlParser;
 			break;
 		case csv:
-			////return LoadCSV(geometryPath);
 			//csvParser = new CSVParser();
 			//geometryParser = csvParser;
 			break;
@@ -124,76 +119,28 @@ bool ProfileMaker::LoadGeometry(std::string geometryPath)
 		}
 	}
 	
+	//load geometry normally.
 	if (!geometryParser->LoadGeometry(geometryPath))
 		return false;
 
+	//allocate our local Array2D and initialize the coordinate columns of it using the loaded geometry.
 	profile = Array2D(geometryParser->GetPathByID(0)->Rows(), 4);
 	profile.Overlay(*geometryParser->GetPathByID(0), 0, 0);
 
-	profile[0][3] = 0.0f;
-	for (int i = 1; i < profile.Rows(); i++)
-		profile[i][3] = CalculateDistance(profile[i - 1][0], profile[i - 1][1], profile[i][0], profile[i][1]);
-
-	if (isDebug)
+	//set CRS related flags
+	switch (geometryParser->GeometryCRS())
 	{
-		std::cout << "Input path" << std::endl;
-		profile.DisplayArrayInCLI();
+	case (CRS::UTM):
+		isPathUTM = true;
+		break;
+	case (CRS::WGS84):
+		isPathUTM = false;
+		break;
+	default:
+		break;
 	}
 
-	return true;
-
-}
-
-bool ProfileMaker::LoadKML(std::string inKMLLoc)
-{
-	if (kmlParser == NULL)
-		kmlParser = new KMLParser();
-	else
-		kmlParser->UnLoadGeometry();
-
-	if (!kmlParser ->LoadGeometry(inKMLLoc))
-		return false;
-	
-	profile = Array2D(kmlParser->GetPathByID(0)->Rows(), 4);
-	profile.Overlay(*kmlParser->GetPathByID(0), 0, 0);
-
-	profile[0][3] = 0.0f;
-	for (int i = 1; i < profile.Rows(); i++)
-		profile[i][3] = CalculateDistance(profile[i - 1][0], profile[i - 1][1], profile[i][0], profile[i][1]);
-	
-	if (isDebug)
-	{
-		std::cout << "Input path" << std::endl;
-		profile.DisplayArrayInCLI();
-	}
-
-	return true;
-}
-
-bool ProfileMaker::LoadCSV(std::string)
-{
-	//if (csvParser == NULL)
-	//	csvParser = new CSVParser();
-	//else
-	//	csvParser->UnloadCSV();
-
-	return true;
-}
-
-bool ProfileMaker::LoadSHP(std::string inSHPLoc)
-{
-	if (shpParser == NULL)
-		shpParser = new SHPParser();
-	else
-		shpParser->UnLoadGeometry();
-
-	if (!shpParser->LoadGeometry(inSHPLoc))
-		return false;
-
-	profile = Array2D(shpParser->GetPathByID(0)->Rows(), 4);
-	profile.Overlay(*shpParser->GetPathByID(0), 0, 0);
-
-
+	//Fill out the distances column
 	profile[0][3] = 0.0f;
 	for (int i = 1; i < profile.Rows(); i++)
 		profile[i][3] = CalculateDistance(profile[i - 1][0], profile[i - 1][1], profile[i][0], profile[i][1]);
@@ -261,8 +208,6 @@ void ProfileMaker::InterpolateProfile(float step, bool maintainBends)
 
 	if (maintainBends)
 		newVertsSum += profile.Rows() - 2;
-
-	//std::cout << "newVertsSum: " << newVertsSum << std::endl; //test
 
 	profile_i = Array2D(newVertsSum, 4);
 	profile_i[0][0] = profile[0][0];
@@ -365,11 +310,18 @@ int ProfileMaker::CalculateProfile() //returning int for end state. 0: failure, 
 										//choice to calculate profile for paths that are partially within the provided DEM's boundaries.
 {
 	//in case dem is in UTM
-	if (demInfo.IsUTM)
+	if (demInfo.IsUTM && !isPathUTM)
 	{
 		ConvertPathToUTM();
-		isConverted = true;
+		//isConverted = true;
+		isPathUTM = true;
 	}
+	else if (!demInfo.IsUTM && isPathUTM)
+	{
+		std::cout << "ERROR! Capability of extracting a projected path from a non-projected DEM is not yet implemented." << std::endl;
+		return false;
+	}
+
 
 	//check if profile is out of bounds
 	if (IsPathOOB()) //TODO remove the exit, return a custom error code, modify calling function to handle the code accordingly
@@ -511,7 +463,7 @@ double ProfileMaker::CalculateDistance(double x1, double y1, double x2, double y
 {
 	double result = 0;
 	//distance calculation for UTM coords is very simple, doing it here and returning value immediatly.
-	if (isConverted)
+	if (isPathUTM)
 	{
 		result = sqrt(pow(abs(x1 - x2), 2.0) + pow(abs(y1 - y2), 2.0));
 
@@ -600,9 +552,6 @@ void ProfileMaker::ResetProfile()
 {
 	isInterpolated = false;
 	isCalculated = false;
-	isConverted = false;
-
-	//kmlParser.UnloadKML();
 }
 
 void ProfileMaker::SetDEMInfo()

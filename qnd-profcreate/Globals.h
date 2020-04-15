@@ -9,6 +9,11 @@ enum FileFormat
 	shapeFile, kml, csv, unsupported
 };
 
+enum CRS
+{
+	WGS84, UTM, undefined
+};
+
 class FileParser
 {
 public:
@@ -21,6 +26,11 @@ public:
 	virtual Array2D const * const GetPathByID(int id) { return nullptr; };
 	virtual bool IsPathLoaded() { return false; };
 
+	virtual CRS GeometryCRS() { return geometryCRS; };
+
 public:
 	const FileFormat parserSupportedFormat = FileFormat::unsupported;
+
+private:
+	CRS geometryCRS = CRS::undefined;
 };

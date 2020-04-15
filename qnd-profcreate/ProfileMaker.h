@@ -11,12 +11,6 @@
 #include "Globals.h"
 
 
-//Geometry Parsing:
-	//Each file format has its own class to handle parsing. ProfileMaker -initially- has pointers to each parser class initialized to NULL.
-	//LoadGeoemetry() is the abstract interface to for these parsers, which -through DetermineGeometryFileFormat()- figures out the format, whether it's supported, and if yes, call appropriate LoadXXX().
-	//Each LoadXXX begins by checking whether the pointer to its parser class is null, if so (and this means this is the first time a geometry of this file format is load) initialize it, if not, and 
-	//that means a geometry of this fileformat was loaded prior, then we unload it (by calling the approprate UnloadXXX() defined within the parser class.
-
 
 struct DEMInfo
 {
@@ -76,21 +70,12 @@ public:
 private:
 	void SetDEMInfo();
 	FileFormat DetermineFileFormat(std::string geometryPath);
-	bool LoadKML(std::string); //checks kml exists, valid, calculates pathVerts to dynamic allocate arrays for PExtractPath()
-	bool LoadCSV(std::string);
-	bool LoadSHP(std::string);
-
-	//void UnloadGeometry();
 
 	float BilinearInterp(int, int, int);
 	float BicubicInterp(int, int, int);
 	bool FileIsExist(std::string);
 	double* ToUTM(double, double);
 	void ConvertPathToUTM();
-
-	//std::string kmlLocation;
-	//std::string demLocation;
-	//std::string outputLocation;
 
 	std::ofstream result;
 
@@ -101,7 +86,7 @@ private:
 
 	bool isInterpolated;
 	bool isCalculated;
-	bool isConverted;
+	bool isPathUTM;
 
 	GDALDataset * demDataset;
 	GDALRasterBand * demBand;

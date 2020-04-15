@@ -57,6 +57,11 @@ bool SHPParser::IsPathLoaded()
 	return isPathLoaded;
 }
 
+CRS SHPParser::GeometryCRS()
+{
+	return geometryCRS;
+}
+
 void SHPParser::UnLoadGeometry()
 {
 	if (verts != NULL) //Doesn't delete already check for NULLity?

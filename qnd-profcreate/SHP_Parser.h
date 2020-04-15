@@ -1,5 +1,4 @@
 //Current known limitation:
-	//[Possible fixed] Files where records are of length > 127 will bug out.
 	//Assumes (and checks for, aborts otherwise) an SHP with only Polyline geometry.
 	//Assumes (and checks for, warns but doens't abort) geometries with single parts (but any number of vertices, up to limit that causes length bug above).
 	//Doesn't check the SHP's CRS.
@@ -8,7 +7,6 @@
 	//Implement and ByteToDouble() and switch uses of casting char* to double* to it instead.
 	//Rename "byte" to "bytes"
 	//Research and -accordingly- adjust handling of SHP files with geometries with more than 1 part.
-	//[Possible fixed] Fix BytesToInt32's issue with ints > 127.
 	//Allow the use of SHP files with point geometries (Will output a single path, with vertices going from first point to last inorder).
 	//Allow use of multiple geometries SHP files, in which only polylines will be considered.
 	//Parse DBF files and look for names to label the paths with (stored as std::string* or char**).
@@ -32,8 +30,7 @@ public:
 	Array2D const * const GetPathByID(int id);
 	bool IsPathLoaded();
 
-	//int GetVertsCount(int shapeNo) const;	//returns -1 if shape doesn't exist or vertsCount array isn't allocated
-											//useless? GetPathByID(int)->Rows() already provides that info.
+	virtual CRS GeometryCRS();
 
 private:
 	const std::string RemoveFileExtension(const std::string fileName) const;
@@ -48,11 +45,12 @@ public:
 	const FileFormat parserSupportedFormat = FileFormat::shapeFile;
 
 private:
-
 	bool isPathLoaded;
 
 	Array2D * verts;
 	std::string * pathsNames;
 	long int pathsCount = 0;
 	long int * vertsCount;
+
+	CRS geometryCRS = CRS::UTM; //TODO Implement CRS reading from .prj files.
 };

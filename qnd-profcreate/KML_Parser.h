@@ -36,6 +36,8 @@ public:
 	Array2D const * const GetPathByID(int id);
 	bool IsPathLoaded();
 
+	virtual CRS GeometryCRS();
+
 private:
 	bool OpenKMLFile(std::string);
 	void CloseKMLFile();
@@ -57,4 +59,6 @@ private:
 	Array2D * verts;
 	std::string * pathsNames;
 	long int pathsCount = 0;
+
+	CRS geometryCRS = CRS::WGS84; //KML is always WGS84
 };

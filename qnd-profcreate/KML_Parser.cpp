@@ -33,8 +33,6 @@ bool KMLParser::LoadGeometry(std::string fileName)
 
 void KMLParser::UnLoadGeometry()
 {
-	//std::cout << "Unloading KML" << std::endl; //test
-
 	if (verts != NULL)
 	{
 		for (int i = 0; i < pathsCount; i++)
@@ -60,6 +58,11 @@ Array2D const * const KMLParser::GetPathByID(int id)
 bool KMLParser::IsPathLoaded()
 {
 	return isPathLoaded;
+}
+
+CRS KMLParser::GeometryCRS()
+{
+	return geometryCRS;
 }
 
 bool KMLParser::OpenKMLFile(std::string fileName)
