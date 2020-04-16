@@ -261,15 +261,25 @@ void ProfileMaker::InterpolateProfile(float step, bool maintainBends)
 
 bool ProfileMaker::IsPathOOB()
 {
+	if (isDebug)
+	{
+		std::cout << "Checking path OOB for DEM boundaries:" << std::endl;
+		std::cout << "Min = " << demInfo.SW_x << ", " << demInfo.SW_y << std::endl;
+		std::cout << "Max = " << demInfo.NE_x << ", " << demInfo.NE_y << std::endl;
+	}
+
 	if (isInterpolated)
 	{
 		for (int i = 0; i < profile_i.Rows(); i++)
 		{
-			if (profile_i[0][i] < demInfo.NW_x || profile_i[i][0] > demInfo.SE_x)
+			if (isDebug)
+				std::cout << "Testing vertex: " << profile_i[i][0] << ", " << profile_i[i][1] << std::endl;
+
+			if (profile_i[i][0] < demInfo.SW_x || profile_i[i][0] > demInfo.NE_x)
 			{
 				return true;
 			}
-			if (profile_i[i][1] > demInfo.NW_y || profile_i[i][2] < demInfo.SE_y)
+			if (profile_i[i][1] < demInfo.SW_y || profile_i[i][2] > demInfo.NE_y)
 			{
 				return true;
 			}
@@ -279,17 +289,19 @@ bool ProfileMaker::IsPathOOB()
 	{
 		for (int i = 0; i < profile.Rows(); i++)
 		{
-			if (profile[0][i] < demInfo.NW_x || profile[i][0] > demInfo.SE_x)
+			if (isDebug)
+				std::cout << "Testing vertex: " << profile[i][0] << ", " << profile[i][1] << std::endl;
+
+			if (profile[i][0] < demInfo.SW_x || profile[i][0] > demInfo.NE_x)
 			{
 				return true;
 			}
-			if (profile[i][1] > demInfo.NW_y || profile[i][2] < demInfo.SE_y)
+			if (profile[i][1] < demInfo.SW_y || profile[i][2] > demInfo.NE_y)
 			{
 				return true;
 			}
 		}
 	}
-
 
 	return false;
 }
@@ -313,14 +325,10 @@ int ProfileMaker::CalculateProfile() //returning int for end state. 0: failure, 
 	if (demInfo.IsUTM && !isPathUTM)
 	{
 		ConvertPathToUTM();
-		//isConverted = true;
 		isPathUTM = true;
 	}
 	else if (!demInfo.IsUTM && isPathUTM)
 	{
-	/*	std::cout << "ERROR! Capability of extracting a projected path from a non-projected DEM is not yet implemented." << std::endl;
-		return false;*/
-
 		ConvertPathToWGS84();
 		isPathUTM = false;
 	}
@@ -330,9 +338,7 @@ int ProfileMaker::CalculateProfile() //returning int for end state. 0: failure, 
 	if (IsPathOOB()) //TODO remove the exit, return a custom error code, modify calling function to handle the code accordingly
 	{
 		std::cout << "Error: Loaded path is outside the boundry of the loaded DEM!\n";
-		//return;
 		std::cout << "Press Enter to Continue.\n";
-		//std::cin.ignore();
 		std::cin.sync();
 		std::cin.get();
 		exit(1);
@@ -764,7 +770,7 @@ bool ProfileMaker::FileIsExist(std::string location) const
 	}
 }
 
-double * ProfileMaker::ToUTM(double lng, double lat) const
+std::unique_ptr<double> ProfileMaker::ToUTM(double lng, double lat) const
 {
 	//converting this http://www.movable-type.co.uk/scripts/latlong-utm-mgrs.html
 	// to c++
@@ -822,13 +828,13 @@ double * ProfileMaker::ToUTM(double lng, double lat) const
 	x = x + UTM_FALSE_EASTING;
 	if (y < 0) y = y + UTM_FALSE_NORTHING; //in case the point was in sourthern hemisphere. for norther hemi, the y above is ok.
 
-	double * coords;
-	coords = new double[2]; //I don't know why, but this fixed it! Just having double coords[2] causes function to return false values in release builds outside the safe haven of debug...
-	coords[0] = y;
-	coords[1] = x;
+	std::unique_ptr<double> coords = std::unique_ptr<double> (new double [2]);
+	coords.get()[0] = y;
+	coords.get()[1] = x;
 
 	if (isDebug)
-		std::cout << "\n in ToUTM, returning coords: " << coords[0] << " and " << coords[1];
+		std::cout << "\n in ToUTM, returning coords: " << coords.get()[0] << " and " << coords.get()[1];
+	
 	return coords;
 }
 
@@ -935,13 +941,13 @@ void ProfileMaker::ConvertPathToUTM()
 {
 	if (isDebug) std::cout << "\nConverting path to UTM\n"; //test
 	
-	double * tempreturn;
+	std::unique_ptr<double> tempreturn;
 
 	for (int i = 0; i < profile_i.Rows(); i++)
 	{
 		tempreturn = ToUTM(profile_i[i][0], profile_i[i][1]);
-		profile_i[i][0] = tempreturn[1];
-		profile_i[i][1] = tempreturn[0];
+		profile_i[i][0] = tempreturn.get()[1];
+		profile_i[i][1] = tempreturn.get()[0];
 	}
 
 	if (isDebug)
