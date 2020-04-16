@@ -261,35 +261,35 @@ void ProfileMaker::InterpolateProfile(float step, bool maintainBends)
 
 bool ProfileMaker::IsPathOOB()
 {
-	//TODO reimplement this method.
-
-	double *tempx, *tempy;
-	int tempverts;
-
-	/*if (isInterpolated)
+	if (isInterpolated)
 	{
-		tempx = P_Xi;
-		tempy = P_Yi;
-		tempverts = pathVerts_i;
+		for (int i = 0; i < profile_i.Rows(); i++)
+		{
+			if (profile_i[0][i] < demInfo.NW_x || profile_i[i][0] > demInfo.SE_x)
+			{
+				return true;
+			}
+			if (profile_i[i][1] > demInfo.NW_y || profile_i[i][2] < demInfo.SE_y)
+			{
+				return true;
+			}
+		}
 	}
 	else
 	{
-		tempx = P_X;
-		tempy = P_Y;
-		tempverts = pathVerts;
+		for (int i = 0; i < profile.Rows(); i++)
+		{
+			if (profile[0][i] < demInfo.NW_x || profile[i][0] > demInfo.SE_x)
+			{
+				return true;
+			}
+			if (profile[i][1] > demInfo.NW_y || profile[i][2] < demInfo.SE_y)
+			{
+				return true;
+			}
+		}
 	}
 
-	for (int i = 0; i < tempverts; i++ )
-	{
-		if (tempx[i] < demInfo.NW_x || tempx[i] > demInfo.SE_x)
-		{
-			return true;
-		}
-		if (tempy[i] > demInfo.NW_y || tempy[i] < demInfo.SE_y)
-		{
-			return true;
-		}
-	}*/
 
 	return false;
 }
@@ -318,8 +318,11 @@ int ProfileMaker::CalculateProfile() //returning int for end state. 0: failure, 
 	}
 	else if (!demInfo.IsUTM && isPathUTM)
 	{
-		std::cout << "ERROR! Capability of extracting a projected path from a non-projected DEM is not yet implemented." << std::endl;
-		return false;
+	/*	std::cout << "ERROR! Capability of extracting a projected path from a non-projected DEM is not yet implemented." << std::endl;
+		return false;*/
+
+		ConvertPathToWGS84();
+		isPathUTM = false;
 	}
 
 
@@ -743,7 +746,7 @@ float ProfileMaker::BicubicInterp(int first_larger_x, int first_larger_y, int po
 	return result_depth;
 }
 
-bool ProfileMaker::FileIsExist(std::string location)
+bool ProfileMaker::FileIsExist(std::string location) const
 {
 	std::cout << "Attempting to open " << location << std::endl;
 	std::ifstream file_to_check;
@@ -761,38 +764,39 @@ bool ProfileMaker::FileIsExist(std::string location)
 	}
 }
 
-double * ProfileMaker::ToUTM(double lng, double lat)
+double * ProfileMaker::ToUTM(double lng, double lat) const
 {
 	//converting this http://www.movable-type.co.uk/scripts/latlong-utm-mgrs.html
 	// to c++
 	//also https://www.uwgb.edu/dutchs/UsefulData/UTMFormulas.HTM
+	//alternatively https://arxiv.org/pdf/1002.1417.pdf
 
 	//std::cout << "\nDevWarning: Using Karney's method to convert from decimal degrees to UTM\n";
 
-	const double Pi = 3.14159265359;
-	const double a = 6378137; //WGS84 earth radius at equator
-	const double f = 1 / 298.257223563; //WGS84 elipsoid flattening
-	const double b = 6356752.3142; //WGS84 radius at poles
-	const double utm_scale_at_meridian = 0.9996;
-	const double falseEasting = 500000, falseNorthing = 10000000;
+	//const double Pi = 3.14159265359;
+	//const double a = 6378137; //WGS84 earth radius at equator
+	//const double f = 1 / 298.257223563; //WGS84 elipsoid flattening
+	//const double b = 6356752.3142; //WGS84 radius at poles
+	//const double utm_scale_at_meridian = 0.9996;
+	//const double falseEasting = 500000, falseNorthing = 10000000;
 
 	int zone = floor((lng + 180.0) / 6.0) + 1;
-	double central_meridian_longitude = ((zone - 1.0) * 6.0 - 180.0 + 3.0) * Pi / 180.0; //in radians
+	double central_meridian_longitude = ((zone - 1.0) * 6.0 - 180.0 + 3.0) * PI_CONSTANT / 180.0; //in radians
 	//TODO consider Norway/Svalbard exceptions, not really necessary.
 
-	const double e = sqrt(1.0 - pow((b / a), 2.0));
-	const double n = (f / (2 - f));
+	const double e = sqrt(1.0 - pow((WGS_EARTH_RADIUS_POLES / WGS84_EARTH_RADIUS_EQUATOR), 2.0));
+	const double n = (WGS84_ELIPSOID_FLATTENING / (2 - WGS84_ELIPSOID_FLATTENING));
 
 
-	lat = lat * Pi / 180.0;
-	lng = (lng * Pi / 180.0) - central_meridian_longitude;
+	lat = lat * PI_CONSTANT / 180.0;
+	lng = (lng * PI_CONSTANT / 180.0) - central_meridian_longitude;
 
 	const double tao = tan(lat);
 	const double sigma = sinh(e * atanh(e * tao / sqrt(1.0 + pow(tao, 2.0)))); //checked with source paper
 	const double tao_prime = (tao * sqrt(1.0 + pow(sigma, 2.0))) - (sigma * sqrt(1.0 + pow(tao, 2.0))); //checked with source paper
 	const double xi_prime = atan(tao_prime / cos(lng)); //checked with source paper
 	const double eta_prime = asinh(sin(lng) / sqrt(pow(tao_prime, 2.0) + pow(cos(lng), 2))); //checked with source
-	const double A = (a / (1.0 + n)) * (1.0 + (1.0 / 4.0)*pow(n, 2.0) + (1.0 / 64.0)*pow(n, 4.0) + (1.0 / 256.0)*pow(n, 6.0)); //checked up to n^4 in source paper
+	const double A = (WGS84_EARTH_RADIUS_EQUATOR / (1.0 + n)) * (1.0 + (1.0 / 4.0)*pow(n, 2.0) + (1.0 / 64.0)*pow(n, 4.0) + (1.0 / 256.0)*pow(n, 6.0)); //checked up to n^4 in source paper
 
 	double alpha[6] = { (1.0 / 2.0)*n - (2.0 / 3.0) * pow(n,2.0) + (5.0 / 16.0) * pow(n,3.0) + (41.0 / 180.0)*pow(n,4.0) - (127.0 / 288.0)*pow(n,5.0) + (7891.0 / 37800.0)*pow(n, 6.0),
 		(13.0 / 48.0) * pow(n, 2.0) - (3.0 / 5.0) * pow(n, 3.0) + (557.0 / 1440.0)*pow(n, 4.0) + (281.0 / 630.0)*pow(n, 5.0) - (1983433.0 / 1935360.0)*pow(n, 6.0),
@@ -812,11 +816,11 @@ double * ProfileMaker::ToUTM(double lng, double lat)
 		q_prime = q_prime + 2.0*i*sin(2.0 * (i + 1.0)*xi_prime) * sinh(2.0 * (i + 1.0) * eta_prime);
 	}
 
-	double x = utm_scale_at_meridian * A * eta;
-	double y = utm_scale_at_meridian * A * xi;
+	double x = UTM_MERIDIAN_SCALE * A * eta;
+	double y = UTM_MERIDIAN_SCALE * A * xi;
 
-	x = x + falseEasting;
-	if (y < 0) y = y + falseNorthing; //in case the point was in sourthern hemisphere. for norther hemi, the y above is ok.
+	x = x + UTM_FALSE_EASTING;
+	if (y < 0) y = y + UTM_FALSE_NORTHING; //in case the point was in sourthern hemisphere. for norther hemi, the y above is ok.
 
 	double * coords;
 	coords = new double[2]; //I don't know why, but this fixed it! Just having double coords[2] causes function to return false values in release builds outside the safe haven of debug...
@@ -828,17 +832,140 @@ double * ProfileMaker::ToUTM(double lng, double lat)
 	return coords;
 }
 
+std::unique_ptr<double> ProfileMaker::ToWGS84(double easting, double northing) const
+{
+	//Using the some source-code referenced in ToUTM() and converting it to C++
+
+	double _easting = easting - UTM_FALSE_EASTING;
+	double _northing = isPathInNorthernHemisphere ? northing : northing - UTM_FALSE_NORTHING;
+
+	double eccentricity = sqrt(WGS84_ELIPSOID_FLATTENING * (2.0f - WGS84_ELIPSOID_FLATTENING)); //this could be calculted outside and hardcoded into this program.
+	double n = WGS84_ELIPSOID_FLATTENING / (2.0f - WGS84_ELIPSOID_FLATTENING); //ditto
+
+	double n2 = n * n;
+	double n3 = n2 * n;
+	double n4 = n3 * n;
+	double n5 = n4 * n;
+	double n6 = n5 * n;
+
+	double A = (WGS84_EARTH_RADIUS_EQUATOR / (1.0f + n)) * (1.0f + n2 * (1.0f / 4.0f) + n4 * (1.0f / 64.0f) + n6 * (1.0f / 256.0f));
+
+	double eta = _easting / (UTM_MERIDIAN_SCALE * A);
+	double xi = _northing / (UTM_MERIDIAN_SCALE * A);
+
+	double beta[6] = {
+		 n * (1.0f/2.0f)	-	n2 * (2.0f / 3.0f)	+	n3 * (37.0f / 96.0f)	-	n4 * (1.0f / 360.0f)		-	n5 * (81.0f / 512.0f)		+	n6 * (96199.0f / 604800.0f),
+								n2 * (1.0f / 48.0f)	+	n3 * (1.0f / 15.0f)		-	n4 * (437.0f / 1440.0f)		+	n5 * (46.0f / 105.0f)		-	n6 * (1118711.0f / 3870720.0f),
+														n3 * (17.0f / 480.0f)	-	n4 * (37.0f / 840.0f)		-	n5 * (209.0f / 4480.0f)		+	n6 * (5569.0f / 90720.0f),
+																					n4 * (4397.0f / 161280.0f)	-	n5 * (11.0f / 504.0f)		-	n6 * (830251.0f / 7257600.0f),
+																													n5 * (4583.0f / 161280.0f)	-	n6 * (108847.0f / 3991680.0f),
+																																					n6 * (20648693.0f / 638668800.0f)
+	};
+
+	double xi_prime = xi;
+	double eta_prime = eta;
+	
+	for (int i = 0; i < 6; i++)
+	{
+		xi_prime -= beta[i] * sin(2.0f * (i + 1) * xi) * cosh(2.0f * (i + 1) * eta);
+		eta_prime -= beta[i] * cos(2.0f * (i + 1) * xi) * sinh(2.0f * (i + 1) * eta);
+	}
+
+	double sinh_eta_prime = sinh(eta_prime);
+	double sin_xi_prime = sin(xi_prime);
+	double cos_xi_prime = cos(xi_prime);
+
+	double tau_prime = sin_xi_prime / sqrt(sinh_eta_prime * sinh_eta_prime + cos_xi_prime * cos_xi_prime);
+
+	double deltaTau = 0.1f;
+	double tau = tau_prime;
+
+	while (abs(deltaTau) > 0.00000000001f)
+	{
+		double sigma = sinh(eccentricity * atanh(eccentricity * tau / sqrt(1.0f + tau * tau)));
+		double tau_i_prime = tau * sqrt(1.0f + sigma * sigma) - sigma * sqrt(1 + tau * tau);
+		deltaTau = ((tau_prime - tau_i_prime) / sqrt(1.0f + tau_i_prime * tau_i_prime)) * ((1.0f + (1.0f - eccentricity * eccentricity) * tau * tau) / ((1.0f - eccentricity * eccentricity) * sqrt(1.0f + tau * tau)));
+		tau += deltaTau;
+	}
+
+	double phi = atan(tau);
+	double lambda = atan2(sinh_eta_prime, cos_xi_prime);
+
+	double p = 1.0f;
+	double q = 0.0f;
+
+	for (int i = 0; i < 6; i++)
+	{
+		p -= 2.0f * i * beta[i] * cos(2.0f * (i + 1) * xi) * cosh(2.0f * (i + 1) * eta);
+		q += 2.0f * i * beta[i] * sin(2.0f * (i + 1) * xi) * sinh(2.0f * (i + 1) * eta);
+	}
+
+	double gamma_prime = atan(tan(xi_prime) * tanh(eta_prime));
+	double gamme_prime_prime = atan2(q, p);
+	double gamma = gamma_prime + gamme_prime_prime;
+
+	double sin_phi = sin(phi);
+
+	double k_prime = sqrt(1.0f - eccentricity * eccentricity *sin_phi * sin_phi) * sqrt(1.0f + tau * tau) * sqrt(sinh_eta_prime * sinh_eta_prime + cos_xi_prime * cos_xi_prime);
+	double k_prime_prime = (A / WGS84_EARTH_RADIUS_EQUATOR ) * sqrt(p * p + q * q);
+	double k = UTM_MERIDIAN_SCALE * k_prime * k_prime_prime;
+
+	double lambda_0 = (PI_CONSTANT / 180.0f)* (double)((pathZone - 1) * 6 - 180 + 3);
+	lambda += lambda_0;
+
+	std::unique_ptr<double> coords = std::unique_ptr<double>(new double[2]);
+	
+	coords.get()[0] = lambda * (180.0f / PI_CONSTANT);
+	coords.get()[1] = phi * (180.0f / PI_CONSTANT);
+
+
+	double convergence = gamma * 180.0f / PI_CONSTANT;
+	double scale = k;
+
+	if (isDebug)
+	{
+		std::cout << "\n in ToUTM, returning coords: " << std::fixed << std::setprecision(11) << coords.get()[0] << " and " << coords.get()[1] << std::endl;
+		std::cout << "Convergence: " << std::fixed << std::setprecision(11) << convergence << ", scale" << scale << std::endl;
+	}
+
+	return coords;
+}
+
 void ProfileMaker::ConvertPathToUTM()
 {
-	double * tempreturn;
-
 	if (isDebug) std::cout << "\nConverting path to UTM\n"; //test
+	
+	double * tempreturn;
 
 	for (int i = 0; i < profile_i.Rows(); i++)
 	{
 		tempreturn = ToUTM(profile_i[i][0], profile_i[i][1]);
 		profile_i[i][0] = tempreturn[1];
 		profile_i[i][1] = tempreturn[0];
+	}
+
+	if (isDebug)
+	{
+		std::cout << "\nConverted path\n";
+		profile_i.DisplayArrayInCLI();
+	}
+}
+
+void ProfileMaker::ConvertPathToWGS84()
+{
+	if (isDebug) std::cout << "\nConverting path to WGS-84 GCS\n"; //test
+	
+	std::unique_ptr<double> tempreturn;
+
+	for (int i = 0; i < profile_i.Rows(); i++)
+	{
+		tempreturn = ToWGS84(profile_i[i][0], profile_i[i][1]);
+		//std::cout << "\n Recieved: " << tempreturn.get()[0] << " and " << tempreturn.get()[1];
+
+		profile_i[i][0] = tempreturn.get()[0];
+		profile_i[i][1] = tempreturn.get()[1];
+		
+		//std::cout << "\n Set: " << profile_i[i][0] << " and " << profile_i[i][1];
 	}
 
 	if (isDebug)

@@ -73,9 +73,11 @@ private:
 
 	float BilinearInterp(int, int, int);
 	float BicubicInterp(int, int, int);
-	bool FileIsExist(std::string);
-	double* ToUTM(double, double);
+	bool FileIsExist(std::string) const;
+	double* ToUTM(double, double) const;
+	std::unique_ptr<double> ToWGS84(double, double) const;
 	void ConvertPathToUTM();
+	void ConvertPathToWGS84(); //TODO merge ConvertPathToUTM() and ConvertPathToWGS84() into a single method that takes a bool toUTM to determine conversion direction.
 
 	std::ofstream result;
 
@@ -87,6 +89,9 @@ private:
 	bool isInterpolated;
 	bool isCalculated;
 	bool isPathUTM;
+	int pathZone = 36; //TODO reset this to an uninitialized variable
+	bool isPathInNorthernHemisphere = true;  //TODO reset this to an uninitialized variable
+
 
 	GDALDataset * demDataset;
 	GDALRasterBand * demBand;
