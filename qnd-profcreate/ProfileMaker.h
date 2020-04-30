@@ -3,12 +3,14 @@
 #include <iostream>
 #include <functional>
 #include "main.h"
-#include "gdal_priv.h"
-#include "cpl_conv.h"
+#include "GeoTIFF_Parser.h"
+//#include "gdal_priv.h"
+//#include "cpl_conv.h"
 #include "Array2D.h"
 #include "KML_Parser.h"
 #include "SHP_Parser.h"
 #include "Globals.h"
+
 
 
 
@@ -94,8 +96,8 @@ private:
 	int pathZone = 36; //TODO reset this to an uninitialized variable
 	bool isPathInNorthernHemisphere = true;  //TODO reset this to an uninitialized variable
 
-	GDALDataset * demDataset;
-	GDALRasterBand * demBand;
+	//GDALDataset * demDataset;
+	//GDALRasterBand * demBand;
 	DEMInfo demInfo;
 
 	KMLParser * kmlParser;

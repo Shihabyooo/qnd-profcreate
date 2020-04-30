@@ -16,7 +16,7 @@ enum FileFormat
 	shapeFile, kml, csv, unsupported
 };
 
-enum CRS
+enum class CRS
 {
 	WGS84, UTM, undefined
 };
