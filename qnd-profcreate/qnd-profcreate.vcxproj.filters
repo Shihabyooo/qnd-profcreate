@@ -16,6 +16,12 @@
     <Filter Include="GeoTIFF-Parser">
       <UniqueIdentifier>{3639792d-e8d7-4622-8043-7ec0cc16fef8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="GeoTIFF-Parser\Header Files">
+      <UniqueIdentifier>{12d55cdc-1675-45f8-92e0-7c0875a33d02}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GeoTIFF-Parser\Source Files">
+      <UniqueIdentifier>{3f03995b-8dca-4b7e-b34b-29ad85e8737a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -36,6 +42,15 @@
     <ClCompile Include="ProfileMaker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GeoTIFF-Parser\Decompressor.cpp">
+      <Filter>GeoTIFF-Parser\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeoTIFF-Parser\GeoTIFF_Parser.cpp">
+      <Filter>GeoTIFF-Parser\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeoTIFF-Parser\GeoTIFF_Parser_Globals.cpp">
+      <Filter>GeoTIFF-Parser\Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h">
@@ -55,6 +70,15 @@
     </ClInclude>
     <ClInclude Include="Globals.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeoTIFF-Parser\Decompressor.h">
+      <Filter>GeoTIFF-Parser\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeoTIFF-Parser\GeoTIFF_Parser.h">
+      <Filter>GeoTIFF-Parser\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeoTIFF-Parser\GeoTIFF_Parser_Globals.h">
+      <Filter>GeoTIFF-Parser\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -1384,3 +1384,8 @@ void UnloadGeoTIFF()
 	tiffDetails = TIFFDetails();
 	geoDetails = GeoTIFFDetails();
 }
+
+const Array2D * GetPointerToBitmap()
+{
+	return bitMap;
+}

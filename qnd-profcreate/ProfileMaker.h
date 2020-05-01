@@ -88,7 +88,7 @@ private:
 	//Note that profile and profile_i are 4 column arrays, the first 3 are x, y, z coords, the last is the distance between each point and the previous one (equal to zero for first point).
 	Array2D profile;
 	Array2D profile_i;
-	Array2D heightsGrid;
+	const Array2D * heightsGrid;
 
 	bool isInterpolated;
 	bool isCalculated;
