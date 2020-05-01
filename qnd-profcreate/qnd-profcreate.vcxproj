@@ -71,19 +71,19 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>GeoTIFF-Parser/;$(IncludePath)</IncludePath>
+    <IncludePath>GeoTIFF-Parser/;Array2D/;/;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>GeoTIFF-Parser/;$(IncludePath)</IncludePath>
+    <IncludePath>GeoTIFF-Parser/;Array2D/;/;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>GeoTIFF-Parser/;$(IncludePath)</IncludePath>
+    <IncludePath>GeoTIFF-Parser/;Array2D/;/;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>GeoTIFF-Parser/;$(IncludePath)</IncludePath>
+    <IncludePath>GeoTIFF-Parser/;Array2D/;/;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -166,7 +166,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Array2D.cpp" />
+    <ClCompile Include="Array2D\Array2D.cpp" />
     <ClCompile Include="GeoTIFF-Parser\Decompressor.cpp" />
     <ClCompile Include="GeoTIFF-Parser\GeoTIFF_Parser.cpp" />
     <ClCompile Include="GeoTIFF-Parser\GeoTIFF_Parser_Globals.cpp" />
@@ -178,6 +178,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Array2D.h" />
+    <ClInclude Include="Array2D\Array2D.h" />
     <ClInclude Include="GeoTIFF-Parser\Decompressor.h" />
     <ClInclude Include="GeoTIFF-Parser\GeoTIFF_Parser.h" />
     <ClInclude Include="GeoTIFF-Parser\GeoTIFF_Parser_Globals.h" />
