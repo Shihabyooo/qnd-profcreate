@@ -13,33 +13,30 @@
 
 
 
-
-struct DEMInfo
-{
-	int x, y;
-	int RasterCount;
-	int BlockSize_x, BlockSize_y;
-	int OverviewCount;
-	int ColorEntryCount;
-
-	std::string ProjectionReference;
-	std::string RasterDataType;
-	std::string ColorInterpretation;
-
-	double originx, originy;
-	double PixelSize_x, PixelSize_y;
-	double geotransform_2, geotransform_4; //TODO find out what these figures stand for
-	double z_max, z_min;
-
-	double	NW_x, NW_y,
-		NE_x, NE_y,
-		SE_x, SE_y,
-		SW_x, SW_y;
-	bool IsUTM;
-	bool WGS84;
-};
-
-
+//struct DEMInfo
+//{
+//	int x, y;
+//	int RasterCount;
+//	int BlockSize_x, BlockSize_y;
+//	int OverviewCount;
+//	int ColorEntryCount;
+//
+//	std::string ProjectionReference;
+//	std::string RasterDataType;
+//	std::string ColorInterpretation;
+//
+//	double originx, originy;
+//	double PixelSize_x, PixelSize_y;
+//	double geotransform_2, geotransform_4; //TODO find out what these figures stand for
+//	double z_max, z_min;
+//
+//	double	NW_x, NW_y,
+//		NE_x, NE_y,
+//		SE_x, SE_y,
+//		SW_x, SW_y;
+//	bool IsUTM;
+//	bool WGS84;
+//};
 
 class ProfileMaker
 {
@@ -70,7 +67,7 @@ public:
 	void ResetDEM();
 
 private:
-	void SetDEMInfo();
+	//void SetDEMInfo();
 	FileFormat DetermineFileFormat(std::string geometryPath);
 
 	float BilinearInterp(int, int, int);
@@ -98,7 +95,7 @@ private:
 
 	//GDALDataset * demDataset;
 	//GDALRasterBand * demBand;
-	DEMInfo demInfo;
+	//DEMInfo demInfo;
 
 	KMLParser * kmlParser;
 	SHPParser * shpParser;

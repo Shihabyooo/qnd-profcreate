@@ -41,53 +41,11 @@ bool ProfileMaker::LoadDEM(std::string inDEMLoc)
 	}
 	
 	heightsGrid = GetPointerToBitmap();
-	
-	//
-	//if (!FileIsExist(inDEMLoc))
-	//{
-	//	std::cout << "Error! Could not open DEM file: " << inDEMLoc << ". \nFile doesn't exist?\n\n";
-	//	return false;
-	//}
+		
+	//TODO check that geoDetails are set properly and to values this code supports.
 
-	//demDataset = (GDALDataset *)GDALOpen(inDEMLoc.c_str(), GA_ReadOnly);
 
-	//if (demDataset == NULL)
-	//{
-	//	//TODO review GDAL docs for CPLError() and see if you can use it to display a more informative error message.
-	//	std::cout << "Error! Could not load DEM file.\n\n";
-	//	return false;
-	//}
-
-	//demBand = demDataset->GetRasterBand(1); //Should consider checking that this is a greyscale (single band) dem first.
-
-	//SetDEMInfo();
-	//DisplayDEMInfo();
-
-	//int demx = demDataset->GetRasterXSize();
-	//int demy = demDataset->GetRasterYSize();
-
-	//std::cout << "demX: " << demx << ", demY: " << demy << std::endl; //test
-
-	//heightsGrid = Array2D(demy, demx);
-
-	//double * scanline;
-	//int demxsize = demBand->GetXSize();
-	//scanline = (double *)CPLMalloc(sizeof(double) * demxsize);
-
-	////TODO the loop bellow bugs out in large rasters, fix this!
-	//for (int i = 0; i < demy; i++)
-	//{
-	//	demBand->RasterIO(GF_Read, 0, i, demxsize, 1, scanline, demxsize, 1, GDT_Float64, 0, 0);
-
-	//	for (int j = 0; j < demx; j++)
-	//		heightsGrid[i][j] = scanline[j];
-	//}
-
-	//CPLFree(scanline);
-	//GDALClose(demDataset);
-	//demDataset = NULL;
-	//std::cout << "Successfully loaded DEM file: " << inDEMLoc << "\n\n";
-
+	std::cout << "Successfully loaded DEM file: " << inDEMLoc << "\n\n";
 	return true;
 }
 
@@ -166,38 +124,38 @@ bool ProfileMaker::LoadGeometry(std::string geometryPath)
 	return true;
 }
 
-void ProfileMaker::DisplayDEMInfo()
-{
-	std::cout << "\n==================================";
-	std::cout << "\n\tDEM info\n";
-	std::cout << "==================================\n\n";
-	std::cout << "Coordinate System: " << demInfo.ProjectionReference << std::endl;
-	std::cout << "Rasters in-file: " << demInfo.RasterCount << std::endl;
-	std::cout << "\nFor raster #1\n";
-	std::cout << "Resolution: " << demInfo.x << " by " << demInfo.y << " pixels.\n";
-	std::cout << "Data type: " << demInfo.RasterDataType << std::endl;
-	std::cout << "Block size: " << demInfo.BlockSize_x << " by " << demInfo.BlockSize_y << " pixels.\n";
-	std::cout << "Color interpretation: " << demInfo.ColorInterpretation << std::endl;
-	std::cout << "Minimum value: " << demInfo.z_min << std::endl;
-	std::cout << "Maximum value: " << demInfo.z_max << std::endl;
-	if (demInfo.ColorEntryCount > 0)
-	{
-		std::cout << "Color table entries: " << demInfo.ColorEntryCount << std::endl;
-	}
-	else
-	{
-		std::cout << "Color table entries: N/A\n";
-	}
-	std::cout << "\nRaster Geographical Transforms:\n";
-	std::cout << "Origin coordinates: " << std::setprecision(14) << demInfo.originx << ", " << demInfo.originy << "\n";
-	std::cout << "Pixel Size: " << std::setprecision(14) << demInfo.PixelSize_x << " by " << demInfo.PixelSize_y << "\n";
-	std::cout << "[Unsupported]: " << demInfo.geotransform_2 << ", " << demInfo.geotransform_4 << "\n"; //TODO geotransform 2 and 4
-	std::cout << "[Border coordinates NW -> NE -> SE -> SW\n";
-	std::cout << demInfo.NW_x << ", " << demInfo.NW_y << std::endl;
-	std::cout << demInfo.NE_x << ", " << demInfo.NE_y << std::endl;
-	std::cout << demInfo.SE_x << ", " << demInfo.SE_y << std::endl;
-	std::cout << demInfo.SW_x << ", " << demInfo.SW_y << std::endl;
-}
+//void ProfileMaker::DisplayDEMInfo()
+//{
+//	std::cout << "\n==================================";
+//	std::cout << "\n\tDEM info\n";
+//	std::cout << "==================================\n\n";
+//	std::cout << "Coordinate System: " << demInfo.ProjectionReference << std::endl;
+//	std::cout << "Rasters in-file: " << demInfo.RasterCount << std::endl;
+//	std::cout << "\nFor raster #1\n";
+//	std::cout << "Resolution: " << demInfo.x << " by " << demInfo.y << " pixels.\n";
+//	std::cout << "Data type: " << demInfo.RasterDataType << std::endl;
+//	std::cout << "Block size: " << demInfo.BlockSize_x << " by " << demInfo.BlockSize_y << " pixels.\n";
+//	std::cout << "Color interpretation: " << demInfo.ColorInterpretation << std::endl;
+//	std::cout << "Minimum value: " << demInfo.z_min << std::endl;
+//	std::cout << "Maximum value: " << demInfo.z_max << std::endl;
+//	if (demInfo.ColorEntryCount > 0)
+//	{
+//		std::cout << "Color table entries: " << demInfo.ColorEntryCount << std::endl;
+//	}
+//	else
+//	{
+//		std::cout << "Color table entries: N/A\n";
+//	}
+//	std::cout << "\nRaster Geographical Transforms:\n";
+//	std::cout << "Origin coordinates: " << std::setprecision(14) << demInfo.originx << ", " << demInfo.originy << "\n";
+//	std::cout << "Pixel Size: " << std::setprecision(14) << demInfo.PixelSize_x << " by " << demInfo.PixelSize_y << "\n";
+//	std::cout << "[Unsupported]: " << demInfo.geotransform_2 << ", " << demInfo.geotransform_4 << "\n"; //TODO geotransform 2 and 4
+//	std::cout << "[Border coordinates NW -> NE -> SE -> SW\n";
+//	std::cout << demInfo.NW_x << ", " << demInfo.NW_y << std::endl;
+//	std::cout << demInfo.NE_x << ", " << demInfo.NE_y << std::endl;
+//	std::cout << demInfo.SE_x << ", " << demInfo.SE_y << std::endl;
+//	std::cout << demInfo.SW_x << ", " << demInfo.SW_y << std::endl;
+//}
 
 void ProfileMaker::DisplayPathInfo()
 {
@@ -276,8 +234,8 @@ bool ProfileMaker::IsPathOOB()
 	if (isDebug)
 	{
 		std::cout << "Checking path OOB for DEM boundaries:" << std::endl;
-		std::cout << "Min = " << demInfo.SW_x << ", " << demInfo.SW_y << std::endl;
-		std::cout << "Max = " << demInfo.NE_x << ", " << demInfo.NE_y << std::endl;
+		std::cout << "Min = " << geoDetails.cornerSW[0] << ", " << geoDetails.cornerSW[1] << std::endl;
+		std::cout << "Max = " << geoDetails.cornerNE[0] << ", " << geoDetails.cornerNE[1] << std::endl;
 	}
 
 	if (isInterpolated)
@@ -287,11 +245,11 @@ bool ProfileMaker::IsPathOOB()
 			if (isDebug)
 				std::cout << "Testing vertex: " << profile_i[i][0] << ", " << profile_i[i][1] << std::endl;
 
-			if (profile_i[i][0] < demInfo.SW_x || profile_i[i][0] > demInfo.NE_x)
+			if (profile_i[i][0] < geoDetails.cornerSW[0] || profile_i[i][0] > geoDetails.cornerNE[0])
 			{
 				return true;
 			}
-			if (profile_i[i][1] < demInfo.SW_y || profile_i[i][2] > demInfo.NE_y)
+			if (profile_i[i][1] < geoDetails.cornerSW[1] || profile_i[i][2] > geoDetails.cornerNE[1])
 			{
 				return true;
 			}
@@ -304,11 +262,11 @@ bool ProfileMaker::IsPathOOB()
 			if (isDebug)
 				std::cout << "Testing vertex: " << profile[i][0] << ", " << profile[i][1] << std::endl;
 
-			if (profile[i][0] < demInfo.SW_x || profile[i][0] > demInfo.NE_x)
+			if (profile[i][0] < geoDetails.cornerSW[0] || profile[i][0] > geoDetails.cornerNE[0])
 			{
 				return true;
 			}
-			if (profile[i][1] < demInfo.SW_y || profile[i][2] > demInfo.NE_y)
+			if (profile[i][1] < geoDetails.cornerSW[1] || profile[i][2] > geoDetails.cornerNE[1])
 			{
 				return true;
 			}
@@ -320,11 +278,11 @@ bool ProfileMaker::IsPathOOB()
 
 bool ProfileMaker::IsPointOOB(double x, double y)
 {
-	if (x < demInfo.NW_x || x > demInfo.SE_x)
+	if (x < geoDetails.cornerSW[0] || x > geoDetails.cornerNE[0])
 	{
 		return false;
 	}
-	if (y > demInfo.NW_y || y < demInfo.SE_y)
+	if (y < geoDetails.cornerSW[1] || y >  geoDetails.cornerNE[1])
 	{
 		return false;
 	}
@@ -334,12 +292,12 @@ int ProfileMaker::CalculateProfile() //returning int for end state. 0: failure, 
 										//choice to calculate profile for paths that are partially within the provided DEM's boundaries.
 {
 	//in case dem is in UTM
-	if (demInfo.IsUTM && !isPathUTM)
+	if (geoDetails.modelType ==  1 && !isPathUTM) //Note that testing modelType == 1 guarantees that the DTM is "Projected," but not necessarily UTM. Must check the projectedCRS for that.
 	{
 		ConvertPathToUTM();
 		isPathUTM = true;
 	}
-	else if (!demInfo.IsUTM && isPathUTM)
+	else if (geoDetails.modelType != 1 && isPathUTM)
 	{
 		ConvertPathToWGS84();
 		isPathUTM = false;
@@ -360,17 +318,17 @@ int ProfileMaker::CalculateProfile() //returning int for end state. 0: failure, 
 
 	for (int i = 0; i < profile_i.Rows(); i++)
 	{
-		for (int j = 0; j < demInfo.y; j++)
+		for (int j = 0; j < tiffDetails.height; j++)
 		{
-			if (profile_i[i][1] > demInfo.originy + j * demInfo.PixelSize_y)
+			if (profile_i[i][1] > geoDetails.tiePoints[1][1] - j * geoDetails.pixelScale[1])
 			{
 				first_larger_y_order = j;
 				break;
 			}
 		}
-		for (int k = 0; k < demInfo.x; k++)
+		for (int k = 0; k < tiffDetails.width; k++)
 		{
-			if (profile_i[i][0] < demInfo.originx + k * demInfo.PixelSize_x)
+			if (profile_i[i][0] < geoDetails.tiePoints[1][0] + k * geoDetails.pixelScale[0])
 			{
 				first_larger_x_order = k;
 				break;
@@ -403,22 +361,22 @@ void ProfileMaker::CalculatePoint(double x, double y)
 	int first_larger_x_order, first_larger_y_order;
 	double A, B; //used as temp holders to clean up bilinear interp forumla
 
-	for (int j = 0; j < demInfo.y; j++)
+	for (int j = 0; j < tiffDetails.height; j++)
 	{
-		if (y > demInfo.originy + j * demInfo.PixelSize_y)
+		if (y >  geoDetails.tiePoints[1][1] - j * geoDetails.pixelScale[1])
 		{
-			boundingy[0] = demInfo.originy + (j - 1) * demInfo.PixelSize_y;
-			boundingy[1] = demInfo.originy + j * demInfo.PixelSize_y;
+			boundingy[0] = geoDetails.tiePoints[1][1] - (j - 1) * geoDetails.pixelScale[1];
+			boundingy[1] = geoDetails.tiePoints[1][1] - j * geoDetails.pixelScale[1];
 			first_larger_y_order = j;
 			break;
 		}
 	}
-	for (int k = 0; k < demInfo.x; k++)
+	for (int k = 0; k < tiffDetails.width; k++)
 	{
-		if (x < demInfo.originx + k * demInfo.PixelSize_x)
+		if (x < geoDetails.tiePoints[1][0] + k * geoDetails.pixelScale[0])
 		{
-			boundingx[0] = demInfo.originx + (k - 1) * demInfo.PixelSize_x;
-			boundingx[1] = demInfo.originx + k * demInfo.PixelSize_x;
+			boundingx[0] = geoDetails.tiePoints[1][0] + (k - 1) * geoDetails.pixelScale[0];
+			boundingx[1] = geoDetails.tiePoints[1][0] + k * geoDetails.pixelScale[0];
 			first_larger_x_order = k;
 			break;
 		}
@@ -703,8 +661,8 @@ float ProfileMaker::BilinearInterp(int first_larger_x, int first_larger_y, int p
 
 	for (int i = 0; i < 2; i++)
 	{
-		boundingx[i] = demInfo.originx + (first_larger_x - 1 + i) * demInfo.PixelSize_x;
-		boundingy[i] = demInfo.originy + (first_larger_y - 1 + i) * demInfo.PixelSize_y;
+		boundingx[i] = geoDetails.tiePoints[1][0] + (first_larger_x - 1 + i) * geoDetails.pixelScale[0];
+		boundingy[i] = geoDetails.tiePoints[1][1] - (first_larger_y - 1 + i) * geoDetails.pixelScale[1];
 	}
 
 	boundingz[0] = heightsGrid->GetValue(first_larger_y - 1, first_larger_x - 1);
@@ -735,8 +693,8 @@ float ProfileMaker::BicubicInterp(int first_larger_x, int first_larger_y, int po
 
 	for (int i = 0; i < 4; i++)
 	{
-		boundingx[i] = demInfo.originx + (first_larger_x - 2 + i) * demInfo.PixelSize_x;
-		boundingy[i] = demInfo.originy + (first_larger_y - 2 + i) * demInfo.PixelSize_y;
+		boundingx[i] = geoDetails.tiePoints[1][0] + (first_larger_x - 2 + i) * geoDetails.pixelScale[0];
+		boundingy[i] = geoDetails.tiePoints[1][1] - (first_larger_y - 2 + i) * geoDetails.pixelScale[1];
 		for (int j = 0; j < 4; j++)
 		{
 			boundingz[i][j] = heightsGrid->GetValue(first_larger_y - 2 + j, first_larger_x - 2 + i);
