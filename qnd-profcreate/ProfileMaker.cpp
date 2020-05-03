@@ -17,7 +17,6 @@ ProfileMaker::~ProfileMaker()
 {
 	profile.~Array2D();
 	profile_i.~Array2D();
-	//heightsGrid.~Array2D();
 
 	if (kmlParser != NULL)
 		delete kmlParser;
@@ -39,11 +38,12 @@ bool ProfileMaker::LoadDEM(std::string inDEMLoc)
 		std::cout << "Error! Could not load DEM file: " << inDEMLoc << std::endl;
 		return false;
 	}
-	
-	heightsGrid = GetPointerToBitmap();
-		
+			
 	//TODO check that geoDetails are set properly and to values this code supports.
 
+	DisplayTIFFDetailsOnCLI();
+	DisplayGeoTIFFDetailsOnCLI();
+	//DisplayBitmapOnCLI();
 
 	std::cout << "Successfully loaded DEM file: " << inDEMLoc << "\n\n";
 	return true;
@@ -123,39 +123,6 @@ bool ProfileMaker::LoadGeometry(std::string geometryPath)
 
 	return true;
 }
-
-//void ProfileMaker::DisplayDEMInfo()
-//{
-//	std::cout << "\n==================================";
-//	std::cout << "\n\tDEM info\n";
-//	std::cout << "==================================\n\n";
-//	std::cout << "Coordinate System: " << demInfo.ProjectionReference << std::endl;
-//	std::cout << "Rasters in-file: " << demInfo.RasterCount << std::endl;
-//	std::cout << "\nFor raster #1\n";
-//	std::cout << "Resolution: " << demInfo.x << " by " << demInfo.y << " pixels.\n";
-//	std::cout << "Data type: " << demInfo.RasterDataType << std::endl;
-//	std::cout << "Block size: " << demInfo.BlockSize_x << " by " << demInfo.BlockSize_y << " pixels.\n";
-//	std::cout << "Color interpretation: " << demInfo.ColorInterpretation << std::endl;
-//	std::cout << "Minimum value: " << demInfo.z_min << std::endl;
-//	std::cout << "Maximum value: " << demInfo.z_max << std::endl;
-//	if (demInfo.ColorEntryCount > 0)
-//	{
-//		std::cout << "Color table entries: " << demInfo.ColorEntryCount << std::endl;
-//	}
-//	else
-//	{
-//		std::cout << "Color table entries: N/A\n";
-//	}
-//	std::cout << "\nRaster Geographical Transforms:\n";
-//	std::cout << "Origin coordinates: " << std::setprecision(14) << demInfo.originx << ", " << demInfo.originy << "\n";
-//	std::cout << "Pixel Size: " << std::setprecision(14) << demInfo.PixelSize_x << " by " << demInfo.PixelSize_y << "\n";
-//	std::cout << "[Unsupported]: " << demInfo.geotransform_2 << ", " << demInfo.geotransform_4 << "\n"; //TODO geotransform 2 and 4
-//	std::cout << "[Border coordinates NW -> NE -> SE -> SW\n";
-//	std::cout << demInfo.NW_x << ", " << demInfo.NW_y << std::endl;
-//	std::cout << demInfo.NE_x << ", " << demInfo.NE_y << std::endl;
-//	std::cout << demInfo.SE_x << ", " << demInfo.SE_y << std::endl;
-//	std::cout << demInfo.SW_x << ", " << demInfo.SW_y << std::endl;
-//}
 
 void ProfileMaker::DisplayPathInfo()
 {
@@ -382,10 +349,10 @@ void ProfileMaker::CalculatePoint(double x, double y)
 		}
 	}
 
-	boundingz[0] = heightsGrid->GetValue(first_larger_y_order - 1, first_larger_x_order - 1); //flipped x and y
-	boundingz[1] = heightsGrid->GetValue(first_larger_y_order - 1, first_larger_x_order);
-	boundingz[2] = heightsGrid->GetValue(first_larger_y_order, first_larger_x_order);
-	boundingz[3] = heightsGrid->GetValue(first_larger_y_order, first_larger_x_order - 1);
+	boundingz[0] = GetSample(first_larger_x_order - 1, first_larger_y_order - 1, 0);
+	boundingz[1] = GetSample(first_larger_x_order, first_larger_y_order - 1, 0);
+	boundingz[2] = GetSample(first_larger_x_order, first_larger_y_order, 0);
+	boundingz[3] = GetSample(first_larger_x_order - 1, first_larger_y_order, 0);
 
 	if (isDebug)
 	{
@@ -533,91 +500,6 @@ void ProfileMaker::ResetProfile()
 	isCalculated = false;
 }
 
-//void ProfileMaker::SetDEMInfo()
-//{
-//
-//	if (demDataset == NULL)
-//	{
-//		std::cout << "ERROR! SetDEMInfo() called without a valid loaded demDataset" << std::endl;
-//		return;
-//	}
-//
-//	double temptransform[6];
-//	int min, max;
-//	double tempminmax[2];
-//
-//	if (demDataset->GetProjectionRef() != NULL)
-//	{
-//		demInfo.ProjectionReference = demDataset->GetProjectionRef();
-//	}
-//
-//	demInfo.x = demBand->GetXSize();
-//	demInfo.y = demBand->GetYSize();
-//
-//	demDataset->GetGeoTransform(temptransform);
-//	demInfo.originx = temptransform[0];
-//	demInfo.originy = temptransform[3];
-//	demInfo.PixelSize_x = temptransform[1];
-//	demInfo.PixelSize_y = temptransform[5];
-//	demInfo.geotransform_2 = temptransform[2]; //TODO change these values when you fix the related name thingy.
-//	demInfo.geotransform_4 = temptransform[4];
-//	demInfo.z_min = demBand->GetMinimum(&min);
-//	demInfo.z_max = demBand->GetMaximum(&max);
-//	if (!(min && max))
-//	{
-//		GDALComputeRasterMinMax((GDALRasterBandH)demBand, true, tempminmax);
-//		demInfo.z_min = tempminmax[0];
-//		demInfo.z_max = tempminmax[1];
-//	}
-//	demBand->GetBlockSize(&demInfo.BlockSize_x, &demInfo.BlockSize_y);
-//	demInfo.RasterCount = demDataset->GetRasterCount();
-//	demInfo.RasterDataType = GDALGetDataTypeName(demBand->GetRasterDataType());
-//	demInfo.OverviewCount = demBand->GetOverviewCount();
-//	demInfo.ColorInterpretation = GDALGetColorInterpretationName(demBand->GetColorInterpretation());
-//
-//	if (demBand->GetColorTable() != NULL)
-//	{
-//		demInfo.ColorEntryCount = demBand->GetColorTable()->GetColorEntryCount();
-//	}
-//	else
-//	{
-//		demInfo.ColorEntryCount = -1;
-//	}
-//
-//	//setting corner coords
-//	//Necessary?
-//	demInfo.NW_x = demInfo.originx;
-//	demInfo.NW_y = demInfo.originy;
-//
-//	demInfo.NE_x = demInfo.originx + demInfo.x * demInfo.PixelSize_x;
-//	demInfo.NE_y = demInfo.originy;
-//
-//	demInfo.SE_x = demInfo.originx + demInfo.x * demInfo.PixelSize_x;
-//	demInfo.SE_y = demInfo.originy + demInfo.y * demInfo.PixelSize_y;
-//
-//	demInfo.SW_x = demInfo.originx;
-//	demInfo.SW_y = demInfo.originy + demInfo.y * demInfo.PixelSize_y;
-//
-//	//checking whether its geographic or utm
-//	//note this implementation is risky, based on a very simple and short observation
-//
-//	std::string tempstring;
-//
-//	tempstring = demInfo.ProjectionReference;
-//
-//	//std::cout << "\n ********************* tempstring: " << tempstring.substr(0,6) << std::endl; //test
-//	if (tempstring.substr(0, 6) == "PROJCS")
-//	{
-//		demInfo.IsUTM = true;
-//		//demInfo.IsDecimal = false;
-//	}
-//	else
-//	{
-//		demInfo.IsUTM = false;
-//		//demInfo.IsDecimal = true;
-//	}
-//}
-
 FileFormat ProfileMaker::DetermineFileFormat(std::string geometryPath)
 {
 	//TODO consider having a const public method in each of the geometry parsing classes that only checks if the provided string is of said file type, which you loop over them here.
@@ -665,10 +547,10 @@ float ProfileMaker::BilinearInterp(int first_larger_x, int first_larger_y, int p
 		boundingy[i] = geoDetails.tiePoints[1][1] - (first_larger_y - 1 + i) * geoDetails.pixelScale[1];
 	}
 
-	boundingz[0] = heightsGrid->GetValue(first_larger_y - 1, first_larger_x - 1);
-	boundingz[1] = heightsGrid->GetValue(first_larger_y - 1, first_larger_x);
-	boundingz[2] = heightsGrid->GetValue(first_larger_y, first_larger_x);
-	boundingz[3] = heightsGrid->GetValue(first_larger_y, first_larger_x - 1);
+	boundingz[0] = GetSample(first_larger_x - 1, first_larger_y - 1, 0);
+	boundingz[1] = GetSample(first_larger_x, first_larger_y - 1, 0);
+	boundingz[2] = GetSample(first_larger_x, first_larger_y, 0);
+	boundingz[3] = GetSample(first_larger_x - 1, first_larger_y, 0);
 
 	A = boundingz[0] * CalculateDistance(boundingx[1], boundingy[0], profile_i[point_order][0], boundingy[0]) / CalculateDistance(boundingx[1], boundingy[0], boundingx[0], boundingy[0]) + boundingz[1] * CalculateDistance(profile_i[point_order][0], boundingy[0], boundingx[0], boundingy[0]) / CalculateDistance(boundingx[1], boundingy[0], boundingx[0], boundingy[0]);
 	B = boundingz[2] * CalculateDistance(boundingx[1], boundingy[1], profile_i[point_order][0], boundingy[1]) / CalculateDistance(boundingx[1], boundingy[1], boundingx[0], boundingy[1]) + boundingz[3] * CalculateDistance(profile_i[point_order][0], boundingy[1], boundingx[0], boundingy[1]) / CalculateDistance(boundingx[1], boundingy[1], boundingx[0], boundingy[1]);
@@ -697,7 +579,7 @@ float ProfileMaker::BicubicInterp(int first_larger_x, int first_larger_y, int po
 		boundingy[i] = geoDetails.tiePoints[1][1] - (first_larger_y - 2 + i) * geoDetails.pixelScale[1];
 		for (int j = 0; j < 4; j++)
 		{
-			boundingz[i][j] = heightsGrid->GetValue(first_larger_y - 2 + j, first_larger_x - 2 + i);
+			boundingz[i][j] = GetSample(first_larger_x - 2 + i, first_larger_y - 2 + j, 0);
 		}
 	}
 

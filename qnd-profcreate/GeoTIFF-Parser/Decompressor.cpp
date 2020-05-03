@@ -14,12 +14,14 @@
 //=====================================================================================================================================================================
 
 
-void SetBitmapPixel(int _uv[2], double * const _pixel, Array2D * const _bitMap)
+void SetBitmapPixel(int _uv[2], const double * const _pixel, Array2D * const _bitMap)
 {
 	for (int i = 0; i < tiffDetails.samplesPerPixel; i++)
 	{
 		_bitMap[_uv[0]][_uv[1]][i] = _pixel[i];
-		//std::cout << "Set sample: " << _uv[0] << ", " << _uv[1] << ", " << i << ": " << _pixel[i] << std::endl; //test
+		
+		//if (_uv[0] >= tiffDetails.width - 1 && _uv[1] >= tiffDetails.height - 1) //test
+			//std::cout << "Set sample: " << _uv[0] << ", " << _uv[1] << ", " << i << ": " << _pixel[i] << std::endl; //test
 	}
 }
 
@@ -34,7 +36,7 @@ double GetIntSampleCurrentStreamPosition() //ONLY FOR USE WITH UNCOMPRESSED DATA
 	return result;
 }
 
-double GetIntSamepleFromMemoryData(unsigned char * data, unsigned long int position)
+double GetIntSamepleFromMemoryData(const unsigned char * data, unsigned long int position)
 {
 	unsigned short int _bytesPerSample = tiffDetails.bitsPerSample / 8;
 	char * sample = new char[_bytesPerSample];
@@ -50,7 +52,7 @@ double GetIntSamepleFromMemoryData(unsigned char * data, unsigned long int posit
 	return result;
 }
 
-double GetFloatSampleFromMemoryData(unsigned char * data, unsigned long int position)
+double GetFloatSampleFromMemoryData(const unsigned char * data, unsigned long int position)
 {
 	unsigned short int _bytesPerSample = tiffDetails.bitsPerSample / 8;
 	char * sample = new char[_bytesPerSample];
@@ -72,7 +74,7 @@ double GetFloatSampleFromMemoryData(unsigned char * data, unsigned long int posi
 	return result;
 }
 
-double GetDoubleSampleFromMemoryData(unsigned char * data, unsigned long int position)
+double GetDoubleSampleFromMemoryData(const unsigned char * data, unsigned long int position)
 {
 	unsigned short int _bytesPerSample = tiffDetails.bitsPerSample / 8;
 	char * sample = new char[_bytesPerSample];
@@ -93,7 +95,7 @@ double GetDoubleSampleFromMemoryData(unsigned char * data, unsigned long int pos
 
 void ParseDecompressedDataFromMemory(int stripOrTileID,
 										Array2D * const _bitMap,
-										unsigned char * data, //data container.
+										const unsigned char * data, //raw data container.
 										unsigned long int noOfPixelsToParse, //For Compression = 1 TIFFs, this should equal the entire pixel count of the strip/tile.
 										unsigned long int firstPixelOrder = 0) //relative to the current strip/tile. Used for when parsing data mid-strip or mid-tile (like in uncompressed blocks in deflate streams.)
 {	
@@ -105,13 +107,13 @@ void ParseDecompressedDataFromMemory(int stripOrTileID,
 			//TODO wrap the xCoord and yCoord formulae bellow in an if-statement checking that the format is stripped image. And another if-statement (and of-course, do the math) for tiled images.
 	
 			int uv[2]; //coordinates of pixel in imagespace (x, y).
-			uv[0] = (stripOrTileID * tiffDetails.rowsPerStrip) + floor((float)i / (float)tiffDetails.width); //formerly: xCoord.
-			uv[1] = i % tiffDetails.width; //formerly: yCoord.
-	
+			uv[0] = i % tiffDetails.width; //xCoord
+			uv[1] = (stripOrTileID * tiffDetails.rowsPerStrip) + floor((float)i / (float)tiffDetails.width); //yCoord.
+
 			//TODO there is a bit in the references that states a tile/strip may contain data not used in the image (due to division issues), check how to handle that case and adjust the check bellow accordingly.
-			if (uv[0] > tiffDetails.width || uv[1] > tiffDetails.height)
+			if (uv[0] >= tiffDetails.width || uv[1] >= tiffDetails.height)
 			{
-				std::cout << "Found unused pixels." << std::endl;
+				std::cout << "Found unused pixels at i = " << i << std::endl;
 				return;
 			}
 
@@ -130,11 +132,9 @@ void ParseDecompressedDataFromMemory(int stripOrTileID,
 				case (3): //floating points
 					if (tiffDetails.bitsPerSample <= 32) //single precision floats (float).
 					{
-						//std::cout << "Float PackBits data combination not yet implemented" << std::endl;
 						pixel[j] = GetFloatSampleFromMemoryData(data, i + j);
 					}
 					else //double precision floats (double).
-						//std::cout << "Double PackBits data combination not yet implemented" << std::endl;
 						pixel[j] = GetDoubleSampleFromMemoryData(data, i + j);
 
 					break;
@@ -144,7 +144,6 @@ void ParseDecompressedDataFromMemory(int stripOrTileID,
 					break;
 				}
 			}
-	
 			SetBitmapPixel(uv, pixel, _bitMap);
 		}
 	
@@ -163,13 +162,13 @@ void ParseUncompressedStripOrTileData(int stripOrTileID,  Array2D * const _bitMa
 		//TODO wrap the xCoord and yCoord formulae bellow in an if-statement checking that the format is stripped image. And another if-statement (and of-course, do the math) for tiled images.
 
 		int uv[2]; //coordinates of pixel in imagespace (x, y).
-		uv[0] = (stripOrTileID * tiffDetails.rowsPerStrip) + floor((float)i / (float)tiffDetails.width); //formerly: xCoord.
-		uv[1] = i % tiffDetails.width; //formerly: yCoord.
+		uv[0] = i % tiffDetails.width; //xCoord.
+		uv[1] = (stripOrTileID * tiffDetails.rowsPerStrip) + floor((float)i / (float)tiffDetails.width); //yCoord.
 
 		//TODO there is a bit in the refences that states a tile/strip may contain data not used in the image (due to division issues), check how to handle that case and adjust the check bellow accordingly.
 		if (uv[0] > tiffDetails.width || uv[1] > tiffDetails.height)
 		{
-			std::cout << "Found unused pixels." << std::endl;
+			std::cout << "Found unused pixels at i = " << i << std::endl;
 			return;
 		}
 
@@ -210,11 +209,10 @@ void ParseUncompressedStripOrTileData(int stripOrTileID,  Array2D * const _bitMa
 	delete[] pixel;
 }
 
-
 //=====================================================================================================================================================================
 //-----------------------------------------Deflate
 //=====================================================================================================================================================================
-
+#pragma region Deflate Decompression
 unsigned short int noOfLiteralLengthCodes = 0, noOfDistanceCodes = 0, noOfCodeLengthCodes = 0;
 unsigned short int huffmanCodeLengthsLiterals[19] = {16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15};
 unsigned short int huffmanCodeLengths[19] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
@@ -805,48 +803,56 @@ void ParseDeflateStripOrTileData(int stripOrTileID, Array2D * const _bitMap)
 	ParseDecompressedDataFromMemory(stripOrTileID, _bitMap, _uncompressedRawData.get(), tiffDetails.noOfPixelsPerTileStrip, 0);
 	std::cout << "Finished decompression." << std::endl;
 }
-
+#pragma endregion
 //=====================================================================================================================================================================
 //-----------------------------------------PackBits
 //=====================================================================================================================================================================
-
+#pragma region PackBits Decompression
 void ParsePackBitsStripOrTileData(int stripOrTileID, Array2D * const _bitMap)
 {
-	std::cout << "Attempted to decompress PackBits data." << std::endl; //test
+	//std::cout << "Attempted to decompress PackBits data. Strip " << stripOrTileID << " of " << tiffDetails.noOfTilesOrStrips << std::endl; //test
 	stream.seekg(tiffDetails.tileStripOffset.get()[stripOrTileID]);
 
 	//estimate number of bytes we excpect to have
+	//I couldn't figure out the correct way to estimate the uncompressed byte count (the references aren't helpful), the loops bellow always overshoots the expected count. So I use 
+	//the logical estimate (noOfBytesInStrip), which is the maximum byte count the ParseDecompressedDataFromMemory() function will make use for anyway, and have a seperate buffer
+	//called noOfBytes, now set to 2x the logical est. and will be used to store the decompressed bytes. This is memory inefficient, but it works...
+
+	unsigned long int noOfBytesInStrip = tiffDetails.rowsPerStrip * (tiffDetails.width + 7) * tiffDetails.samplesPerPixel * tiffDetails.bitsPerSample / 8;
 	//unsigned long int noOfBytes = tiffDetails.noOfPixelsPerTileStrip * tiffDetails.samplesPerPixel * tiffDetails.bitsPerSample / 8;
-	unsigned long int noOfBytes = tiffDetails.height * (tiffDetails.width + 7) * tiffDetails.samplesPerPixel * tiffDetails.bitsPerSample / 8;
-	std::cout << "noOfBytes: " << noOfBytes << std::endl; //test
+	//unsigned long int noOfBytes = tiffDetails.rowsPerStrip * (tiffDetails.width + 7) * tiffDetails.samplesPerPixel * tiffDetails.bitsPerSample / 8;
+	unsigned long int noOfBytes =  2 * noOfBytesInStrip;
+	//std::cout << "noOfBytes: " << noOfBytes << std::endl; //test
+	//std::cout << "noOfBytesInStrip: " << noOfBytesInStrip << std::endl; //test
 
 	unsigned long int counter = 0; //counter is used to track of how many bytes we've extracted.
 	std::unique_ptr<unsigned char> uncompressedRawData = std::unique_ptr<unsigned char>(new unsigned char[noOfBytes]);
+	
+	
+
 	char _header; //Used only for the header. The bytes are read as signed characters, so we don't use our BytesToInt8() function as it casts the bytes as unsigned chars.
 
-	while (counter < noOfBytes)
+	while (counter < noOfBytesInStrip)
 	{
 		stream.read(&_header, sizeof(_header)); //read header and store in the direct use buffer without converting using BytesToInt8().
 		
-		unsigned char _byte;
-
 		if (_header >= 0 && _header <= 127)//read n+1 bytes.
 		{
-			for (int i = 0; i < _header + 1; i++)
-			{
-				stream.read((char*) &_byte, sizeof(_byte));
-				uncompressedRawData.get()[counter] = _byte;
-				counter++;
-			}
+			//Three approaches were tried here: 1: Have a loop that reads a single byte from file then assigns to to uncompressedRawData (slowest)
+			//2: Read a length of _header+1 from file, load it to memory, and have a loop copying from that memory to uncompressedRawData (faster)
+			//3: Read directly from file to uncompressedRawData (fastest, yet).
+
+			stream.read((char*)&uncompressedRawData.get()[counter], (unsigned short int)_header + 1);
+			counter += _header+1;
 		}
 		else if (_header <= -1 && _header >= -127) //read one byte, repeast 1 - n times.
 		{
+			unsigned char _byte;
 			stream.read((char*)&_byte, sizeof(_byte));
 			for (int i = 0; i < 1 - _header; i++)
-			{
-				uncompressedRawData.get()[counter] = _byte;
-				counter++;
-			}
+				uncompressedRawData.get()[counter + i] = _byte;
+				
+			counter += 1 - _header;
 		}
 		else if (_header > 127 || _header < -127)
 		{
@@ -854,11 +860,14 @@ void ParsePackBitsStripOrTileData(int stripOrTileID, Array2D * const _bitMap)
 		}
 		else
 		{
-			std::cout << "Packbits - NoOp." << std::endl;
+			//std::cout << "Packbits - NoOp." << std::endl;
 		}
 	}
 	
+	//std::cout << "counter: " << counter << std::endl;//test
+
 	ParseDecompressedDataFromMemory(stripOrTileID, _bitMap, uncompressedRawData.get(), tiffDetails.noOfPixelsPerTileStrip, 0);
 
-	std::cout << "Finished decompression." << std::endl;
+	//std::cout << "Finished decompression." << std::endl;
 }
+#pragma endregion

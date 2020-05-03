@@ -67,7 +67,6 @@ public:
 	void ResetDEM();
 
 private:
-	//void SetDEMInfo();
 	FileFormat DetermineFileFormat(std::string geometryPath);
 
 	float BilinearInterp(int, int, int);
@@ -85,17 +84,12 @@ private:
 	//Note that profile and profile_i are 4 column arrays, the first 3 are x, y, z coords, the last is the distance between each point and the previous one (equal to zero for first point).
 	Array2D profile;
 	Array2D profile_i;
-	const Array2D * heightsGrid;
 
 	bool isInterpolated;
 	bool isCalculated;
 	bool isPathUTM;
 	int pathZone = 36; //TODO reset this to an uninitialized variable
 	bool isPathInNorthernHemisphere = true;  //TODO reset this to an uninitialized variable
-
-	//GDALDataset * demDataset;
-	//GDALRasterBand * demBand;
-	//DEMInfo demInfo;
 
 	KMLParser * kmlParser;
 	SHPParser * shpParser;
