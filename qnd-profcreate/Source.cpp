@@ -18,7 +18,9 @@ void main(int argc, char *argv[])
 	/*SHPParser shp;
 	shp.LoadSHP("2.shp");*/
 	//std::string demLocation = "DEM.tif";
-	std::string demLocation = "dem_GCS.tif"; //test
+	//std::string demLocation = "dem_GCS.tif"; //test
+	//std::string demLocation = "wdem_uncomp.tif"; //test
+	std::string demLocation = "wdem_packbits.tif"; //test
 
 	argc = 2;//test
 	argv[1] = "2.shp";//test
