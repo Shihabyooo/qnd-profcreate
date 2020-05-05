@@ -1,4 +1,5 @@
 #include "main.h"
+#include "GUIHandler.h"
 
 bool isDebug = true;
 bool maintainBendLocations = false; //for when interpolating profile
@@ -15,6 +16,10 @@ void GenerateProfile(std::string geometryPath, float interpolationSteps);
 
 void main(int argc, char *argv[])
 {
+
+	int result = StartGUI();
+	std::cout << "GUI result: " << result; //test
+
 	/*SHPParser shp;
 	shp.LoadSHP("2.shp");*/
 	//std::string demLocation = "DEM.tif";

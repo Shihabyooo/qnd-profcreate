@@ -176,6 +176,7 @@
     <ClCompile Include="GeoTIFF-Parser\Decompressor.cpp" />
     <ClCompile Include="GeoTIFF-Parser\GeoTIFF_Parser.cpp" />
     <ClCompile Include="GeoTIFF-Parser\GeoTIFF_Parser_Globals.cpp" />
+    <ClCompile Include="GUIHandler.cpp" />
     <ClCompile Include="KML_Parser.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ProfileMaker.cpp" />
@@ -197,6 +198,7 @@
     <ClInclude Include="GeoTIFF-Parser\GeoTIFF_Parser.h" />
     <ClInclude Include="GeoTIFF-Parser\GeoTIFF_Parser_Globals.h" />
     <ClInclude Include="Globals.h" />
+    <ClInclude Include="GUIHandler.h" />
     <ClInclude Include="KML_Parser.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="ProfileMaker.h" />
