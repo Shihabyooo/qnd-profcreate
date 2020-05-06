@@ -10,7 +10,7 @@ void PopulateDrivesList()
 {
 	//std::cout << "Populating drives list" << std::endl;
 	unsigned long int driveMask = GetLogicalDrives();
-
+	availableDrives.clear();
 	for (int i = 0; i < 26; i++)
 	{
 		if (((unsigned char)driveMask & (unsigned long int)pow(2, i)) > 0)
@@ -144,18 +144,18 @@ std::vector<std::wstring> QuerryDirectoryContent(std::wstring path)
 	return content;
 }
 
-std::string RecursiveTree(std::wstring parentPath)
+std::string RecursiveTree(std::wstring parentPath, ImGuiTreeNodeFlags treeFlags)
 {
 	std::vector<std::wstring> dirContent = QuerryDirectoryContent(parentPath);
 	for (int j = 0; j < dirContent.size(); j++)
 	{
-		if (ImGui::TreeNode(ToUTF8(dirContent[j]).c_str()))
+		if (ImGui::TreeNodeEx(ToUTF8(dirContent[j]).c_str(), treeFlags))
 		{
 			if (ImGui::Button("Use This Directory"))
 			{
 				return ToUTF8(dirContent[j]);
 			}
-			RecursiveTree(dirContent[j]);
+			RecursiveTree(dirContent[j], treeFlags);
 		}
 	}
 
@@ -181,7 +181,8 @@ void SetOutputPath(std::string path)
 
 void CloseFileBrowser()
 {
-
+	//dirTree = std::unique_ptr<DirectoryNode>(nullptr);
+	//ImGui::CloseCurrentPopup();
 	isBrowserOpen = false;
 }
 
@@ -189,10 +190,13 @@ void DrawFileBrowser()
 {
 	if (!isBrowserOpen)
 		return;
-
-	if (ImGui::BeginPopupModal("Browse", &isBrowserOpen, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_AlwaysAutoResize))
+	if (ImGui::BeginPopupModal("Browse", &isBrowserOpen, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings))
 	{
-		if (ImGui::TreeNode("This Computer"))
+		//ImGui::SetNextItemOpen(false, ImGuiCond_Appearing);
+
+		ImGuiTreeNodeFlags treeFlags = ImGuiTreeNodeFlags_NoAutoOpenOnLog;
+
+		if (ImGui::TreeNodeEx("This Computer", treeFlags))
 		{
 			for (int i = 0; i < availableDrives.size(); i++)
 			{
@@ -200,9 +204,9 @@ void DrawFileBrowser()
 				drivePath += availableDrives[i];
 				drivePath += L":\\";
 
-				if (ImGui::TreeNode(ToUTF8(drivePath).c_str()))
+				if (ImGui::TreeNodeEx(ToUTF8(drivePath).c_str(), treeFlags))
 				{
-					std::string result = RecursiveTree(drivePath);
+					std::string result = RecursiveTree(drivePath, treeFlags);
 					if (result.length() > 0)
 					{
 						SetOutputPath(result);
@@ -212,6 +216,7 @@ void DrawFileBrowser()
 			}
 			ImGui::TreePop();
 		}
+		ImGui::Separator();
 		ImGui::EndPopup();
 	}
 }

@@ -158,15 +158,7 @@ void DrawMainWindow()
 	ImGui::Text("Geometry Sources");
 
 	static char filePath[MAX_PATH] = "test";
-	int extensionBegin = -1, pathSize = -1;
-	//for (int i = MAX_PATH - 1; i >= 0; i--) { if (filePath[i] != '\0' && filePath[i] != ' ') { pathSize = i; break; } } //find path length
-	//for (int i = pathSize; i >= 0; i--) { if (filePath[i] == '.') { extensionBegin = i; break; } } //find extension begining 
-	//std::cout << "PathSize: " << pathSize << ", extensionBegin: " << extensionBegin << std::endl;
-	//if (extensionBegin < 0 && pathSize + 4 < MAX_PATH) { filePath[pathSize+1] = '.'; filePath[pathSize + 2] = 'd'; filePath[pathSize+3] = 'a'; filePath[pathSize+4] = 't';}
-	//std::cout << filePath << std::endl;
 	ImGui::InputText("File Path", filePath, IM_ARRAYSIZE(filePath));
-	//for (int i = MAX_PATH - 1; i >= 0; i--) { if (filePath[i] != '\0' && filePath[i] != ' ' && filePath[i] != '\3') { std::cout << "end at:" << i << std::endl; break; } if (filePath[i] == ' ' || filePath[i] == '\3') { filePath[i] = '\0'; } } //sanitize output (InputText does not set chars to \0 when reducing size of text)
-	//std::cout << filePath << std::endl;
 
 	if (ImGui::Button("Browse for directory"))
 	{
