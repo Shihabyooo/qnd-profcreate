@@ -14,49 +14,53 @@ ProfileMaker instance;
 void GenerateProfile(std::string geometryPath, float interpolationSteps);
 
 
-void main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 
 	int result = StartGUI();
 	std::cout << "GUI result: " << result; //test
 
-	/*SHPParser shp;
-	shp.LoadSHP("2.shp");*/
-	//std::string demLocation = "DEM.tif";
-	//std::string demLocation = "dem_GCS.tif"; //test
-	//std::string demLocation = "wdem_uncomp.tif"; //test
-	std::string demLocation = "wdem_packbits.tif"; //test
-
-	argc = 2;//test
-	argv[1] = "2.shp";//test
-	//argv[2] = "ATEST_GEO_GEART.kml";//test
-	
-	std::cout << "\n Enter Interpolation steps: ";
-	float interpolationStep = 100.0f;
-	std::cin >> interpolationStep;
-	
-	std::cout << "\nLoading DEM\n\n";
-	if (!instance.LoadDEM(demLocation))
-	{
-		std::cout << "\nPress enter to exit.";
-		std::cin.sync();
-		std::cin.get();
-		exit(0);
-	}
-	std::cout << "\nDEM Info\n\n";
-	//instance.DisplayDEMInfo();
-
-	for (int i = 1; i < argc; i++)
-	{
-		std::string geometryPath = argv[i];
-		GenerateProfile(geometryPath, interpolationStep);
-		std::cout << "Finished extracting profile for " << geometryPath << std::endl;
-	}
 
 
-	std::cout << "\n\nPress Enter to continue";
-	//std::cin.sync();
-	//std::cin.get();
+	///*SHPParser shp;
+	//shp.LoadSHP("2.shp");*/
+	////std::string demLocation = "DEM.tif";
+	////std::string demLocation = "dem_GCS.tif"; //test
+	////std::string demLocation = "wdem_uncomp.tif"; //test
+	//std::string demLocation = "wdem_packbits.tif"; //test
+	//
+	//argc = 2;//test
+	//argv[1] = "2.shp";//test
+	////argv[2] = "ATEST_GEO_GEART.kml";//test
+	//
+	//std::cout << "\n Enter Interpolation steps: ";
+	//float interpolationStep = 100.0f;
+	//std::cin >> interpolationStep;
+	//
+	//std::cout << "\nLoading DEM\n\n";
+	//if (!instance.LoadDEM(demLocation))
+	//{
+	//	std::cout << "\nPress enter to exit.";
+	//	std::cin.sync();
+	//	std::cin.get();
+	//	exit(0);
+	//}
+	//std::cout << "\nDEM Info\n\n";
+	////instance.DisplayDEMInfo();
+	//
+	//for (int i = 1; i < argc; i++)
+	//{
+	//	std::string geometryPath = argv[i];
+	//	GenerateProfile(geometryPath, interpolationStep);
+	//	std::cout << "Finished extracting profile for " << geometryPath << std::endl;
+	//}
+	//
+	//
+	//std::cout << "\n\nPress Enter to continue";
+	////std::cin.sync();
+	////std::cin.get();
+
+	return result;
 }
 
 void GenerateProfile(std::string geometryPath, float interpolationSteps)

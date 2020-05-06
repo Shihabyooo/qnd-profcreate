@@ -95,6 +95,7 @@
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(DXSDK_DIR)Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ShowIncludes>false</ShowIncludes>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -113,6 +114,7 @@
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(DXSDK_DIR)Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ShowIncludes>false</ShowIncludes>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -133,6 +135,7 @@
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(DXSDK_DIR)Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ShowIncludes>false</ShowIncludes>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -155,6 +158,7 @@
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(DXSDK_DIR)Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ShowIncludes>false</ShowIncludes>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -173,6 +177,7 @@
     <ClCompile Include="DearIMGUI\imgui_widgets.cpp" />
     <ClCompile Include="DearIMGUI\Implementation\imgui_impl_dx11.cpp" />
     <ClCompile Include="DearIMGUI\Implementation\imgui_impl_win32.cpp" />
+    <ClCompile Include="FilesystemBrowser.cpp" />
     <ClCompile Include="GeoTIFF-Parser\Decompressor.cpp" />
     <ClCompile Include="GeoTIFF-Parser\GeoTIFF_Parser.cpp" />
     <ClCompile Include="GeoTIFF-Parser\GeoTIFF_Parser_Globals.cpp" />
@@ -194,6 +199,7 @@
     <ClInclude Include="DearIMGUI\imstb_rectpack.h" />
     <ClInclude Include="DearIMGUI\imstb_textedit.h" />
     <ClInclude Include="DearIMGUI\imstb_truetype.h" />
+    <ClInclude Include="FilesystemBrowser.h" />
     <ClInclude Include="GeoTIFF-Parser\Decompressor.h" />
     <ClInclude Include="GeoTIFF-Parser\GeoTIFF_Parser.h" />
     <ClInclude Include="GeoTIFF-Parser\GeoTIFF_Parser_Globals.h" />
