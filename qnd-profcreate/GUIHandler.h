@@ -10,7 +10,7 @@
 #include <dinput.h>
 #include <tchar.h>
 #include <wchar.h>
-#include "FilesystemBrowser.h"
+#include "MainWindow.h"
 
 
 #define PROGRAMNAME		_T("QnD_ProfCreate")
