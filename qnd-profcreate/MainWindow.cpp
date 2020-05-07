@@ -2,17 +2,13 @@
 
 
 std::unique_ptr<bool> selectedGeometry;
-std::unique_ptr<std::string> geometryNames;
-
-
-
+std::vector<std::string> geometryNames;
+bool defaulSelectionState = true;
 
 void DrawGeometryList()
 {
-
+	//std::cout 
 }
-
-
 
 void DrawMainWindow()
 {
@@ -45,7 +41,7 @@ void DrawMainWindow()
 
 	if (ImGui::Button("Browse for directory"))
 	{
-		OpenFileBrowser(filePath, geometryNames.get(), DataType::geometry);
+		OpenFileBrowser(filePath, &geometryNames, selectedGeometry.get(), DataType::geometry);
 	}
 
 	DrawFileBrowser();

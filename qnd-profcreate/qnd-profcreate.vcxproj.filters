@@ -90,6 +90,9 @@
     <ClCompile Include="FilesystemBrowser.cpp">
       <Filter>GUI</Filter>
     </ClCompile>
+    <ClCompile Include="MainWindow.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h">
@@ -150,6 +153,9 @@
       <Filter>GUI</Filter>
     </ClInclude>
     <ClInclude Include="FilesystemBrowser.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="MainWindow.h">
       <Filter>GUI</Filter>
     </ClInclude>
   </ItemGroup>

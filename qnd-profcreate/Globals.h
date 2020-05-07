@@ -10,6 +10,7 @@
 #define WGS84_ELIPSOID_FLATTENING (double)(1.0f/298.257223563f)
 
 extern bool isDebug;
+extern bool defaulSelectionState;
 
 enum class DataType
 {

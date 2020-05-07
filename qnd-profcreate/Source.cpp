@@ -1,5 +1,4 @@
 #include "main.h"
-#include "GUIHandler.h"
 
 bool isDebug = true;
 bool maintainBendLocations = false; //for when interpolating profile

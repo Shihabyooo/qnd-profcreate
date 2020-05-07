@@ -4,7 +4,9 @@ std::vector<char> availableDrives;
 std::unique_ptr<DirectoryNode> dirTree = std::unique_ptr<DirectoryNode>(nullptr);
 bool isBrowserOpen = false;
 char * browserOutPath = NULL;
-
+DataType currentTargetType;
+std::vector<std::string> * fileList;
+bool * selectionFlags;
 
 void PopulateDrivesList()
 {
@@ -152,10 +154,9 @@ std::string RecursiveTree(std::wstring parentPath, ImGuiTreeNodeFlags treeFlags)
 		if (ImGui::TreeNodeEx(ToUTF8(dirContent[j]).c_str(), treeFlags))
 		{
 			if (ImGui::Button("Use This Directory"))
-			{
 				return ToUTF8(dirContent[j]);
-			}
-			RecursiveTree(dirContent[j], treeFlags);
+			
+			return RecursiveTree(dirContent[j], treeFlags);
 		}
 	}
 
@@ -179,10 +180,34 @@ void SetOutputPath(std::string path)
 		browserOutPath[i] = '\0';
 }
 
+void UpdateFileList(std::string directoryPath)
+{
+	UpdateFileList(directoryPath, fileList, selectionFlags, currentTargetType);
+}
+
+void UpdateFileList(std::string directoryPath, std::vector<std::string> * _fileList, bool * _selectionFlags, DataType _dataType) //This function will be called in MainWindo in the future.
+{
+	std::vector<std::wstring> content;
+
+	for (auto& entry : std::filesystem::directory_iterator(directoryPath))
+	{
+		if (!entry.is_directory())
+		{
+			if (CheckFileFormatSupport(ToUTF8(entry.path().wstring()), currentTargetType))
+				fileList->push_back(ToUTF8(entry.path().wstring()));
+		}
+	}
+
+	selectionFlags = new bool[fileList->size()];
+	for (int i = 0; i < fileList->size(); i++)
+		selectionFlags[i] = defaulSelectionState;
+}
+
 void CloseFileBrowser()
 {
 	//dirTree = std::unique_ptr<DirectoryNode>(nullptr);
 	//ImGui::CloseCurrentPopup();
+
 	isBrowserOpen = false;
 }
 
@@ -190,10 +215,15 @@ void DrawFileBrowser()
 {
 	if (!isBrowserOpen)
 		return;
-	if (ImGui::BeginPopupModal("Browse", &isBrowserOpen, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings))
+
+	ImGui::SetNextWindowPos(ImVec2(515, 10), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(300, 750), ImGuiCond_FirstUseEver);
+
+	//if (ImGui::BeginPopupModal("Browse", &isBrowserOpen, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings))
+	if (ImGui::BeginPopupModal("Browse", &isBrowserOpen, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoSavedSettings))
 	{
 		//ImGui::SetNextItemOpen(false, ImGuiCond_Appearing);
-
+		
 		ImGuiTreeNodeFlags treeFlags = ImGuiTreeNodeFlags_NoAutoOpenOnLog;
 
 		if (ImGui::TreeNodeEx("This Computer", treeFlags))
@@ -210,6 +240,7 @@ void DrawFileBrowser()
 					if (result.length() > 0)
 					{
 						SetOutputPath(result);
+						UpdateFileList(result);
 						CloseFileBrowser();
 					}
 				}
@@ -230,10 +261,14 @@ std::string ToUTF8(std::wstring wideString)
 	return result;
 }
 
-void OpenFileBrowser(char * outPath)
+void OpenFileBrowser(char * outPath, std::vector<std::string> * fileListBuffer, bool * selectionFlagsBuffer, DataType dataType) 
 {
 	isBrowserOpen = true;
 	browserOutPath = outPath;
+	currentTargetType = dataType;
+	fileList = fileListBuffer;
+	selectionFlags = selectionFlagsBuffer;
+
 	ImGui::OpenPopup("Browse");
 	PopulateDrivesList();
 }

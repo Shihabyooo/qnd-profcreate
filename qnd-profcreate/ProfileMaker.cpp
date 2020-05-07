@@ -34,8 +34,6 @@ bool CheckFileFormatSupport(std::string path, DataType dataType)
 	return false;
 }
 
-
-
 ProfileMaker::ProfileMaker()
 {
 	//GDALRegister_GTiff();

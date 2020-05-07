@@ -1,5 +1,4 @@
 #pragma once
-
 #include <wchar.h>
 #include <vector>
 #include <filesystem>
@@ -7,7 +6,8 @@
 #include <iostream>
 
 #include "imgui.h"
-
+#include "ProfileMaker.h"
+#include "Globals.h"
 
 class DirectoryNode
 {
@@ -42,4 +42,5 @@ public: //TODO rewrite this code to protect variables, add getters of const poin
 
 std::string ToUTF8(std::wstring wideString);
 void DrawFileBrowser();
-void OpenFileBrowser(char * outPath);
+void OpenFileBrowser(char * outPath, std::vector<std::string> * fileListBuffer, bool * selectionFlagsBuffer, DataType dataType);
+void UpdateFileList(std::string directoryPath, std::vector<std::string> * _fileList, bool * _selectionFlags, DataType _dataType);
