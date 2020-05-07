@@ -11,8 +11,6 @@
 #include "SHP_Parser.h"
 #include "Globals.h"
 
-
-
 //struct DEMInfo
 //{
 //	int x, y;
@@ -37,6 +35,9 @@
 //	bool IsUTM;
 //	bool WGS84;
 //};
+
+extern std::string supportedGeometryFormats[];
+extern std::string supportedDEMFormats[];
 
 class ProfileMaker
 {
@@ -96,3 +97,5 @@ private:
 	//CSVParser * csvParser;
 	FileParser * geometryParser;
 };
+
+bool CheckFileFormatSupport(std::string path, DataType dataType);

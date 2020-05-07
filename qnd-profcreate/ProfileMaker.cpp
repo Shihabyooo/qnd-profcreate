@@ -1,5 +1,40 @@
 #include "ProfileMaker.h"
 
+std::string supportedGeometryFormats[] = { ".shp", ".kml" };
+std::string supportedDEMFormats[] = { ".tif" };
+
+
+bool CheckFileFormatSupport(std::string path, DataType dataType)
+{
+	if (path.length() < 4)
+		return false;
+
+	std::string extension = path.substr(path.length() - 4, 4);
+	
+	switch (dataType)
+	{
+	case DataType::dem:
+		for each (std::string _extension in supportedDEMFormats)
+		{
+			if (extension == _extension)
+				return true;
+		}
+		break;
+	case DataType::geometry:
+		for each (std::string _extension in supportedGeometryFormats)
+		{
+			if (extension == _extension)
+				return true;
+		}
+		break;
+	default:
+		return false;
+	}
+	
+	return false;
+}
+
+
 
 ProfileMaker::ProfileMaker()
 {

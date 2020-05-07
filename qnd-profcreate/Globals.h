@@ -11,6 +11,11 @@
 
 extern bool isDebug;
 
+enum class DataType
+{
+	dem, geometry
+};
+
 enum FileFormat
 {
 	shapeFile, kml, csv, unsupported
@@ -20,6 +25,8 @@ enum class CRS
 {
 	WGS84, UTM, undefined
 };
+
+
 
 class FileParser
 {
