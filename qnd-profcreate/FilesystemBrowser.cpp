@@ -6,7 +6,7 @@ bool isBrowserOpen = false;
 char * browserOutPath = NULL;
 DataType currentTargetType;
 std::vector<std::string> * fileList;
-bool * selectionFlags;
+std::unique_ptr<bool> * selectionFlags;
 
 void PopulateDrivesList()
 {
@@ -29,6 +29,38 @@ void PopulateDrivesList()
 		_drives.push_back(drivePath);
 	}
 	dirTree = std::unique_ptr<DirectoryNode>(new DirectoryNode(L"Root", _drives));
+}
+
+
+//Note: both overloads of IsDirectoryAccessible() are exactly the same inside, at first, I considered having the wstring one have one line: return IsDirectoryAccessible(ToUTF8(path));, but that might cause issues
+//TODO research this.
+bool IsDirectoryAccessible(std::string path) //used to filter out inaccessabile directories, such as those the OS denies access to.
+{
+	try
+	{
+		std::filesystem::directory_iterator it = std::filesystem::directory_iterator(path);
+	}
+	catch (std::filesystem::filesystem_error)
+	{
+		std::cout << "Exception caught when attempting to access directory: " << path.c_str() << ". Access Denied?" << std::endl;
+		return false;
+	}
+	return true;
+}
+
+bool IsDirectoryAccessible(std::wstring path) //used to filter out inaccessabile directories, such as those the OS denies access to.
+{
+	try
+	{
+		std::filesystem::directory_iterator it = std::filesystem::directory_iterator(path);
+	}
+	catch (std::filesystem::filesystem_error)
+	{
+		std::cout << "Exception caught when attempting to access directory: " << ToUTF8(path.c_str()) << ". Access Denied?" << std::endl;
+		return false;
+	}
+
+	return true;
 }
 
 DirectoryNode * TraverseDirectoryTree(std::wstring path)
@@ -129,10 +161,11 @@ std::vector<std::wstring> QuerryDirectoryContent(std::wstring path)
 	if (node == NULL)
 	{
 		//std::cout << "Adding new data for path: " << ToUTF8(path).c_str() << std::endl; //test
+		//for (auto& entry : std::filesystem::directory_iterator(path, std::filesystem::directory_options::none | std::filesystem::directory_options::skip_permission_denied))
 		for (auto& entry : std::filesystem::directory_iterator(path))
 		{
 			//std::cout << "FileSystem result: " << ToUTF8(entry.path().wstring()).c_str() << std::endl; //test
-			if (entry.is_directory())
+			if (entry.is_directory() && IsDirectoryAccessible(entry.path().wstring()))
 				content.push_back((entry.path().wstring() + L"\\"));
 		}
 		AddNode(path, content);
@@ -151,17 +184,23 @@ std::string RecursiveTree(std::wstring parentPath, ImGuiTreeNodeFlags treeFlags)
 	std::vector<std::wstring> dirContent = QuerryDirectoryContent(parentPath);
 	for (int j = 0; j < dirContent.size(); j++)
 	{
+
 		if (ImGui::TreeNodeEx(ToUTF8(dirContent[j]).c_str(), treeFlags))
 		{
 			if (ImGui::Button("Use This Directory"))
 				return ToUTF8(dirContent[j]);
 			
-			return RecursiveTree(dirContent[j], treeFlags);
+			std::string result = RecursiveTree(dirContent[j], treeFlags);
+			
+			if (result.length() > 0)
+				return result;
 		}
-	}
 
+	}
+	
 	ImGui::TreePop();
-	return std::string();
+
+	return "";
 }
 
 void SetOutputPath(std::string path)
@@ -185,22 +224,49 @@ void UpdateFileList(std::string directoryPath)
 	UpdateFileList(directoryPath, fileList, selectionFlags, currentTargetType);
 }
 
-void UpdateFileList(std::string directoryPath, std::vector<std::string> * _fileList, bool * _selectionFlags, DataType _dataType) //This function will be called in MainWindo in the future.
+void UpdateFileList(std::string directoryPath, std::vector<std::string> * _fileList, std::unique_ptr<bool> * _selectionFlags, DataType _dataType) //This function will be called in MainWindow in the future.
 {
-	std::vector<std::wstring> content;
+	//std::cout << "Checking directory: " << directoryPath.c_str()  << std::endl;//test
 
+	//if (!std::filesystem::is_directory(directoryPath))// || !IsDirectoryAccessible(directoryPath));
+	if (!IsDirectoryAccessible(directoryPath) || !std::filesystem::is_directory(directoryPath) || directoryPath.length() < 3)
+		return;
+
+	_fileList->clear();
 	for (auto& entry : std::filesystem::directory_iterator(directoryPath))
 	{
-		if (!entry.is_directory())
+		//std::cout << CheckFileFormatSupport(ToUTF8(entry.path().wstring()), _dataType) << std::endl;
+		if (entry.is_regular_file() && CheckFileFormatSupport(ToUTF8(entry.path().wstring()), _dataType))
+			_fileList->push_back(ToUTF8(entry.path().wstring()));
+	}
+
+	//if (_fileList->size() > 0)
+	{
+		*_selectionFlags = std::unique_ptr<bool>(new bool[_fileList->size()]);
+
+		for (int i = 0; i < _fileList->size(); i++)
+			_selectionFlags->get()[i] = defaulSelectionState;
+	}
+}
+
+std::string ExtractFileName(std::string path)
+{
+	std::string name;
+
+	int counter = 0;
+	for (int i = path.length() - 1; i >= 0; i--)
+	{
+		if (path[i] == '\\')
 		{
-			if (CheckFileFormatSupport(ToUTF8(entry.path().wstring()), currentTargetType))
-				fileList->push_back(ToUTF8(entry.path().wstring()));
+			counter = i;
+			break;
 		}
 	}
 
-	selectionFlags = new bool[fileList->size()];
-	for (int i = 0; i < fileList->size(); i++)
-		selectionFlags[i] = defaulSelectionState;
+	if (counter == 0)
+		return "";
+
+	return path.substr(counter + 1, path.length() - counter - 1);
 }
 
 void CloseFileBrowser()
@@ -261,7 +327,7 @@ std::string ToUTF8(std::wstring wideString)
 	return result;
 }
 
-void OpenFileBrowser(char * outPath, std::vector<std::string> * fileListBuffer, bool * selectionFlagsBuffer, DataType dataType) 
+void OpenFileBrowser(char * outPath, std::vector<std::string> * fileListBuffer, std::unique_ptr<bool> * selectionFlagsBuffer, DataType dataType) 
 {
 	isBrowserOpen = true;
 	browserOutPath = outPath;
