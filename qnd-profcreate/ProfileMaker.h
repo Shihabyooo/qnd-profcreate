@@ -39,6 +39,10 @@
 extern std::string supportedGeometryFormats[];
 extern std::string supportedDEMFormats[];
 
+extern std::vector<std::string> geometryList;
+extern std::string demLocation;
+
+
 class ProfileMaker
 {
 public:

@@ -3,6 +3,8 @@
 std::string supportedGeometryFormats[] = { ".shp", ".kml" };
 std::string supportedDEMFormats[] = { ".tif" };
 
+std::vector<std::string> geometryList;
+std::string demLocation;
 
 bool CheckFileFormatSupport(std::string path, DataType dataType)
 {
@@ -103,15 +105,15 @@ bool ProfileMaker::LoadGeometry(std::string geometryPath)
 	{
 		switch (format)
 		{
-		case shapeFile:
+		case FileFormat::shapeFile:
 			shpParser = new SHPParser();
 			geometryParser = shpParser;
 			break;
-		case kml:
+		case FileFormat::kml:
 			kmlParser = new KMLParser();
 			geometryParser = kmlParser;
 			break;
-		case csv:
+		case FileFormat::csv:
 			//csvParser = new CSVParser();
 			//geometryParser = csvParser;
 			break;

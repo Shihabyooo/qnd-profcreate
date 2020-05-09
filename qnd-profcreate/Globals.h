@@ -17,17 +17,20 @@ enum class DataType
 	dem, geometry
 };
 
-enum FileFormat
+enum class FileFormat
 {
 	shapeFile, kml, csv, unsupported
+};
+
+enum class InterpolationMethods
+{
+	nearestNeighbour, bilinear, bicubic
 };
 
 enum class CRS
 {
 	WGS84, UTM, undefined
 };
-
-
 
 class FileParser
 {
