@@ -81,7 +81,7 @@ void GenerateProfile(std::string geometryPath, float interpolationSteps)
 	if (isDebug)
 	{
 		std::cout << "\nBefore interpolation\n\n";
-		instance.DisplayPathInfo();
+		instance.DisplayPath();
 	}
 
 	std::cout << "\nInterpolating Profile\n\n";
@@ -93,11 +93,11 @@ void GenerateProfile(std::string geometryPath, float interpolationSteps)
 	if (isDebug)
 	{
 		std::cout << "\nAfter Z calculations\n\n";
-		instance.DisplayPathInfo();
+		instance.DisplayPath();
 	}
 
 	std::cout << "\nWriting\n\n";
-	instance.WriteProfile(outputPath);
+	instance.WriteProfileToDisk(outputPath, false);
 
 	std::cout << "\nPrepping for Next Path\n\n";
 	instance.ResetProfile();
