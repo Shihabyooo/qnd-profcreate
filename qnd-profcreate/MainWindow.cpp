@@ -8,6 +8,8 @@ std::unique_ptr<bool> selectedDEM;
 std::vector<std::string> geometryNames;
 std::vector<std::string> demNames;
 bool defaulSelectionState = true;
+double chainageSteps = 0.0f;
+bool mainatainBends = false;
 
 void DrawFileList(char * filePath, std::vector<std::string> * fileNames, std::unique_ptr<bool> * selectionStates, DataType dataType)
 {	
@@ -27,6 +29,68 @@ void DrawFileList(char * filePath, std::vector<std::string> * fileNames, std::un
 
 	ImGui::Separator();
 }
+
+bool CheckSelectionValidity()
+{
+	//check that geometry files are loaded to file list
+	if (geometryNames.size() < 1)// || demNames.size() < 1)
+	{
+		std::cout << "ERROR! At least one geometry file must be provided." << std::endl;
+		return false;
+	}
+	
+	//check dem files are loaded to file list
+	if (demNames.size() < 1)
+	{
+		std::cout << "ERROR! A DEM file must be provided." << std::endl;
+		return false;
+	}
+
+	//check that at least one geometry file from file list is selected
+	for (int i = 0; i < geometryNames.size(); i++)
+	{
+		if (selectedGeometry.get()[i] == true)
+			break;
+		else if (i == geometryNames.size() - 1)//reached last element and none are selected
+		{
+			std::cout << "ERROR! At least one geometry file must be selected." << std::endl;
+			return false;	
+		}
+	}
+
+	//check that a dem file from file list is selected.
+	for (int i = 0; i < demNames.size(); i++)
+	{
+		if (selectedDEM.get()[i] == true)
+			break;
+		else if (i == demNames.size() - 1)
+		{
+			std::cout << "ERROR! A DEM file must be selected." << std::endl;
+			return false;
+		}
+	}
+
+	//check that chainageSteps is set > 0.0f
+	if (chainageSteps < 0.001f)
+	{
+		std::cout << "ERROR! Chainage Steps is set to a very small value or zero." << std::endl;
+		return false;
+	}
+
+
+	//if we reached here, means all input are set and ok (at GUI level).
+	return true;
+}
+
+void BeginProcessing()
+{
+	if (!CheckSelectionValidity())
+		return;
+
+
+
+}
+
 
 void DrawMainWindow()
 {
@@ -50,9 +114,10 @@ void DrawMainWindow()
 	}
 
 	ImGui::Text("QnD Profile Creator v.0.x.x");
-	ImGui::Spacing();
-
 	ImGui::Separator();
+	ImGui::NewLine();
+
+	//Geometry data
 	ImGui::Text("Geometry Sources");
 	ImGui::InputText("Geometry File Path", geometryFilePath, IM_ARRAYSIZE(geometryFilePath));
 
@@ -61,21 +126,30 @@ void DrawMainWindow()
 	
 	DrawFileBrowser();
 	DrawFileList(geometryFilePath, &geometryNames, &selectedGeometry, DataType::geometry);
+	ImGui::NewLine();
 
-	ImGui::Separator();
+	//DEM data
 	ImGui::Text("DEM");
 	ImGui::InputText("DEM File Path", demFilePath, IM_ARRAYSIZE(demFilePath));
 
 	if (ImGui::Button("Browse for DEM directory"))
 		OpenFileBrowser(demFilePath, &demNames, &selectedDEM, DataType::dem);
-	////DrawFileBrowser(); //The call is already made above...
+	//DrawFileBrowser(); //The call is already made above...
 	DrawFileList(demFilePath, &demNames, &selectedDEM, DataType::dem);
+	ImGui::NewLine();
 
-	ImGui::Spacing();
-	ImGui::Spacing();
+	//Other data
+	static char chainageStepsBuffer[11] = "";
+	ImGui::PushItemWidth(85);
+	ImGui::InputText("Chainage Steps", chainageStepsBuffer, 11, ImGuiInputTextFlags_CharsDecimal);
+	chainageSteps = atof(chainageStepsBuffer);
+	ImGui::Checkbox("Maintain Path Bends", &mainatainBends);
 
 	
-	ImGui::Button("Process!", ImVec2(100, 50));
+	ImGui::NewLine();
+	ImGui::NewLine();
+	if (ImGui::Button("Process!", ImVec2(100, 50)))
+		BeginProcessing();
 
 	ImGui::End();
 }
