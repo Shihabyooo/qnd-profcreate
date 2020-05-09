@@ -5,6 +5,7 @@
 HWND windowHandle;
 WNDCLASSEX windowClass;
 ImVec4 clearColour;
+int defaultWindowSize[2] = { 1024, 768 }; //width x height
 
 void CreateRenderTarget()
 {
@@ -99,6 +100,8 @@ int InitializeAndShowWindow()
 		UnregisterClass(windowClass.lpszClassName, windowClass.hInstance);
 		return 1;
 	}
+
+	SetWindowPos(windowHandle, HWND_TOP, 0, 0, defaultWindowSize[0], defaultWindowSize[1], 0);
 
 	// Show the window
 	ShowWindow(windowHandle, SW_SHOWDEFAULT);
