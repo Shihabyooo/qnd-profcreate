@@ -16,7 +16,7 @@ void GenerateProfile(std::string geometryPath, float interpolationSteps);
 int main(int argc, char *argv[])
 {
 
-	int result = StartGUI();
+	int result = StartGUI(&instance);
 	std::cout << "GUI result: " << result; //test
 
 

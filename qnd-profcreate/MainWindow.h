@@ -5,5 +5,6 @@
 //#include "ProfileMaker.h"
 #include "Globals.h"
 
+extern ProfileMaker * profileMaker;
 
 void DrawMainWindow();

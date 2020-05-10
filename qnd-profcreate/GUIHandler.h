@@ -11,7 +11,7 @@
 #include <tchar.h>
 #include <wchar.h>
 #include "MainWindow.h"
-
+#include "ProfileMaker.h"
 
 #define PROGRAMNAME		_T("QnD_ProfCreate")
 #define WINDOWNAME		_T("QnD Profile Creator")
@@ -26,4 +26,4 @@ static ID3D11RenderTargetView*  g_mainRenderTargetView = NULL;
 
 
 
-int StartGUI();
+int StartGUI(ProfileMaker * _profileMaker);

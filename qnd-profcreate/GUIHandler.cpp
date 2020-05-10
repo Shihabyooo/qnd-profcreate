@@ -158,8 +158,8 @@ int ProgramLoop()
 		//if (show_demo_window)
 		bool showDemo = true;
 		ImGui::ShowDemoWindow(&showDemo);
+		
 		DrawMainWindow();
-
 
 		// Rendering
 		ImGui::Render();
@@ -184,7 +184,7 @@ int ProgramLoop()
 	return 0;
 }
 
-int StartGUI()
+int StartGUI(ProfileMaker * _profileMaker)
 {
 
 	if (InitializeAndShowWindow() != 0)
@@ -192,6 +192,10 @@ int StartGUI()
 
 	SetupDearIMGUI();
 
+	//Set the ProfileMaker *  in MainWindow.
+	profileMaker = _profileMaker;
+
+	//Start the program loop (this will not return until window quits or faces a fata error).
 	int result = ProgramLoop();
 
 

@@ -1,5 +1,6 @@
 #include "MainWindow.h"
 
+ProfileMaker * profileMaker = NULL;
 
 char geometryFilePath[MAX_PATH] = "Enter path to geometry directory here or use the directory browser.";
 char demFilePath[MAX_PATH] = "Enter path to DEM directory here or use the directory browser.";
@@ -166,7 +167,6 @@ void DrawMainWindow()
 	ImGui::NewLine();
 	if (ImGui::Button("Process!", ImVec2(100, 50)))
 		BeginProcessing();
-	//ImGui::GetFont()->Scale = 1.0f;
 	ImGui::PopFont();
 	ImGui::GetFont()->Scale = 1.0f;
 
