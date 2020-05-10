@@ -3,6 +3,7 @@
 
 char geometryFilePath[MAX_PATH] = "Enter path to geometry directory here or use the directory browser.";
 char demFilePath[MAX_PATH] = "Enter path to DEM directory here or use the directory browser.";
+char outputDirectoryPath[MAX_PATH] = "Enter output directory.";
 std::unique_ptr<bool> selectedGeometry;
 std::unique_ptr<bool> selectedDEM;
 std::vector<std::string> geometryNames;
@@ -10,6 +11,7 @@ std::vector<std::string> demNames;
 bool defaulSelectionState = true;
 double chainageSteps = 0.0f;
 bool mainatainBends = false;
+bool useInputDirForOutput = false;
 
 void DrawFileList(char * filePath, std::vector<std::string> * fileNames, std::unique_ptr<bool> * selectionStates, DataType dataType)
 {	
@@ -19,14 +21,13 @@ void DrawFileList(char * filePath, std::vector<std::string> * fileNames, std::un
 	if (ImGui::Button("Update List", ImVec2(50, 20)))
 		UpdateFileList(filePath, fileNames, selectionStates, dataType);
 
-	ImGui::Spacing();
+	ImGui::NewLine();
 	for (int i = 0; i < fileNames->size(); i++)
 	{		
 		bool state = selectionStates->get()[i]; //feeding selectedGeometry.get()[i] directly to ImGui::Selectable() prevents it from switching selection state.
 		ImGui::Selectable(ExtractFileName((*fileNames)[i]).c_str(), &state);
 		selectionStates->get()[i] = state;
 	}
-
 	ImGui::Separator();
 }
 
@@ -87,8 +88,6 @@ void BeginProcessing()
 	if (!CheckSelectionValidity())
 		return;
 
-
-
 }
 
 
@@ -138,18 +137,39 @@ void DrawMainWindow()
 	DrawFileList(demFilePath, &demNames, &selectedDEM, DataType::dem);
 	ImGui::NewLine();
 
-	//Other data
+	//Other input
 	static char chainageStepsBuffer[11] = "";
 	ImGui::PushItemWidth(85);
 	ImGui::InputText("Chainage Steps", chainageStepsBuffer, 11, ImGuiInputTextFlags_CharsDecimal);
 	chainageSteps = atof(chainageStepsBuffer);
 	ImGui::Checkbox("Maintain Path Bends", &mainatainBends);
-
+	ImGui::Checkbox("Use input directory for Output.", &useInputDirForOutput);
+	ImGui::PopItemWidth();
 	
+	//output location
+	ImGuiInputTextFlags outDirInputFlags = 0; 
+	if (useInputDirForOutput)
+		outDirInputFlags = ImGuiInputTextFlags_ReadOnly;
+	ImGui::InputText("Output Diretory", outputDirectoryPath, IM_ARRAYSIZE(outputDirectoryPath), outDirInputFlags);
+	if (!useInputDirForOutput)
+	{
+		if (ImGui::Button("Browse for output directory"))
+			OpenFileBrowserSimple(outputDirectoryPath);
+	}
+	else
+		ImGui::Dummy(ImVec2(0.0f, ImGui::GetFontSize() * 1.5f));
+	
+	//The scaling solution is ugly....
+	ImGui::GetFont()->Scale = 1.5f;
+	ImGui::PushFont(ImGui::GetFont());
 	ImGui::NewLine();
 	ImGui::NewLine();
 	if (ImGui::Button("Process!", ImVec2(100, 50)))
 		BeginProcessing();
+	//ImGui::GetFont()->Scale = 1.0f;
+	ImGui::PopFont();
+	ImGui::GetFont()->Scale = 1.0f;
+
 
 	ImGui::End();
 }

@@ -42,7 +42,8 @@ public: //TODO rewrite this code to protect variables, add getters of const poin
 
 std::string ToUTF8(std::wstring wideString);
 void DrawFileBrowser();
-void OpenFileBrowser(char * outPath, std::vector<std::string> * fileListBuffer, std::unique_ptr<bool> * selectionFlagsBuffer, DataType dataType);
+void OpenFileBrowserSimple(char * outPath); //Shows a browser, and updates outPath upon selecting a directory without doing any list updates.
+void OpenFileBrowser(char * outPath, std::vector<std::string> * fileListBuffer, std::unique_ptr<bool> * selectionFlagsBuffer,  DataType dataType);
 void UpdateFileList(std::string directoryPath, std::vector<std::string> * _fileList, std::unique_ptr<bool> * _selectionFlags, DataType _dataType);
 
 std::string ExtractFileName(std::string path);

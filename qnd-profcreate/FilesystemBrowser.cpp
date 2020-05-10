@@ -31,7 +31,6 @@ void PopulateDrivesList()
 	dirTree = std::unique_ptr<DirectoryNode>(new DirectoryNode(L"Root", _drives));
 }
 
-
 //Note: both overloads of IsDirectoryAccessible() are exactly the same inside, at first, I considered having the wstring one have one line: return IsDirectoryAccessible(ToUTF8(path));, but that might cause issues
 //TODO research this.
 bool IsDirectoryAccessible(std::string path) //used to filter out inaccessabile directories, such as those the OS denies access to.
@@ -56,7 +55,7 @@ bool IsDirectoryAccessible(std::wstring path) //used to filter out inaccessabile
 	}
 	catch (std::filesystem::filesystem_error)
 	{
-		std::cout << "Exception caught when attempting to access directory: " << ToUTF8(path.c_str()) << ". Access Denied?" << std::endl;
+		std::cout << "Exception caught while attempting to access directory: " << ToUTF8(path.c_str()) << ". Access Denied?" << std::endl;
 		return false;
 	}
 
@@ -221,6 +220,9 @@ void SetOutputPath(std::string path)
 
 void UpdateFileList(std::string directoryPath)
 {
+	if (fileList == NULL || selectionFlags == NULL) //helpful in making FileSystemBrowser work for setting a directory without updating anything (e.g. in case for Output Directory selection).
+		return;
+
 	UpdateFileList(directoryPath, fileList, selectionFlags, currentTargetType);
 }
 
@@ -334,6 +336,18 @@ void OpenFileBrowser(char * outPath, std::vector<std::string> * fileListBuffer, 
 	currentTargetType = dataType;
 	fileList = fileListBuffer;
 	selectionFlags = selectionFlagsBuffer;
+
+	ImGui::OpenPopup("Browse");
+	PopulateDrivesList();
+}
+
+void OpenFileBrowserSimple(char * outPath)
+{
+	isBrowserOpen = true;
+	browserOutPath = outPath;
+	//currentTargetType = DataType::dem; //Since all references to this enum would be shorted out when setting fileList or selectionFlags to NULL, no need to set it.
+	fileList = NULL;
+	selectionFlags = NULL;
 
 	ImGui::OpenPopup("Browse");
 	PopulateDrivesList();

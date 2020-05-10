@@ -526,7 +526,7 @@ float ProfileMaker::BilinearInterpolation(int first_larger_x, int first_larger_y
 	double boundingy[2];
 	double pointx, pointy;
 
-	for (int i = 0; i < 2; i++)
+	for (int i = 0; i < 2; i++) //This is just stupid. The entire block is 5 lines long, what it replaces would be only 4. -_-
 	{
 		boundingx[i] = geoDetails.tiePoints[1][0] + (first_larger_x - 1 + i) * geoDetails.pixelScale[0];
 		boundingy[i] = geoDetails.tiePoints[1][1] - (first_larger_y - 1 + i) * geoDetails.pixelScale[1];
