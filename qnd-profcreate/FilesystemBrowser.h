@@ -47,3 +47,7 @@ void OpenFileBrowser(char * outPath, std::vector<std::string> * fileListBuffer, 
 void UpdateFileList(std::string directoryPath, std::vector<std::string> * _fileList, std::unique_ptr<bool> * _selectionFlags, DataType _dataType);
 
 std::string ExtractFileName(std::string path);
+std::string ExtractParentDirectoryPath(std::string filePath);
+
+bool IsDirectoryAccessible(const std::wstring path);
+bool IsDirectoryAccessible(const std::string path);

@@ -33,7 +33,7 @@ void PopulateDrivesList()
 
 //Note: both overloads of IsDirectoryAccessible() are exactly the same inside, at first, I considered having the wstring one have one line: return IsDirectoryAccessible(ToUTF8(path));, but that might cause issues
 //TODO research this.
-bool IsDirectoryAccessible(std::string path) //used to filter out inaccessabile directories, such as those the OS denies access to.
+bool IsDirectoryAccessible(const std::string path) //used to filter out inaccessabile directories, such as those the OS denies access to.
 {
 	try
 	{
@@ -47,7 +47,7 @@ bool IsDirectoryAccessible(std::string path) //used to filter out inaccessabile 
 	return true;
 }
 
-bool IsDirectoryAccessible(std::wstring path) //used to filter out inaccessabile directories, such as those the OS denies access to.
+bool IsDirectoryAccessible(const std::wstring path) //used to filter out inaccessabile directories, such as those the OS denies access to.
 {
 	try
 	{
@@ -253,8 +253,6 @@ void UpdateFileList(std::string directoryPath, std::vector<std::string> * _fileL
 
 std::string ExtractFileName(std::string path)
 {
-	std::string name;
-
 	int counter = 0;
 	for (int i = path.length() - 1; i >= 0; i--)
 	{
@@ -269,6 +267,24 @@ std::string ExtractFileName(std::string path)
 		return "";
 
 	return path.substr(counter + 1, path.length() - counter - 1);
+}
+
+std::string ExtractParentDirectoryPath(std::string filePath)
+{
+	int counter = 0;
+	for (int i = filePath.length() - 1; i >= 0; i--)
+	{
+		if (filePath[i] == '\\')
+		{
+			counter = i;
+			break;
+		}
+	}
+
+	if (counter == 0)
+		return "";
+
+	return filePath.substr(0, counter);
 }
 
 void CloseFileBrowser()
