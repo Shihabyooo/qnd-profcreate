@@ -9,12 +9,13 @@ std::unique_ptr<bool> selectedGeometry;
 std::unique_ptr<bool> selectedDEM;
 std::vector<std::string> geometryNames;
 std::vector<std::string> demNames;
+std::string outputDirectory;
 bool defaulSelectionState = true;
 double chainageSteps = 0.0f;
 bool mainatainBends = false;
 bool useInputDirForOutput = false;
 
-void DrawFileList(char * filePath, std::vector<std::string> * fileNames, std::unique_ptr<bool> * selectionStates, DataType dataType)
+void DrawFileList(char * filePath, std::vector<std::string> * fileNames, std::unique_ptr<bool> * selectionStates, DataType dataType, bool singleSelection)
 {	
 	ImGui::Separator();
 	ImGui::Text("Available Geometries\n");
@@ -28,6 +29,14 @@ void DrawFileList(char * filePath, std::vector<std::string> * fileNames, std::un
 		bool state = selectionStates->get()[i]; //feeding selectedGeometry.get()[i] directly to ImGui::Selectable() prevents it from switching selection state.
 		ImGui::Selectable(ExtractFileName((*fileNames)[i]).c_str(), &state);
 		selectionStates->get()[i] = state;
+		
+		//for single selection mode, check if this item is selected, and if so unselect remaining items. Ugly hack, but works.
+		if (singleSelection && state == true)
+		{
+			for (int j = 0; j < fileNames->size(); j++)
+				if (selectionStates->get()[j] && j != i)
+					selectionStates->get()[j] = false;
+		}
 	}
 	ImGui::Separator();
 }
@@ -79,6 +88,12 @@ bool CheckSelectionValidity()
 		return false;
 	}
 
+	//check that output directory is set.
+	if (outputDirectory.length() < 3 || !IsDirectoryAccessible(outputDirectory))
+	{
+		std::cout << "ERROR! Invalid output directory." << std::endl;
+		return false;
+	}
 
 	//if we reached here, means all input are set and ok (at GUI level).
 	return true;
@@ -86,8 +101,37 @@ bool CheckSelectionValidity()
 
 void BeginProcessing()
 {
+	outputDirectory = std::string(outputDirectoryPath);
+
 	if (!CheckSelectionValidity())
 		return;
+
+	if (profileMaker == NULL)
+	{
+		std::cout << "ERROR! profileMaker is set to NULL." << std::endl;
+		return;
+	}
+
+	//create list of selected geometries.
+	std::vector<std::string> _geoemetryPaths;
+	for (int i = 0; i < geometryNames.size(); i++)
+	{
+		if (selectedGeometry.get()[i])
+			_geoemetryPaths.push_back(geometryNames[i]);
+	}
+
+	//Extract selected DEM from list.
+	std::string _demPath;
+	for (int i = 0; i < demNames.size(); i++)
+	{
+		if (selectedDEM.get()[i])
+		{
+			_demPath = geometryNames[i];
+			break;
+		}
+	}
+
+	//profileMaker->BatchProfileProcessing(_geoemetryPaths, _demPath, outputDirectory, chainageSteps, )
 
 }
 
@@ -125,7 +169,7 @@ void DrawMainWindow()
 		OpenFileBrowser(geometryFilePath, &geometryNames, &selectedGeometry, DataType::geometry);
 	
 	DrawFileBrowser();
-	DrawFileList(geometryFilePath, &geometryNames, &selectedGeometry, DataType::geometry);
+	DrawFileList(geometryFilePath, &geometryNames, &selectedGeometry, DataType::geometry, false);
 	ImGui::NewLine();
 
 	//DEM data
@@ -135,7 +179,7 @@ void DrawMainWindow()
 	if (ImGui::Button("Browse for DEM directory"))
 		OpenFileBrowser(demFilePath, &demNames, &selectedDEM, DataType::dem);
 	//DrawFileBrowser(); //The call is already made above...
-	DrawFileList(demFilePath, &demNames, &selectedDEM, DataType::dem);
+	DrawFileList(demFilePath, &demNames, &selectedDEM, DataType::dem, true);
 	ImGui::NewLine();
 
 	//Other input
@@ -144,7 +188,27 @@ void DrawMainWindow()
 	ImGui::InputText("Chainage Steps", chainageStepsBuffer, 11, ImGuiInputTextFlags_CharsDecimal);
 	chainageSteps = atof(chainageStepsBuffer);
 	ImGui::Checkbox("Maintain Path Bends", &mainatainBends);
-	ImGui::Checkbox("Use input directory for Output.", &useInputDirForOutput);
+	if (ImGui::Checkbox("Use input directory for Output.", &useInputDirForOutput))
+	{
+		if (useInputDirForOutput)
+		{
+			if (geometryNames.size() > 0)
+			{
+				std::string _outputDir = ExtractParentDirectoryPath(geometryNames[0]);
+				for (int i = 0; i < MAX_PATH; i++) //this approach is probably more expensive than making two loops.
+				{
+					if (i < _outputDir.length())
+						outputDirectoryPath[i] = _outputDir[i];
+					else
+						outputDirectoryPath[i] = '\0';
+				}
+			}
+			else //zero out the output dir.
+				for (int i = 0; i < MAX_PATH; i++) 
+					outputDirectoryPath[i] = '\0';
+		}
+	}
+	
 	ImGui::PopItemWidth();
 	
 	//output location

@@ -12,8 +12,8 @@
 extern std::string supportedGeometryFormats[];
 extern std::string supportedDEMFormats[];
 
-extern std::vector<std::string> geometryList;
-extern std::string demLocation;
+//extern std::vector<std::string> geometryList;
+//extern std::string demLocation;
 
 class ProfileMaker
 {
@@ -21,7 +21,7 @@ public:
 	ProfileMaker();
 	~ProfileMaker();
 
-	bool BatchProfileProcessing(); //Primarily for use in the GUI implementation.
+	bool BatchProfileProcessing(std::vector<std::string> & geometryList, std::string & demLocation, std::string & outputDirectory, double chainageSteps, InterpolationMethods interpolationMethod, bool maintainBends); //Primarily for use in the GUI implementation.
 
 	bool LoadDEM(std::string demPath); //Currently merely an interface for GeoTIFF_Parser. Need to implement verification of the GeoTIFF's DTM parameters and that the program supports them
 	bool LoadGeometry(std::string geometryPath);
