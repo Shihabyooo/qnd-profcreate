@@ -3,8 +3,8 @@
 std::string supportedGeometryFormats[] = { ".shp", ".kml" };
 std::string supportedDEMFormats[] = { ".tif" };
 
-std::vector<std::string> geometryList;
-std::string demLocation;
+//std::vector<std::string> geometryList;
+//std::string demLocation;
 
 bool CheckFileFormatSupport(std::string path, DataType dataType)
 {
@@ -63,6 +63,62 @@ ProfileMaker::~ProfileMaker()
 		delete csvParser;*/
 
 	UnloadGeoTIFF();
+}
+
+bool ProfileMaker::BatchProfileProcessing(	std::vector<std::string> & geometryList,
+											std::string & demLocation,
+											std::string & outputDirectory,
+											double chainageSteps,
+											InterpolationMethods interpolationMethod,
+											bool maintainBends)
+{
+	std::cout << "\nLoading DEM\n\n";
+	if (!LoadDEM(demLocation))
+		return false;
+	
+	for (int i = 0; i < geometryList.size(); i++)
+	{
+		std::string geometryPath = geometryList[i];
+		std::cout << "\n Processing file:" << geometryPath << std::endl;
+
+		std::string outputPath = outputDirectory;
+		outputPath += geometryPath + ".csv"; //TODO need to extract file name of geometryPath and remove the extension first
+
+		std::cout << "\nLoading geometry\n\n";
+		if (!LoadGeometry(geometryPath))
+		{
+			std::cout << "ERROR! Failed to load geometry file " << geometryPath << std::endl;
+			continue;
+		}
+
+		if (isDebug)
+		{
+			std::cout << "\nBefore interpolation\n\n";
+			DisplayPath();
+		}
+
+		std::cout << "\nInterpolating Profile\n\n";
+		InterpolateProfile(chainageSteps, maintainBends);
+
+		std::cout << "\nCalculating Profile\n\n";
+		CalculateProfile();
+
+		if (isDebug)
+		{
+			std::cout << "\nAfter Z calculations\n\n";
+			DisplayPath();
+		}
+
+		std::cout << "\nWriting\n\n";
+		WriteProfileToDisk(outputPath, false);
+
+		std::cout << "Finished extracting profile for " << geometryPath << std::endl;
+		std::cout << "\nPrepping for Next Path\n\n";
+		ResetProfile();
+	}
+
+
+	return true;
 }
 
 bool ProfileMaker::LoadDEM(std::string demPath)
