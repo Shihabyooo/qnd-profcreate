@@ -14,6 +14,8 @@ bool defaulSelectionState = true;
 double chainageSteps = 0.0f;
 bool mainatainBends = false;
 bool useInputDirForOutput = false;
+InterpolationMethods interpolationMethod = InterpolationMethods::nearestNeighbour;
+
 
 void DrawFileList(char * filePath, std::vector<std::string> * fileNames, std::unique_ptr<bool> * selectionStates, DataType dataType, bool singleSelection)
 {	
@@ -126,15 +128,36 @@ void BeginProcessing()
 	{
 		if (selectedDEM.get()[i])
 		{
-			_demPath = geometryNames[i];
+			_demPath = demNames[i];
 			break;
 		}
 	}
 
-	//profileMaker->BatchProfileProcessing(_geoemetryPaths, _demPath, outputDirectory, chainageSteps, )
+	bool result = profileMaker->BatchProfileProcessing(_geoemetryPaths, _demPath, outputDirectory, chainageSteps, interpolationMethod, mainatainBends);
 
 }
 
+void DrawInterpolationMethods() //The approach with the function is ugly in more ways that one. FIX IT!
+{
+	static char * _interpolationMethods[] = { "Nearest Neighbour", "Bilinear", "Bicubic" }; //TODO update this after adding more interpolation methods (or change to automatically adjust to them)
+	static int _currentInterpMethod = int(interpolationMethod);
+
+	if (ImGui::BeginCombo("Interpolation Method", _interpolationMethods[_currentInterpMethod], 0))
+	{
+		for (int i = 0; i < 3; i++) //TODO update this after adding more interpolation methods (or change to automatically adjust to them)
+		{
+			bool isSelected = (_currentInterpMethod == i);
+			if (ImGui::Selectable(_interpolationMethods[i], isSelected))
+			{
+				_currentInterpMethod = i;
+				interpolationMethod = (InterpolationMethods)i;
+			}
+			if (isSelected)
+				ImGui::SetItemDefaultFocus();
+		}
+		ImGui::EndCombo();
+	}
+}
 
 void DrawMainWindow()
 {
@@ -208,8 +231,10 @@ void DrawMainWindow()
 					outputDirectoryPath[i] = '\0';
 		}
 	}
-	
 	ImGui::PopItemWidth();
+	
+	DrawInterpolationMethods();
+
 	
 	//output location
 	ImGuiInputTextFlags outDirInputFlags = 0; 

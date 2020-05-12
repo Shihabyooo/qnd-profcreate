@@ -22,9 +22,9 @@ enum class FileFormat
 	shapeFile, kml, csv, unsupported
 };
 
-enum class InterpolationMethods
+enum class InterpolationMethods //IMPORTANT! Do not change this enum without updating its uses in MainWindow.cpp -> DrawInterpolationMethods. It depends critically on the values of the enums.
 {
-	nearestNeighbour, bilinear, bicubic
+	nearestNeighbour = 0, bilinear = 1, bicubic =2
 };
 
 enum class CRS
