@@ -17,13 +17,22 @@ bool useInputDirForOutput = false;
 InterpolationMethods interpolationMethod = InterpolationMethods::nearestNeighbour;
 
 
-void DrawFileList(char * filePath, std::vector<std::string> * fileNames, std::unique_ptr<bool> * selectionStates, DataType dataType, bool singleSelection)
+void DrawFileList(char * filePath, std::vector<std::string> * fileNames, std::unique_ptr<bool> * selectionStates, DataType dataType, bool singleSelection, char listID)
 {	
 	ImGui::Separator();
-	ImGui::Text("Available Geometries\n");
+	ImGui::Text("Available Files\n");
 	ImGui::SameLine();
-	if (ImGui::Button("Update List", ImVec2(50, 20)))
+
+	//Because this function should spawn two distinct buttons, the label should be modified with each seperate call to this function, we control that by listID argument.
+	//This is not a the most gracefull of solutions, but it works.
+	char buttonLabel[15] = "Update List##X"; //'X' is a place holder, will be changed to listID.
+	buttonLabel[13] = listID;
+
+	if (ImGui::Button(buttonLabel, ImVec2(100, 20)))
+	{
 		UpdateFileList(filePath, fileNames, selectionStates, dataType);
+		std::cout << "Updating with path: " << std::string(filePath).c_str() << ", dataype: " << (int)dataType << std::endl; //test
+	}
 
 	ImGui::NewLine();
 	for (int i = 0; i < fileNames->size(); i++)
@@ -192,7 +201,7 @@ void DrawMainWindow()
 		OpenFileBrowser(geometryFilePath, &geometryNames, &selectedGeometry, DataType::geometry);
 	
 	DrawFileBrowser();
-	DrawFileList(geometryFilePath, &geometryNames, &selectedGeometry, DataType::geometry, false);
+	DrawFileList(geometryFilePath, &geometryNames, &selectedGeometry, DataType::geometry, false, '0');
 	ImGui::NewLine();
 
 	//DEM data
@@ -202,7 +211,7 @@ void DrawMainWindow()
 	if (ImGui::Button("Browse for DEM directory"))
 		OpenFileBrowser(demFilePath, &demNames, &selectedDEM, DataType::dem);
 	//DrawFileBrowser(); //The call is already made above...
-	DrawFileList(demFilePath, &demNames, &selectedDEM, DataType::dem, true);
+	DrawFileList(demFilePath, &demNames, &selectedDEM, DataType::dem, true, '1');
 	ImGui::NewLine();
 
 	//Other input
