@@ -8,6 +8,7 @@
 #include "KML_Parser.h"
 #include "SHP_Parser.h"
 #include "Globals.h"
+#include "FilesystemBrowser.h" //need to use the std::string ExtractFileName(std::string path) function in it
 
 extern std::string supportedGeometryFormats[];
 extern std::string supportedDEMFormats[];

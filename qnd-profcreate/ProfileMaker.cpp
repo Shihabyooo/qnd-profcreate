@@ -72,7 +72,7 @@ bool ProfileMaker::BatchProfileProcessing(	std::vector<std::string> & geometryLi
 											InterpolationMethods interpolationMethod,
 											bool maintainBends)
 {
-	std::cout << "\nLoading DEM\n\n";
+	std::cout << "\nLoading DEM" << demLocation.c_str() <<"\n\n";
 	if (!LoadDEM(demLocation))
 		return false;
 	
@@ -82,12 +82,13 @@ bool ProfileMaker::BatchProfileProcessing(	std::vector<std::string> & geometryLi
 		std::cout << "\n Processing file:" << geometryPath << std::endl;
 
 		std::string outputPath = outputDirectory;
-		outputPath += geometryPath + ".csv"; //TODO need to extract file name of geometryPath and remove the extension first
+		outputPath += "\\" + ExtractFileName(geometryPath) + ".csv";
 
 		std::cout << "\nLoading geometry\n\n";
 		if (!LoadGeometry(geometryPath))
 		{
 			std::cout << "ERROR! Failed to load geometry file " << geometryPath << std::endl;
+			std::cout << "Skipping this geometry" << std::endl;
 			continue;
 		}
 
@@ -116,7 +117,7 @@ bool ProfileMaker::BatchProfileProcessing(	std::vector<std::string> & geometryLi
 		std::cout << "\nPrepping for Next Path\n\n";
 		ResetProfile();
 	}
-
+	std::cout << "Finished processing geometries." << std::endl;
 
 	return true;
 }
@@ -227,14 +228,13 @@ void ProfileMaker::DisplayPath()
 
 void ProfileMaker::InterpolateProfile(const float step, const bool maintainBends)
 {
-	int newVertsSum = profile.Rows();
+	//int newVertsSum = profile.Rows();
 
 	float totalLength = 0.0f;
-
 	for (int i = 1; i < profile.Rows(); i++)
 		totalLength += profile[i][3];
 
-	newVertsSum = floor(totalLength / step) + 2; //the 2 are begining and ending verts
+	int newVertsSum = floor(totalLength / step) + 2; //the 2 are begining and ending verts
 
 	if (maintainBends)
 		newVertsSum += profile.Rows() - 2;
@@ -244,7 +244,7 @@ void ProfileMaker::InterpolateProfile(const float step, const bool maintainBends
 	profile_i[0][1] = profile[0][1];
 
 
-	int currentSegment = 1;
+	unsigned int currentSegment = 1;
 	float lastBendChainage = 0.0f;
 
 	std::function<double(double, double, double, double) > interpolate = [&](double x0, double x1, double l, double dist)->double
@@ -256,7 +256,7 @@ void ProfileMaker::InterpolateProfile(const float step, const bool maintainBends
 	{
 		if (i*step >= lastBendChainage + profile[currentSegment][3])
 		{
-			lastBendChainage += profile[currentSegment - 1][3];
+			lastBendChainage += profile[currentSegment][3];
 			currentSegment++;
 
 			if (maintainBends)
@@ -264,13 +264,15 @@ void ProfileMaker::InterpolateProfile(const float step, const bool maintainBends
 				profile_i[i][0] = profile[i][0];
 				profile_i[i][1] = profile[i][1];
 				i++;
-				if (i >= profile_i.Rows() - 1)
+				if (i >= profile_i.Rows() - 1) //This would happen if the reach between last two vertices is less than interpolation step.
 					break;
 			}
+			//std::cout << std::endl; //test
 		}
 
 		float distFromLastBend = (step * i) - lastBendChainage;
-
+		
+		std::cout << i << " of " << profile_i.Rows() - 3 << " : " << i * step << " of " << totalLength << "\t--\tlastBend: " << lastBendChainage << ",segment: " << profile[currentSegment][3] << ",\tdist: " << distFromLastBend << std::endl; //test
 		profile_i[i][0] = interpolate(profile[currentSegment - 1][0], profile[currentSegment][0], profile[currentSegment][3], distFromLastBend);
 		profile_i[i][1] = interpolate(profile[currentSegment - 1][1], profile[currentSegment][1], profile[currentSegment][3], distFromLastBend);
 
@@ -409,7 +411,8 @@ int ProfileMaker::CalculateProfile() //returning int for end state. 0: failure, 
 bool ProfileMaker::WriteProfileToDisk(std::string out_csv, bool overWrite)
 {
 	if (FileIsExist(out_csv) && !overWrite)
-		out_csv = AppendSuffixToFileName(out_csv, std::numeric_limits<unsigned int>::max());
+		//out_csv = AppendSuffixToFileName(out_csv, std::numeric_limits<unsigned int>::max());
+		out_csv = AppendSuffixToFileName(out_csv, 4294967295); //Windows.h has "max" as a macro, so the version above fails to execute. Hardcoding the max value of uint (int msvc) to get around this.
 	
 	if (out_csv == "") //practically speaking, this a very, very remote probability.
 	{
@@ -454,8 +457,8 @@ double ProfileMaker::CalculateDistance(double x1, double y1, double x2, double y
 	{
 		result = sqrt(pow(abs(x1 - x2), 2.0) + pow(abs(y1 - y2), 2.0));
 
-		if (isDebug)
-			std::cout << "Calculating distance for UTM, result= " << result << std::endl; //test
+		//if (isDebug)
+		//	std::cout << "Calculating distance for UTM, result= " << result << std::endl; //test
 
 		return result;
 	}
