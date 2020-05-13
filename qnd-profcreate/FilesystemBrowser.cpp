@@ -73,7 +73,7 @@ DirectoryNode * TraverseDirectoryTree(std::wstring path)
 			return node;
 
 		previousNode = node;
-		for (int i = 0; i < node->noOfSubNodes; i++)
+		for (unsigned long int i = 0; i < node->noOfSubNodes; i++)
 		{
 			if (node->subNodes[i] != NULL)
 			{
@@ -129,7 +129,7 @@ void AddNode(std::wstring path, std::vector<std::wstring> content)
 	}
 
 	//first, check that no current node is set for our path.
-	for (int i = 0; i < parentNode->noOfSubNodes; i++)
+	for (unsigned long int i = 0; i < parentNode->noOfSubNodes; i++)
 		if (parentNode->subNodes[i] != NULL && parentNode->subNodes[i]->path == path)
 		{
 			std::cout << "Warning! Attempting to add a node that is already added. At AddNode()." << std::endl;
@@ -137,7 +137,7 @@ void AddNode(std::wstring path, std::vector<std::wstring> content)
 			return;
 		}
 
-	for (int i = 0; i < parentNode->noOfSubNodes; i++)
+	for (unsigned long int i = 0; i < parentNode->noOfSubNodes; i++)
 	{
 		if (parentNode->subNodes[i] == NULL)
 		{
@@ -214,7 +214,7 @@ void SetOutputPath(std::string path)
 		browserOutPath[i] = path[i];
 
 	//null out the remaining fields (if any)
-	for (int i = path.length(); i < MAX_PATH; i++)
+	for (size_t i = path.length(); i < MAX_PATH; i++)
 		browserOutPath[i] = '\0';
 }
 
@@ -254,7 +254,7 @@ void UpdateFileList(std::string directoryPath, std::vector<std::string> * _fileL
 std::string ExtractFileName(std::string path)
 {
 	int counter = 0;
-	for (int i = path.length() - 1; i >= 0; i--)
+	for (unsigned int i = path.length() - 1; i >= 0; i--)
 	{
 		if (path[i] == '\\')
 		{
@@ -272,7 +272,7 @@ std::string ExtractFileName(std::string path)
 std::string ExtractParentDirectoryPath(std::string filePath)
 {
 	int counter = 0;
-	for (int i = filePath.length() - 1; i >= 0; i--)
+	for (unsigned int i = filePath.length() - 1; i >= 0; i--)
 	{
 		if (filePath[i] == '\\')
 		{

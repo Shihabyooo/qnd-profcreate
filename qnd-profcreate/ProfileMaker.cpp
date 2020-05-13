@@ -226,15 +226,15 @@ void ProfileMaker::DisplayPath()
 		profile.DisplayArrayInCLI();
 }
 
-void ProfileMaker::InterpolateProfile(const float step, const bool maintainBends)
+void ProfileMaker::InterpolateProfile(const double step, const bool maintainBends)
 {
 	//int newVertsSum = profile.Rows();
 
-	float totalLength = 0.0f;
+	double totalLength = 0.0f;
 	for (int i = 1; i < profile.Rows(); i++)
 		totalLength += profile[i][3];
 
-	int newVertsSum = floor(totalLength / step) + 2; //the 2 are begining and ending verts
+	unsigned long int newVertsSum = (unsigned long int)floor(totalLength / step) + 2; //the 2 are begining and ending verts
 
 	if (maintainBends)
 		newVertsSum += profile.Rows() - 2;
@@ -245,7 +245,7 @@ void ProfileMaker::InterpolateProfile(const float step, const bool maintainBends
 
 
 	unsigned int currentSegment = 1;
-	float lastBendChainage = 0.0f;
+	double lastBendChainage = 0.0f;
 
 	std::function<double(double, double, double, double) > interpolate = [&](double x0, double x1, double l, double dist)->double
 	{ //too many methods in this class already, plus I already have other methods with interpolate in the name. This is a small one, leave it as a lambda
@@ -270,7 +270,7 @@ void ProfileMaker::InterpolateProfile(const float step, const bool maintainBends
 			//std::cout << std::endl; //test
 		}
 
-		float distFromLastBend = (step * i) - lastBendChainage;
+		double distFromLastBend = (step * i) - lastBendChainage;
 		
 		std::cout << i << " of " << profile_i.Rows() - 3 << " : " << i * step << " of " << totalLength << "\t--\tlastBend: " << lastBendChainage << ",segment: " << profile[currentSegment][3] << ",\tdist: " << distFromLastBend << std::endl; //test
 		profile_i[i][0] = interpolate(profile[currentSegment - 1][0], profile[currentSegment][0], profile[currentSegment][3], distFromLastBend);
@@ -466,7 +466,7 @@ double ProfileMaker::CalculateDistance(double x1, double y1, double x2, double y
 	//distance calculation for decimal degrees using Vincenty's formulae 
 	////https://en.wikipedia.org/wiki/Vincenty%27s_formulae#cite_note-opposite-3
 
-	double azim; //azimuth
+	//double azim; //azimuth
 	double sigma;
 	double u1, u2, dx;
 	double lambda, lambda_old = 0.0;
@@ -574,16 +574,16 @@ FileFormat ProfileMaker::DetermineFileFormat(std::string geometryPath)
 	}
 }
 
-float ProfileMaker::BilinearInterpolation(int first_larger_x, int first_larger_y, int point_order)
+double ProfileMaker::BilinearInterpolation(unsigned long int first_larger_x, unsigned long int first_larger_y, unsigned long int point_order)
 {
 	//TODO Check this implementation
 	double A, B;
-	float  result_depth;
+	double  result_depth;
 
-	float boundingz[4];
+	double boundingz[4];
 	double boundingx[2];
 	double boundingy[2];
-	double pointx, pointy;
+	//double pointx, pointy;
 
 	for (int i = 0; i < 2; i++) //This is just stupid. The entire block is 5 lines long, what it replaces would be only 4. -_-
 	{
@@ -604,14 +604,14 @@ float ProfileMaker::BilinearInterpolation(int first_larger_x, int first_larger_y
 	return result_depth;
 }
 
-float ProfileMaker::BicubicInterpolation(int first_larger_x, int first_larger_y, int point_order)
+double ProfileMaker::BicubicInterpolation(unsigned long int first_larger_x, unsigned long int first_larger_y, unsigned long int point_order)
 {
 	//reference:
 	//http://www.paulinternet.nl/?page=bicubic
 
-	float result_depth;
+	double result_depth;
 
-	float boundingz[4][4];
+	double boundingz[4][4];
 	double boundingx[4];
 	double boundingy[4];
 	double temp_value[4];
@@ -699,7 +699,7 @@ std::unique_ptr<double> ProfileMaker::ToUTM(double lng, double lat) const
 	//const double utm_scale_at_meridian = 0.9996;
 	//const double falseEasting = 500000, falseNorthing = 10000000;
 
-	int zone = floor((lng + 180.0) / 6.0) + 1;
+	unsigned int zone = (unsigned int)floor((lng + 180.0) / 6.0) + 1;
 	double central_meridian_longitude = ((zone - 1.0) * 6.0 - 180.0 + 3.0) * PI_CONSTANT / 180.0; //in radians
 	//TODO consider Norway/Svalbard exceptions, not really necessary.
 

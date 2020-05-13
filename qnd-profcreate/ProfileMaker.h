@@ -27,7 +27,7 @@ public:
 	bool LoadDEM(std::string demPath); //Currently merely an interface for GeoTIFF_Parser. Need to implement verification of the GeoTIFF's DTM parameters and that the program supports them
 	bool LoadGeometry(std::string geometryPath);
 
-	void InterpolateProfile(const float step, const bool maintainBends); //Not to be confused with DEM-to-Profile Z coordinates interpolation. Interpolate Profile is simple linear interpolation.
+	void InterpolateProfile(const double step, const bool maintainBends); //Not to be confused with DEM-to-Profile Z coordinates interpolation. Interpolate Profile is simple linear interpolation.
 	int CalculateProfile(); //TODO replace hardcoded Bicubic inteprolation uses and replace with conditional statements based on an argument of type "InterpolationMethods"
 	bool WriteProfileToDisk(std::string out_csv, bool overWrite); 
 
@@ -46,9 +46,9 @@ private:
 	bool IsPointOOB(double x, double y); //Checks whether a coordinate set is within the DEM's boundaries. Does *not* consider CRS differences. 
 
 	//DEM-to-Profile interpolation
-	float BilinearInterpolation(int first_larger_x, int first_larger_y, int point_order); //TODO switch variables' storage from float to double.
-	float BicubicInterpolation(int first_larger_x, int first_larger_y, int point_order);
-	float NearestNeighbourInterpolation(int first_larger_x, int first_larger_y, int point_order); //TODO implement this
+	double BilinearInterpolation(unsigned long int first_larger_x, unsigned long int first_larger_y, unsigned long int point_order); //TODO switch variables' storage from float to double.
+	double BicubicInterpolation(unsigned long int first_larger_x, unsigned long int first_larger_y, unsigned long int point_order);
+	double NearestNeighbourInterpolation(unsigned long int first_larger_x, unsigned long int first_larger_y, unsigned long int point_order); //TODO implement this
 	
 	//CRS conversion
 	std::unique_ptr<double> ToUTM(double lng, double lat) const;	//converts a set of geoegraphic CRS (WGS84) coordinates to project UTM coordinates.

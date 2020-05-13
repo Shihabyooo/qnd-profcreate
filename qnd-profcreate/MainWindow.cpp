@@ -15,7 +15,7 @@ double chainageSteps = 0.0f;
 bool mainatainBends = false;
 bool useInputDirForOutput = false;
 InterpolationMethods interpolationMethod = InterpolationMethods::nearestNeighbour;
-
+bool processingPopupState = false;
 
 void DrawFileList(char * filePath, std::vector<std::string> * fileNames, std::unique_ptr<bool> * selectionStates, DataType dataType, bool singleSelection, char listID)
 {	
@@ -50,6 +50,19 @@ void DrawFileList(char * filePath, std::vector<std::string> * fileNames, std::un
 		}
 	}
 	ImGui::Separator();
+}
+
+void DrawProcessingPopup()
+{
+	if (!processingPopupState)
+		return;
+
+	//ImGui::OpenPopup("Processing");
+	ImGui::BeginPopupModal("Processing", &processingPopupState, ImGuiWindowFlags_NoSavedSettings);
+
+	ImGui::Text("Processing Profiles - Please wait.");
+	ImGui::EndPopup();
+
 }
 
 bool CheckSelectionValidity()
@@ -142,8 +155,18 @@ void BeginProcessing()
 		}
 	}
 
-	bool result = profileMaker->BatchProfileProcessing(_geoemetryPaths, _demPath, outputDirectory, chainageSteps, interpolationMethod, mainatainBends);
+	//The "Processing" popup will not appear during processing with this implementation, this is due to the fact that call to this function, and in turn DrawMainWindow() will be stalled until
+	// profileMaker->BatchProfileProcessing() returns. Meaning ImGui::End() and (in the GUIHandler's ProgramLoop()) both the ImGui::Render() and the D3D context updating won't be executed.
+	//There are two possible solutions to this:
+	//A:	Have BatchProfileProcessing() run on a different thread, with a flag local to the parent process it sets when its done (so the parent process can know that processing is done, and we
+	//		can claose the popup.
+	//B:	Move prcessing calls to GuiHandler, and have this function set a flag there in addition to starting the popup. At the end of the render/message loop (i.e. after g_pSwapChain->Present(1, 0))
+	//		an if-statment checks the flag and if set, start the call BatchProfileProcessing().
 
+	processingPopupState = true;
+	ImGui::OpenPopup("Processing");
+
+	bool result = profileMaker->BatchProfileProcessing(_geoemetryPaths, _demPath, outputDirectory, chainageSteps, interpolationMethod, mainatainBends);
 }
 
 void DrawInterpolationMethods() //The approach with the function is ugly in more ways that one. FIX IT!
@@ -244,7 +267,6 @@ void DrawMainWindow()
 	
 	DrawInterpolationMethods();
 
-	
 	//output location
 	ImGuiInputTextFlags outDirInputFlags = 0; 
 	if (useInputDirForOutput)
@@ -268,6 +290,7 @@ void DrawMainWindow()
 	ImGui::PopFont();
 	ImGui::GetFont()->Scale = 1.0f;
 
+	DrawProcessingPopup();
 
 	ImGui::End();
 }

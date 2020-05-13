@@ -19,7 +19,7 @@ public: //TODO rewrite this code to protect variables, add getters of const poin
 		noOfSubNodes = thisContent.size();
 		subNodes = new DirectoryNode *[noOfSubNodes];
 
-		for (int i = 0; i < noOfSubNodes; i++) //Set all subnodes to NULL
+		for (unsigned long int i = 0; i < noOfSubNodes; i++) //Set all subnodes to NULL
 			subNodes[i] = NULL;
 	}
 
@@ -27,7 +27,7 @@ public: //TODO rewrite this code to protect variables, add getters of const poin
 	{
 		if (subNodes != NULL)
 		{
-			for (int i = 0; i < noOfSubNodes; i++)
+			for (unsigned long int i = 0; i < noOfSubNodes; i++)
 				delete subNodes[i];
 			delete[] subNodes;
 		}
