@@ -667,6 +667,25 @@ double ProfileMaker::BicubicInterpolation(unsigned long int first_larger_x, unsi
 
 double ProfileMaker::NearestNeighbourInterpolation(unsigned long int first_larger_x, unsigned long int first_larger_y, unsigned long int point_order)
 {
+	//possible approaches:
+	//	- Compute the distance between the point and all four surrounding pixels, then test for shortest distance (should be expensives, specially with geographic CRS)
+	//	- [Implementation bellow] Compute the pixel boundaries joint between our pixels (basically, 2 lines corrosponding the position of the average of each two adjacent 
+	//	  pixels) then test whether the point is above/bellow, or left/right of those lines.
+
+	double verticalBoundary = geoDetails.tiePoints[1][0] + ((float)(first_larger_x + first_larger_x - 1) / 2.0f) * geoDetails.pixelScale[0];
+	double horizontalBoundary = geoDetails.tiePoints[1][1] + ((float)(first_larger_y + first_larger_y - 1) / 2.0f) * geoDetails.pixelScale[1];
+
+	double point[2] = { profile_i[point_order][0], profile_i[point_order][1] }; //just to make the code bellow somewhat simpler.
+
+	if (profile_i[point_order][0] <= verticalBoundary && profile_i[point_order][1] <= horizontalBoundary) //SW
+		return GetSample(first_larger_x - 1, first_larger_y - 1, 0);
+	else if (profile_i[point_order][0] <= verticalBoundary && profile_i[point_order][1] > horizontalBoundary) //NW
+		return GetSample(first_larger_x - 1, first_larger_y, 0);
+	else if (profile_i[point_order][0] > verticalBoundary &&  profile_i[point_order][1] > horizontalBoundary) //NE
+		return GetSample(first_larger_x, first_larger_y, 0);
+	else if (profile_i[point_order][0] > verticalBoundary &&  profile_i[point_order][1] <= horizontalBoundary) //SE
+		return GetSample(first_larger_x, first_larger_y - 1, 0);
+
 	return 0.0;
 }
 

@@ -62,43 +62,43 @@ int main(int argc, char *argv[])
 	return result;
 }
 
-void GenerateProfile(std::string geometryPath, float interpolationSteps)
-{
-	std::string outputPath;
-
-	std::cout << "\n Processing file:" << geometryPath << std::endl;;
-	outputPath = geometryPath + ".csv";
-
-	std::cout << "\nLoading geometry\n\n";
-	if (!instance.LoadGeometry(geometryPath))
-	{
-		std::cout << "\nPress enter to exit.";
-		std::cin.sync();
-		std::cin.get();
-		exit(0);
-	}
-
-	if (isDebug)
-	{
-		std::cout << "\nBefore interpolation\n\n";
-		instance.DisplayPath();
-	}
-
-	std::cout << "\nInterpolating Profile\n\n";
-	instance.InterpolateProfile(interpolationSteps, maintainBendLocations);
-
-	std::cout << "\nCalculating Profile\n\n";
-	instance.CalculateProfile();
-
-	if (isDebug)
-	{
-		std::cout << "\nAfter Z calculations\n\n";
-		instance.DisplayPath();
-	}
-
-	std::cout << "\nWriting\n\n";
-	instance.WriteProfileToDisk(outputPath, false);
-
-	std::cout << "\nPrepping for Next Path\n\n";
-	instance.ResetProfile();
-}
+//void GenerateProfile(std::string geometryPath, float interpolationSteps)
+//{
+//	std::string outputPath;
+//
+//	std::cout << "\n Processing file:" << geometryPath << std::endl;;
+//	outputPath = geometryPath + ".csv";
+//
+//	std::cout << "\nLoading geometry\n\n";
+//	if (!instance.LoadGeometry(geometryPath))
+//	{
+//		std::cout << "\nPress enter to exit.";
+//		std::cin.sync();
+//		std::cin.get();
+//		exit(0);
+//	}
+//
+//	if (isDebug)
+//	{
+//		std::cout << "\nBefore interpolation\n\n";
+//		instance.DisplayPath();
+//	}
+//
+//	std::cout << "\nInterpolating Profile\n\n";
+//	instance.InterpolateProfile(interpolationSteps, maintainBendLocations);
+//
+//	std::cout << "\nCalculating Profile\n\n";
+//	instance.CalculateProfile();
+//
+//	if (isDebug)
+//	{
+//		std::cout << "\nAfter Z calculations\n\n";
+//		instance.DisplayPath();
+//	}
+//
+//	std::cout << "\nWriting\n\n";
+//	instance.WriteProfileToDisk(outputPath, false);
+//
+//	std::cout << "\nPrepping for Next Path\n\n";
+//	instance.ResetProfile();
+//}
