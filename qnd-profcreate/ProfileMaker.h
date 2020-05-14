@@ -28,7 +28,7 @@ public:
 	bool LoadGeometry(std::string geometryPath);
 
 	void InterpolateProfile(const double step, const bool maintainBends); //Not to be confused with DEM-to-Profile Z coordinates interpolation. Interpolate Profile is simple linear interpolation.
-	int CalculateProfile(); //TODO replace hardcoded Bicubic inteprolation uses and replace with conditional statements based on an argument of type "InterpolationMethods"
+	int CalculateProfile(InterpolationMethods method); //TODO replace hardcoded Bicubic inteprolation uses and replace with conditional statements based on an argument of type "InterpolationMethods"
 	bool WriteProfileToDisk(std::string out_csv, bool overWrite); 
 
 	void ResetProfile(); //Profile container's memory management is delegated to Array2D classes. This method now only resets associated flags.
@@ -46,6 +46,7 @@ private:
 	bool IsPointOOB(double x, double y); //Checks whether a coordinate set is within the DEM's boundaries. Does *not* consider CRS differences. 
 
 	//DEM-to-Profile interpolation
+	double InterpolatePointHeight(unsigned long int first_larger_x, unsigned long int first_larger_y, unsigned long int point_order, InterpolationMethods method);
 	double BilinearInterpolation(unsigned long int first_larger_x, unsigned long int first_larger_y, unsigned long int point_order); //TODO switch variables' storage from float to double.
 	double BicubicInterpolation(unsigned long int first_larger_x, unsigned long int first_larger_y, unsigned long int point_order);
 	double NearestNeighbourInterpolation(unsigned long int first_larger_x, unsigned long int first_larger_y, unsigned long int point_order); //TODO implement this

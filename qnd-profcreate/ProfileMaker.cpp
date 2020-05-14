@@ -102,7 +102,7 @@ bool ProfileMaker::BatchProfileProcessing(	std::vector<std::string> & geometryLi
 		InterpolateProfile(chainageSteps, maintainBends);
 
 		std::cout << "\nCalculating Profile\n\n";
-		CalculateProfile();
+		CalculateProfile(interpolationMethod);
 
 		if (isDebug)
 		{
@@ -350,7 +350,7 @@ bool ProfileMaker::IsPointOOB(double x, double y)
 	}
 }
 
-int ProfileMaker::CalculateProfile() //returning int for end state. 0: failure, 1: success, 2: success with gaps (for when implementing 
+int ProfileMaker::CalculateProfile(InterpolationMethods method) //returning int for end state. 0: failure, 1: success, 2: success with gaps (for when implementing 
 										//choice to calculate profile for paths that are partially within the provided DEM's boundaries.
 {
 	//in case dem is in UTM
@@ -397,7 +397,8 @@ int ProfileMaker::CalculateProfile() //returning int for end state. 0: failure, 
 			}
 		}
 
-		profile_i[i][2] = BicubicInterpolation(first_larger_x_order, first_larger_y_order, i);
+		//profile_i[i][2] = BicubicInterpolation(first_larger_x_order, first_larger_y_order, i);
+		profile_i[i][2] = InterpolatePointHeight(first_larger_x_order, first_larger_y_order, i, method);
 	}
 
 	isCalculated = true;
@@ -574,6 +575,22 @@ FileFormat ProfileMaker::DetermineFileFormat(std::string geometryPath)
 	}
 }
 
+double ProfileMaker::InterpolatePointHeight(unsigned long int first_larger_x, unsigned long int first_larger_y, unsigned long int point_order, InterpolationMethods method)
+{
+	switch (method)
+	{
+	case InterpolationMethods::nearestNeighbour:
+		return NearestNeighbourInterpolation(first_larger_x, first_larger_y, point_order);
+	case InterpolationMethods::bilinear:
+		return BilinearInterpolation(first_larger_x, first_larger_y, point_order);
+	case InterpolationMethods::bicubic:
+		return BicubicInterpolation(first_larger_x, first_larger_y, point_order);
+	default:
+		std::cout << "ERROR! Recieved an unexpected InterpolationMethods flag" << std::endl;
+		return 0.0f;
+	}
+}
+
 double ProfileMaker::BilinearInterpolation(unsigned long int first_larger_x, unsigned long int first_larger_y, unsigned long int point_order)
 {
 	//TODO Check this implementation
@@ -646,6 +663,11 @@ double ProfileMaker::BicubicInterpolation(unsigned long int first_larger_x, unsi
 	result_depth = temp_value[1] + 0.5 * pointy * (temp_value[2] - temp_value[0] + pointy * (2 * temp_value[0] - 5 * temp_value[1] + 4 * temp_value[2] - temp_value[3] + pointy * (3 * (temp_value[1] - temp_value[2]) + temp_value[3] - temp_value[0])));
 
 	return result_depth;
+}
+
+double ProfileMaker::NearestNeighbourInterpolation(unsigned long int first_larger_x, unsigned long int first_larger_y, unsigned long int point_order)
+{
+	return 0.0;
 }
 
 bool ProfileMaker::FileIsExist(std::string location) const
