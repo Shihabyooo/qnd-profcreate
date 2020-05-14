@@ -409,11 +409,17 @@ int ProfileMaker::CalculateProfile(InterpolationMethods method) //returning int 
 	return 0;
 }
 
-bool ProfileMaker::WriteProfileToDisk(std::string out_csv, bool overWrite)
+bool ProfileMaker::WriteProfileToDisk(std::string &out_csv, bool overWrite)
 {
+	if (out_csv.length() < 5) //min: a single character file name plus four characters for extension (including the dot).
+	{							//This check needs to be enriched, but I'm leaving it as is assuming the GUI implementation does that.
+		std::cout << "ERROR! Illegal outputfile name." << std::endl;
+		return false;
+	}
+
 	if (FileIsExist(out_csv) && !overWrite)
 		//out_csv = AppendSuffixToFileName(out_csv, std::numeric_limits<unsigned int>::max());
-		out_csv = AppendSuffixToFileName(out_csv, 4294967295); //Windows.h has "max" as a macro, so the version above fails to execute. Hardcoding the max value of uint (int msvc) to get around this.
+		out_csv = AppendSuffixToFileName(out_csv, 4294967295); //Windows.h has "max" as a macro, so the version above fails to execute. Hardcoding the max value of uint (in msvc) to get around this.
 	
 	if (out_csv == "") //practically speaking, this a very, very remote probability.
 	{
@@ -707,21 +713,26 @@ bool ProfileMaker::FileIsExist(std::string location) const
 	}
 }
 
-std::string ProfileMaker::AppendSuffixToFileName(std::string path, unsigned int maxSuffix)
+std::string ProfileMaker::AppendSuffixToFileName(std::string &path, unsigned int maxSuffix)
 {
-	unsigned int counter = 0; 
+	unsigned int counter = 1; 
+	
+	std::string _path = path.substr(0, path.length() - 4);
+	_path += "_";
+
 	while (counter < maxSuffix)
 	{
-		std::string appendedPath = path;
-		appendedPath += "_" + counter;
+		std::string appendedPath = _path;		
+		appendedPath += std::to_string(counter) + ".csv";
 
 		if (!FileIsExist(appendedPath))
 			return appendedPath;
-
+		
 		counter++;
 	}
 
 	return ""; //An empty string is an error state.
+				//TODO consider replacing this with exception throwing.
 }
 
 std::unique_ptr<double> ProfileMaker::ToUTM(double lng, double lat) const

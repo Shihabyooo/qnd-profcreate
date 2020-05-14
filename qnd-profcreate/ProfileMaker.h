@@ -29,7 +29,7 @@ public:
 
 	void InterpolateProfile(const double step, const bool maintainBends); //Not to be confused with DEM-to-Profile Z coordinates interpolation. Interpolate Profile is simple linear interpolation.
 	int CalculateProfile(InterpolationMethods method); //TODO replace hardcoded Bicubic inteprolation uses and replace with conditional statements based on an argument of type "InterpolationMethods"
-	bool WriteProfileToDisk(std::string out_csv, bool overWrite); 
+	bool WriteProfileToDisk(std::string &out_csv, bool overWrite); 
 
 	void ResetProfile(); //Profile container's memory management is delegated to Array2D classes. This method now only resets associated flags.
 	void ResetDEM(); //To be implemented once we start supporing multi-DEM use cases.
@@ -40,7 +40,7 @@ private:
 	//Utilities
 	FileFormat DetermineFileFormat(std::string geometryPath);
 	bool FileIsExist(std::string location) const;
-	std::string AppendSuffixToFileName(std::string path, unsigned int maxSuffix); //maxSuffix is the *exclusive* upper limit to numerical suffix to be appended.
+	std::string AppendSuffixToFileName(std::string &path, unsigned int maxSuffix); //maxSuffix is the *exclusive* upper limit to numerical suffix to be appended.
 	double CalculateDistance(double x1, double y1, double x2, double y2, bool isUTM); //Calculates distance between two points based isUTM. True = simple cartesian calc, False = Use Vincenty's Formulae.
 	bool IsPathOOB(); //Checks that stored paths is within DEM's boundaries. Test either "profile" or "profile_i" depending on state of isInterpoalted.
 	bool IsPointOOB(double x, double y); //Checks whether a coordinate set is within the DEM's boundaries. Does *not* consider CRS differences. 
