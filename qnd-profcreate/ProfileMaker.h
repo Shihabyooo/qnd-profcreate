@@ -44,6 +44,8 @@ private:
 	double CalculateDistance(double x1, double y1, double x2, double y2, bool isUTM); //Calculates distance between two points based isUTM. True = simple cartesian calc, False = Use Vincenty's Formulae.
 	bool IsPathOOB(); //Checks that stored paths is within DEM's boundaries. Test either "profile" or "profile_i" depending on state of isInterpoalted.
 	bool IsPointOOB(double x, double y); //Checks whether a coordinate set is within the DEM's boundaries. Does *not* consider CRS differences. 
+	bool CheckDEMLoaded(std::string demPath);
+
 
 	//DEM-to-Profile interpolation
 	double InterpolatePointHeight(unsigned long int first_larger_x, unsigned long int first_larger_y, unsigned long int point_order, InterpolationMethods method);
@@ -67,6 +69,8 @@ private:
 	bool isPathUTM;
 	int pathZone = 36; //TODO reset this to an uninitialized variable
 	bool isPathInNorthernHemisphere = true;  //TODO reset this to an uninitialized variable
+	std::string loadedDEMPath = ""; //Probably a bad way to go about this problem. This value will store the currently loaded DEM path, to avoid loading the same DEM multiple times with successive calls
+									//to BatchProfileProcessing(). 
 
 	//Note: the xxxParsers will be instantiated only as required throughout the program's lifetime. It's possible to simplify LoadGeometry() by always instantiating all parsers in the constructor, at (argubly insignificant) memory cost.
 	KMLParser * kmlParser;

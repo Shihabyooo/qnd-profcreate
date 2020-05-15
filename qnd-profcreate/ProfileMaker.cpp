@@ -72,10 +72,13 @@ bool ProfileMaker::BatchProfileProcessing(	std::vector<std::string> & geometryLi
 											InterpolationMethods interpolationMethod,
 											bool maintainBends)
 {
-	std::cout << "\nLoading DEM" << demLocation.c_str() <<"\n\n";
-	if (!LoadDEM(demLocation))
-		return false;
-	
+	if (!CheckDEMLoaded(demLocation))
+	{
+		std::cout << "\nLoading DEM" << demLocation.c_str() << "\n\n";
+		if (!LoadDEM(demLocation))
+			return false;
+	}
+
 	for (int i = 0; i < geometryList.size(); i++)
 	{
 		std::string geometryPath = geometryList[i];
@@ -139,6 +142,7 @@ bool ProfileMaker::LoadDEM(std::string demPath)
 		//DisplayBitmapOnCLI();
 	}
 
+	loadedDEMPath = demPath;
 	std::cout << "Successfully loaded DEM file: " << demPath << "\n\n";
 	return true;
 }
@@ -348,6 +352,14 @@ bool ProfileMaker::IsPointOOB(double x, double y)
 	{
 		return false;
 	}
+}
+
+bool ProfileMaker::CheckDEMLoaded(std::string demPath)
+{
+	if (demPath == loadedDEMPath)
+		return true;
+	else
+		return false;
 }
 
 int ProfileMaker::CalculateProfile(InterpolationMethods method) //returning int for end state. 0: failure, 1: success, 2: success with gaps (for when implementing 
