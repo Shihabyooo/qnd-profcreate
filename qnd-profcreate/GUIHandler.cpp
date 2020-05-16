@@ -5,7 +5,6 @@
 HWND windowHandle;
 WNDCLASSEX windowClass;
 ImVec4 clearColour;
-int defaultWindowSize[2] = { 1024, 768 }; //width x height
 
 void CreateRenderTarget()
 {
@@ -59,6 +58,27 @@ void CleanupDeviceD3D()
 	if (g_pd3dDevice) { g_pd3dDevice->Release(); g_pd3dDevice = NULL; }
 }
 
+void UpdateSubWindowsSizes() //SubWindows = ImGUI windows.
+{
+	RECT clientSize;
+
+	bool result = GetClientRect(windowHandle, &clientSize);
+
+	if (!result)
+	{
+		Log(std::string("ERROR! Failed to get updated window size."), LOG_ERROR);
+		return;
+	}
+
+	std::cout << "updating (top*right*bottom*left)" << clientSize.top << " x " << clientSize.right << " x " << clientSize.bottom << " x " << clientSize.left << std::endl;
+
+	UpdateMainWindowSizeAndPos(clientSize.right, clientSize.bottom);
+	UpdateLogWindowSizeAndPos(clientSize.right, clientSize.bottom);
+
+	
+
+}
+
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -73,6 +93,8 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			CleanupRenderTarget();
 			g_pSwapChain->ResizeBuffers(0, (UINT)LOWORD(lParam), (UINT)HIWORD(lParam), DXGI_FORMAT_UNKNOWN, 0);
 			CreateRenderTarget();
+			if (wParam == SIZE_MAXIMIZED || wParam == SIZE_RESTORED) //we only need to update subwindows if we change the size of the parent window. Minimizing (and sizes of other windows) are irrelevant.
+				UpdateSubWindowsSizes();
 		}
 		return 0;
 	case WM_SYSCOMMAND:
@@ -101,7 +123,7 @@ int InitializeAndShowWindow()
 		return 1;
 	}
 
-	SetWindowPos(windowHandle, HWND_TOP, 0, 0, defaultWindowSize[0], defaultWindowSize[1], 0);
+	SetWindowPos(windowHandle, HWND_TOP, 0, 0, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, 0);
 
 	// Show the window
 	ShowWindow(windowHandle, SW_SHOWDEFAULT);
@@ -189,6 +211,7 @@ int StartGUI(ProfileMaker * _profileMaker)
 {
 
 	//test
+	Log(std::string("To bait fish withal! If it would serve anything, it would feed my revenge! Or at least, that's how I think the quote goes. My memory is as reliable as a cheap chinese product tho, so don't hold me to it...."), LogEntryType::success);
 	for (int i = 0; i < 50; i++)
 		Log(std::string("test"), i % 4 == 0 ? LogEntryType::normal : (i % 3 == 0 ? LogEntryType::warning : (i % 2 == 0 ? LogEntryType::error : LogEntryType::success)));
 		
@@ -203,9 +226,10 @@ int StartGUI(ProfileMaker * _profileMaker)
 	//Set the ProfileMaker *  in MainWindow.
 	profileMaker = _profileMaker;
 
-	//Start the program loop (this will not return until window quits or faces a fata error).
+	//Start the program loop (this will not return until window quits or faces a fatal error).
 	int result = ProgramLoop();
 
 
 	return result;
 }
+

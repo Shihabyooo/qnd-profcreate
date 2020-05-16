@@ -8,6 +8,10 @@
 #include "imgui.h"
 #include "Globals.h"
 
+#define LOG_SUCCESS	LogEntryType::success
+#define LOG_ERROR	LogEntryType::error
+#define LOG_NORM	LogEntryType::normal
+#define LOG_WARN	LogEntryType::warning
 
 enum class LogEntryType
 {
@@ -30,3 +34,4 @@ public:
 
 void DrawLogWindow();
 bool Log(std::string &content, LogEntryType type);
+void UpdateLogWindowSizeAndPos(long int resolutionX, long int resolutionY);

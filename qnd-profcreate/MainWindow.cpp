@@ -17,6 +17,10 @@ bool useInputDirForOutput = false;
 InterpolationMethods interpolationMethod = InterpolationMethods::nearestNeighbour;
 bool processingPopupState = false;
 
+static bool updateDimensions = false;
+static WindowDimensions dimensions;
+
+
 void DrawFileList(char * filePath, std::vector<std::string> * fileNames, std::unique_ptr<bool> * selectionStates, DataType dataType, bool singleSelection, char listID)
 {	
 	ImGui::Separator();
@@ -194,9 +198,13 @@ void DrawInterpolationMethods() //The approach with the function is ugly in more
 void DrawMainWindow()
 {
 	ImGuiWindowFlags windowFlags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
-	ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Once);
-	ImGui::SetNextWindowSize(ImVec2(400, 768), ImGuiCond_Once);
-	// 1024, 768 
+
+	if (updateDimensions)
+	{
+		ImGui::SetNextWindowPos(ImVec2(dimensions.positionX, dimensions.positionY), ImGuiCond_Always);
+		ImGui::SetNextWindowSize(ImVec2(dimensions.width, dimensions.height), ImGuiCond_Always);
+		updateDimensions = false;
+	}
 
 	ImGui::Begin("MainWindow", NULL, windowFlags);
 	ImGui::PushItemWidth(ImGui::GetFontSize() * -12); //Use fixed width for labels (by passing a negative value), the rest goes to widgets. We choose a width proportional to our font size.
@@ -294,4 +302,16 @@ void DrawMainWindow()
 	DrawProcessingPopup();
 
 	ImGui::End();
+}
+
+void UpdateMainWindowSizeAndPos(long int resolutionX, long int resolutionY)
+{
+	long int width = resolutionX > WINDOW_MAIN_MIN_WIDTH ? (resolutionX > WINDOW_MAIN_MAX_WIDTH ? WINDOW_MAIN_MAX_WIDTH : resolutionX) : WINDOW_MAIN_MIN_WIDTH;
+	long int height = WINDOW_MAIN_HEIGHT_PERCENTAGE * resolutionY;
+
+	//std::cout << "Main Window Res: " << width << " x " << height << std::endl;
+
+	dimensions = WindowDimensions(0, 0, width, height);
+
+	updateDimensions = true;
 }

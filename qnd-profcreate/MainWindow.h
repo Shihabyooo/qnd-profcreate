@@ -8,3 +8,4 @@
 extern ProfileMaker * profileMaker;
 
 void DrawMainWindow();
+void UpdateMainWindowSizeAndPos(long int resolutionX, long int resolutionY);
