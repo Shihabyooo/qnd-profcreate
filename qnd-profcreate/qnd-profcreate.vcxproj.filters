@@ -93,6 +93,9 @@
     <ClCompile Include="MainWindow.cpp">
       <Filter>GUI</Filter>
     </ClCompile>
+    <ClCompile Include="LogWindow.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h">
@@ -156,6 +159,9 @@
       <Filter>GUI</Filter>
     </ClInclude>
     <ClInclude Include="MainWindow.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="LogWindow.h">
       <Filter>GUI</Filter>
     </ClInclude>
   </ItemGroup>

@@ -11,6 +11,7 @@
 #include <tchar.h>
 #include <wchar.h>
 #include "MainWindow.h"
+#include "LogWindow.h"
 #include "ProfileMaker.h"
 
 #define PROGRAMNAME		_T("QnD_ProfCreate")

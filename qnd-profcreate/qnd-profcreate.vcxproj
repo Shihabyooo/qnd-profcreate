@@ -185,6 +185,7 @@
     <ClCompile Include="KML_Parser.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MainWindow.cpp" />
+    <ClCompile Include="LogWindow.cpp" />
     <ClCompile Include="ProfileMaker.cpp" />
     <ClCompile Include="SHP_Parser.cpp" />
     <ClCompile Include="Source.cpp" />
@@ -209,6 +210,7 @@
     <ClInclude Include="KML_Parser.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="MainWindow.h" />
+    <ClInclude Include="LogWindow.h" />
     <ClInclude Include="ProfileMaker.h" />
     <ClInclude Include="SHP_Parser.h" />
   </ItemGroup>

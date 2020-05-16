@@ -160,6 +160,7 @@ int ProgramLoop()
 		ImGui::ShowDemoWindow(&showDemo);
 		
 		DrawMainWindow();
+		DrawLogWindow();
 
 		// Rendering
 		ImGui::Render();
@@ -186,6 +187,13 @@ int ProgramLoop()
 
 int StartGUI(ProfileMaker * _profileMaker)
 {
+
+	//test
+	for (int i = 0; i < 50; i++)
+		Log(std::string("test"), i % 4 == 0 ? LogEntryType::normal : (i % 3 == 0 ? LogEntryType::warning : (i % 2 == 0 ? LogEntryType::error : LogEntryType::success)));
+		
+
+	//endtest
 
 	if (InitializeAndShowWindow() != 0)
 		return WINDOW_INIT_FAIL;

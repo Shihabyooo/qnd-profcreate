@@ -194,8 +194,9 @@ void DrawInterpolationMethods() //The approach with the function is ugly in more
 void DrawMainWindow()
 {
 	ImGuiWindowFlags windowFlags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
-	ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_FirstUseEver);
-	ImGui::SetNextWindowSize(ImVec2(500, 500), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Once);
+	ImGui::SetNextWindowSize(ImVec2(400, 768), ImGuiCond_Once);
+	// 1024, 768 
 
 	ImGui::Begin("MainWindow", NULL, windowFlags);
 	ImGui::PushItemWidth(ImGui::GetFontSize() * -12); //Use fixed width for labels (by passing a negative value), the rest goes to widgets. We choose a width proportional to our font size.
@@ -281,14 +282,14 @@ void DrawMainWindow()
 		ImGui::Dummy(ImVec2(0.0f, ImGui::GetFontSize() * 1.5f));
 	
 	//The scaling solution is ugly....
-	ImGui::GetFont()->Scale = 1.5f;
-	ImGui::PushFont(ImGui::GetFont());
+	//ImGui::GetFont()->Scale = 1.5f;
+	//ImGui::PushFont(ImGui::GetFont());
 	ImGui::NewLine();
 	ImGui::NewLine();
 	if (ImGui::Button("Process!", ImVec2(100, 50)))
 		BeginProcessing();
-	ImGui::PopFont();
-	ImGui::GetFont()->Scale = 1.0f;
+	/*ImGui::PopFont();
+	ImGui::GetFont()->Scale = 1.0f;*/
 
 	DrawProcessingPopup();
 
