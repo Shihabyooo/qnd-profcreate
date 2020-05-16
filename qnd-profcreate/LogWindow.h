@@ -33,5 +33,6 @@ public:
 };
 
 void DrawLogWindow();
-bool Log(std::string &content, LogEntryType type);
+void Log(std::string &content, LogEntryType type = LogEntryType::normal);
+void Log(char * content, LogEntryType type = LogEntryType::normal);
 void UpdateLogWindowSizeAndPos(long int resolutionX, long int resolutionY);

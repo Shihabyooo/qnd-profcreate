@@ -63,12 +63,16 @@ void DrawLogWindow()
 	ImGui::End();
 }
 
-bool Log(std::string & content, LogEntryType type)
+void Log(std::string & content, LogEntryType type)
 {
+	//TODO enrich the logging mechanism with a max value, after which the oldest logs are removed.
 
 	logHistory.push_back(LogEntry(content, type));
+}
 
-	return true;
+void Log(char * content, LogEntryType type)
+{
+	Log(std::string(content), type);
 }
 
 void UpdateLogWindowSizeAndPos(long int resolutionX, long int resolutionY)
