@@ -74,7 +74,8 @@ bool ProfileMaker::BatchProfileProcessing(	std::vector<std::string> & geometryLi
 {
 	if (!CheckDEMLoaded(demLocation))
 	{
-		std::cout << "\nLoading DEM" << demLocation.c_str() << "\n\n";
+		//std::cout << "\nLoading DEM" << demLocation.c_str() << "\n\n";
+		Log((std::string("Attempting to load Dem: ") + demLocation));
 		if (!LoadDEM(demLocation))
 			return false;
 	}
@@ -82,16 +83,20 @@ bool ProfileMaker::BatchProfileProcessing(	std::vector<std::string> & geometryLi
 	for (int i = 0; i < geometryList.size(); i++)
 	{
 		std::string geometryPath = geometryList[i];
-		std::cout << "\n Processing file:" << geometryPath << std::endl;
+		//std::cout << "\n Processing file: " << geometryPath << std::endl;
+		Log((std::string("Processing file: ") + geometryPath));
 
 		std::string outputPath = outputDirectory;
 		outputPath += "\\" + ExtractFileName(geometryPath) + ".csv";
 
-		std::cout << "\nLoading geometry\n\n";
+		//std::cout << "\nLoading geometry\n\n";
+		Log("Loading geometry.");
 		if (!LoadGeometry(geometryPath))
 		{
-			std::cout << "ERROR! Failed to load geometry file " << geometryPath << std::endl;
-			std::cout << "Skipping this geometry" << std::endl;
+			//std::cout << "ERROR! Failed to load geometry file " << geometryPath << std::endl;
+			Log((std::string("ERROR! Failed to load geometry file: ") + geometryPath), LOG_ERROR);
+			//std::cout << "Skipping this geometry" << std::endl;
+			Log("Skipping this geometry.");
 			continue;
 		}
 
@@ -101,11 +106,19 @@ bool ProfileMaker::BatchProfileProcessing(	std::vector<std::string> & geometryLi
 			DisplayPath();
 		}
 
-		std::cout << "\nInterpolating Profile\n\n";
+		//std::cout << "\nInterpolating Profile\n\n";
+		Log("Interpolating Profile.");
+
 		InterpolateProfile(chainageSteps, maintainBends);
 
-		std::cout << "\nCalculating Profile\n\n";
-		CalculateProfile(interpolationMethod);
+		//std::cout << "\nCalculating Profile\n\n";
+		Log("Extracting profile heights.");
+		
+		if (CalculateProfile(interpolationMethod) == 2)
+		{
+			Log("Skipping this geometry.");
+			continue;
+		}
 
 		if (isDebug)
 		{
@@ -113,14 +126,20 @@ bool ProfileMaker::BatchProfileProcessing(	std::vector<std::string> & geometryLi
 			DisplayPath();
 		}
 
-		std::cout << "\nWriting\n\n";
+		//std::cout << "\nWriting\n\n";
+		Log("Writing results to disk.");
 		WriteProfileToDisk(outputPath, false);
 
-		std::cout << "Finished extracting profile for " << geometryPath << std::endl;
-		std::cout << "\nPrepping for Next Path\n\n";
+		//std::cout << "Finished extracting profile for " << geometryPath << std::endl;
+		Log((std::string("Finished extracting profile for: ") + geometryPath), LOG_SUCCESS);
+
+		//std::cout << "\nPrepping for Next Path\n\n";
+		Log("Preparing for next path.");
 		ResetProfile();
 	}
-	std::cout << "Finished processing geometries." << std::endl;
+
+	//std::cout << "Finished processing geometries." << std::endl;
+	Log("Finished processing all geometries.", LOG_SUCCESS);
 
 	return true;
 }
@@ -130,7 +149,8 @@ bool ProfileMaker::LoadDEM(std::string demPath)
 
 	if (!LoadGeoTIFF(demPath))
 	{
-		std::cout << "Error! Could not load DEM file: " << demPath << std::endl;
+		//std::cout << "Error! Could not load DEM file: " << demPath << std::endl;
+		Log("ERROR! Could not load DEM file.", LOG_ERROR);
 		return false;
 	}
 			
@@ -181,9 +201,9 @@ bool ProfileMaker::LoadGeometry(std::string geometryPath)
 			//geometryParser = csvParser;
 			break;
 		default:
-			std::cout << "ERROR! Loaded filel format is not supported" << std::endl;
+			//std::cout << "ERROR! Loaded filel format is not supported" << std::endl;
+			Log("ERROR! Could not load a parser for provided geometry file.", LOG_ERROR);
 			return false;
-			break;
 		}
 	}
 	
@@ -276,7 +296,7 @@ void ProfileMaker::InterpolateProfile(const double step, const bool maintainBend
 
 		double distFromLastBend = (step * i) - lastBendChainage;
 		
-		std::cout << i << " of " << profile_i.Rows() - 3 << " : " << i * step << " of " << totalLength << "\t--\tlastBend: " << lastBendChainage << ",segment: " << profile[currentSegment][3] << ",\tdist: " << distFromLastBend << std::endl; //test
+		//std::cout << i << " of " << profile_i.Rows() - 3 << " : " << i * step << " of " << totalLength << "\t--\tlastBend: " << lastBendChainage << ",segment: " << profile[currentSegment][3] << ",\tdist: " << distFromLastBend << std::endl; //test
 		profile_i[i][0] = interpolate(profile[currentSegment - 1][0], profile[currentSegment][0], profile[currentSegment][3], distFromLastBend);
 		profile_i[i][1] = interpolate(profile[currentSegment - 1][1], profile[currentSegment][1], profile[currentSegment][3], distFromLastBend);
 
@@ -299,7 +319,7 @@ bool ProfileMaker::IsPathOOB()
 {
 	if (isDebug)
 	{
-		std::cout << "Checking path OOB for DEM boundaries:" << std::endl;
+		std::cout << "Checking path OOB for DEM boundaries: " << std::endl;
 		std::cout << "Min = " << geoDetails.cornerSW[0] << ", " << geoDetails.cornerSW[1] << std::endl;
 		std::cout << "Max = " << geoDetails.cornerNE[0] << ", " << geoDetails.cornerNE[1] << std::endl;
 	}
@@ -362,8 +382,8 @@ bool ProfileMaker::CheckDEMLoaded(std::string demPath)
 		return false;
 }
 
-int ProfileMaker::CalculateProfile(InterpolationMethods method) //returning int for end state. 0: failure, 1: success, 2: success with gaps (for when implementing 
-										//choice to calculate profile for paths that are partially within the provided DEM's boundaries.
+int ProfileMaker::CalculateProfile(InterpolationMethods method) //returning int for end state. 0: success,	1: success with gaps, 2: failure, path OOB 
+																//return 1 is for when implementing choice to calculate profile for paths that are partially within the provided DEM's boundaries.
 {
 	//in case dem is in UTM
 	if (geoDetails.modelType ==  1 && !isPathUTM) //Note that testing modelType == 1 guarantees that the DTM is "Projected," but not necessarily UTM. Must check the projectedCRS for that.
@@ -381,11 +401,9 @@ int ProfileMaker::CalculateProfile(InterpolationMethods method) //returning int 
 	//check if profile is out of bounds
 	if (IsPathOOB()) //TODO remove the exit, return a custom error code, modify calling function to handle the code accordingly
 	{
-		std::cout << "Error: Loaded path is outside the boundry of the loaded DEM!\n";
-		std::cout << "Press Enter to Continue.\n";
-		std::cin.sync();
-		std::cin.get();
-		exit(1);
+		//std::cout << "Error: Loaded path is outside the boundry of the loaded DEM!\n";
+		Log("ERROR! Loaded path is outside the boundry of the loaded DEM.", LOG_ERROR);
+		return 2;
 	}
 
 	int first_larger_x_order, first_larger_y_order;
@@ -435,23 +453,30 @@ bool ProfileMaker::WriteProfileToDisk(std::string &out_csv, bool overWrite)
 	
 	if (out_csv == "") //practically speaking, this a very, very remote probability.
 	{
-		std::cout << "ERROR! All possible output filenames exist on disk and overwriting is disabled." << std::endl;
+		//std::cout << "ERROR! All possible output filenames exist on disk and overwriting is disabled." << std::endl;
+		Log("ERROR! All possible output filenames exist on disk and overwriting is disabled.");
+
 		return false;
 	}
 
-	std::cout << "Attempting to create output file\n";
+	//std::cout << "Attempting to create output file\n";
+	Log("Attempting to create output file");
+
 	std::ofstream result;
 	result.open(out_csv);
 	if (!result.is_open())
 	{
-		std::cout << "Error: failed to create or open file!\n";
+		//std::cout << "Error: failed to create or open file!\n";
+		Log("ERROR! Failed to create or open file.", LOG_ERROR);
 		return false;
 	}
 
-	std::cout << "File creation is successfull\n";
+	//std::cout << "File creation is successfull\n";
+	Log("File creation is successfull.", LOG_SUCCESS);
 
-	std::cout << "\nWriting results to disk" << std::endl;
-	
+	//std::cout << "\nWriting results to disk" << std::endl;
+	Log("Writing results to disk.");
+
 	if (isPathUTM)
 		result << "Easting,Northing,Chainage,Height" << std::endl;
 	else
@@ -568,7 +593,7 @@ FileFormat ProfileMaker::DetermineFileFormat(std::string geometryPath)
 	//TODO consider having a const public method in each of the geometry parsing classes that only checks if the provided string is of said file type, which you loop over them here.
 
 	std::string extension = geometryPath.substr(geometryPath.length() - 4, 4);
-	std::cout << "file extension: " << extension << std::endl; //test
+	//std::cout << "file extension: " << extension << std::endl; //test
 
 	if (extension == ".kml" || extension == ".KML")
 	{
@@ -577,6 +602,7 @@ FileFormat ProfileMaker::DetermineFileFormat(std::string geometryPath)
 	else if (extension == ".kmz" || extension == ".KMZ")
 	{
 		std::cout << "WARNING! compressed KMZ format is not supported yet. Please recreate your path in uncompressed kml format and try again." << std::endl;
+		Log("ERROR! compressed KMZ format is not supported yet. Please recreate your path in uncompressed kml format and try again.", LOG_ERROR);
 		return FileFormat::unsupported;
 	}
 	else if (extension == ".shp" || extension == ".SHP")
@@ -604,7 +630,8 @@ double ProfileMaker::InterpolatePointHeight(unsigned long int first_larger_x, un
 	case InterpolationMethods::bicubic:
 		return BicubicInterpolation(first_larger_x, first_larger_y, point_order);
 	default:
-		std::cout << "ERROR! Recieved an unexpected InterpolationMethods flag" << std::endl;
+		//std::cout << "ERROR! Recieved an unexpected InterpolationMethods flag" << std::endl;
+		Log("ERROR! Recieved an unexpected InterpolationMethods flag", LOG_ERROR);
 		return 0.0f;
 	}
 }
@@ -709,7 +736,9 @@ double ProfileMaker::NearestNeighbourInterpolation(unsigned long int first_large
 
 bool ProfileMaker::FileIsExist(std::string location) const
 {
-	std::cout << "Attempting to open " << location << std::endl;
+	if (isDebug)
+		std::cout << "Attempting to check existence of file: " << location << std::endl;
+
 	std::ifstream file_to_check;
 
 	file_to_check.open(location);
@@ -809,8 +838,9 @@ std::unique_ptr<double> ProfileMaker::ToUTM(double lng, double lat) const
 	coords.get()[0] = y;
 	coords.get()[1] = x;
 
-	if (isDebug)
-		std::cout << "\n in ToUTM, returning coords: " << coords.get()[0] << " and " << coords.get()[1];
+	//The part bellow would severely impact performance, in case of large profiles.
+	/*if (isDebug)
+		std::cout << "\n in ToUTM, returning coords: " << coords.get()[0] << " and " << coords.get()[1];*/
 	
 	return coords;
 }
@@ -905,18 +935,20 @@ std::unique_ptr<double> ProfileMaker::ToWGS84(double easting, double northing, b
 	double convergence = gamma * 180.0f / PI_CONSTANT;
 	double scale = k;
 
-	if (isDebug)
+	//The part bellow would severely impact performance, in case of large profiles.
+	/*if (isDebug)
 	{
 		std::cout << "\n in ToUTM, returning coords: " << std::fixed << std::setprecision(11) << coords.get()[0] << " and " << coords.get()[1] << std::endl;
 		std::cout << "Convergence: " << std::fixed << std::setprecision(11) << convergence << ", scale" << scale << std::endl;
-	}
+	}*/
 
 	return coords;
 }
 
 void ProfileMaker::ConvertPathToUTM()
 {
-	if (isDebug) std::cout << "\nConverting path to UTM\n"; //test
+	if (isDebug)
+		std::cout << "\nConverting path to UTM\n"; //test
 	
 	std::unique_ptr<double> tempreturn;
 

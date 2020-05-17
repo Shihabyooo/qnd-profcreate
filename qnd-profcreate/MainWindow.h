@@ -4,6 +4,7 @@
 #include "FilesystemBrowser.h"
 //#include "ProfileMaker.h"
 #include "Globals.h"
+#include "LogWindow.h"
 
 extern ProfileMaker * profileMaker;
 

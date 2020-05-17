@@ -70,7 +70,7 @@ void UpdateSubWindowsSizes() //SubWindows = ImGUI windows.
 		return;
 	}
 
-	std::cout << "updating (top*right*bottom*left)" << clientSize.top << " x " << clientSize.right << " x " << clientSize.bottom << " x " << clientSize.left << std::endl;
+	//std::cout << "updating (top*right*bottom*left)" << clientSize.top << " x " << clientSize.right << " x " << clientSize.bottom << " x " << clientSize.left << std::endl;
 
 	UpdateMainWindowSizeAndPos(clientSize.right, clientSize.bottom);
 	UpdateLogWindowSizeAndPos(clientSize.right, clientSize.bottom);
@@ -209,14 +209,11 @@ int ProgramLoop()
 
 int StartGUI(ProfileMaker * _profileMaker)
 {
-
-	//test
-	Log(std::string("To bait fish withal! If it would serve anything, it would feed my revenge! Or at least, that's how I think the quote goes. My memory is as reliable as a cheap chinese product tho, so don't hold me to it...."), LogEntryType::success);
-	for (int i = 0; i < 50; i++)
-		Log(std::string("test"), i % 4 == 0 ? LogEntryType::normal : (i % 3 == 0 ? LogEntryType::warning : (i % 2 == 0 ? LogEntryType::error : LogEntryType::success)));
-		
-
-	//endtest
+	////test
+	//Log(std::string("To bait fish withal! If it would serve anything, it would feed my revenge! Or at least, that's how I think the quote goes. My memory is as reliable as a cheap chinese product tho, so don't hold me to it...."), LogEntryType::success);
+	//for (int i = 0; i < 50; i++)
+	//	Log(std::string("test"), i % 4 == 0 ? LogEntryType::normal : (i % 3 == 0 ? LogEntryType::warning : (i % 2 == 0 ? LogEntryType::error : LogEntryType::success)));
+	////endtest
 
 	if (InitializeAndShowWindow() != 0)
 		return WINDOW_INIT_FAIL;

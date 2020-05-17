@@ -35,7 +35,7 @@ void DrawFileList(char * filePath, std::vector<std::string> * fileNames, std::un
 	if (ImGui::Button(buttonLabel, ImVec2(100, 20)))
 	{
 		UpdateFileList(filePath, fileNames, selectionStates, dataType);
-		std::cout << "Updating with path: " << std::string(filePath).c_str() << ", dataype: " << (int)dataType << std::endl; //test
+		//std::cout << "Updating with path: " << std::string(filePath).c_str() << ", dataype: " << (int)dataType << std::endl; //test
 	}
 
 	ImGui::NewLine();
@@ -69,20 +69,25 @@ void DrawProcessingPopup()
 
 }
 
-bool CheckSelectionValidity()
+bool CheckInputValidity()
 {
+	bool inputValidity = true; //To have all check errors show on the log, we don't immediatly return when one fails.
+
 	//check that geometry files are loaded to file list
 	if (geometryNames.size() < 1)// || demNames.size() < 1)
 	{
-		std::cout << "ERROR! At least one geometry file must be provided." << std::endl;
-		return false;
+		//std::cout << "ERROR! At least one geometry file must be provided." << std::endl;
+		Log("ERROR! At least one geometry file must be provided.", LOG_ERROR);
+		inputValidity = false;
 	}
 	
 	//check dem files are loaded to file list
 	if (demNames.size() < 1)
 	{
-		std::cout << "ERROR! A DEM file must be provided." << std::endl;
-		return false;
+		//std::cout << "ERROR! A DEM file must be provided." << std::endl;
+		Log("ERROR! A DEM file must be provided.", LOG_ERROR);
+
+		inputValidity = false;
 	}
 
 	//check that at least one geometry file from file list is selected
@@ -92,8 +97,10 @@ bool CheckSelectionValidity()
 			break;
 		else if (i == geometryNames.size() - 1)//reached last element and none are selected
 		{
-			std::cout << "ERROR! At least one geometry file must be selected." << std::endl;
-			return false;	
+			//std::cout << "ERROR! At least one geometry file must be selected." << std::endl;
+			Log("ERROR! At least one geometry file must be selected.", LOG_ERROR);
+
+			inputValidity = false;
 		}
 	}
 
@@ -104,39 +111,47 @@ bool CheckSelectionValidity()
 			break;
 		else if (i == demNames.size() - 1)
 		{
-			std::cout << "ERROR! A DEM file must be selected." << std::endl;
-			return false;
+			//std::cout << "ERROR! A DEM file must be selected." << std::endl;
+			Log("ERROR! A DEM file must be selected.", LOG_ERROR);
+
+			inputValidity = false;
 		}
 	}
 
 	//check that chainageSteps is set > 0.0f
 	if (chainageSteps < 0.001f)
 	{
-		std::cout << "ERROR! Chainage Steps is set to a very small value or zero." << std::endl;
-		return false;
+		//std::cout << "ERROR! Chainage Steps is set to a very small value or zero." << std::endl;
+		Log("ERROR! Chainage Steps is set to a very small value or zero.", LOG_ERROR);
+
+		inputValidity = false;
 	}
 
 	//check that output directory is set.
 	if (outputDirectory.length() < 3 || !IsDirectoryAccessible(outputDirectory))
 	{
-		std::cout << "ERROR! Invalid output directory." << std::endl;
-		return false;
+		//std::cout << "ERROR! Invalid output directory." << std::endl;
+		Log("ERROR! Invalid output directory.", LOG_ERROR);
+
+		inputValidity = false;
 	}
 
 	//if we reached here, means all input are set and ok (at GUI level).
-	return true;
+	return inputValidity;
 }
 
 void BeginProcessing()
 {
 	outputDirectory = std::string(outputDirectoryPath);
 
-	if (!CheckSelectionValidity())
+	if (!CheckInputValidity())
 		return;
 
 	if (profileMaker == NULL)
 	{
-		std::cout << "ERROR! profileMaker is set to NULL." << std::endl;
+		std::cout << "ERROR! profileMaker is set to NULL. This should not happen (unless the programmer sucked more than he thought he does)." << std::endl;
+		Log("ERROR! profileMaker is set to NULL. This should not happen (unless the programmer sucked more than he thought he does).", LOG_ERROR);
+
 		return;
 	}
 
@@ -159,6 +174,7 @@ void BeginProcessing()
 		}
 	}
 
+	//TODO Decouple processing from UI drawing; read bellow.
 	//The "Processing" popup will not appear during processing with this implementation, this is due to the fact that call to this function, and in turn DrawMainWindow() will be stalled until
 	// profileMaker->BatchProfileProcessing() returns. Meaning ImGui::End() and (in the GUIHandler's ProgramLoop()) both the ImGui::Render() and the D3D context updating won't be executed.
 	//There are two possible solutions to this:
@@ -167,10 +183,17 @@ void BeginProcessing()
 	//B:	Move prcessing calls to GuiHandler, and have this function set a flag there in addition to starting the popup. At the end of the render/message loop (i.e. after g_pSwapChain->Present(1, 0))
 	//		an if-statment checks the flag and if set, start the call BatchProfileProcessing().
 
-	processingPopupState = true;
-	ImGui::OpenPopup("Processing");
+	/*processingPopupState = true;
+	ImGui::OpenPopup("Processing");*/
+
+	Log("Begining processing."); //note: this won't appear probably because it depends on ImGui finishing drawing a window, which won't happen unless BatchPorileProcessing returns.
 
 	bool result = profileMaker->BatchProfileProcessing(_geoemetryPaths, _demPath, outputDirectory, chainageSteps, interpolationMethod, mainatainBends);
+
+	if (result)
+		Log("Finished processing successfully", LOG_SUCCESS);
+	else
+		Log("Processing aborted due to errors.", LOG_ERROR);
 }
 
 void DrawInterpolationMethods() //The approach with the function is ugly in more ways that one. FIX IT!
