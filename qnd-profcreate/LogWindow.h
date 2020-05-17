@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <Windows.h>
 #include <iostream>
+#include <chrono>
 
 #include "imgui.h"
 #include "Globals.h"

@@ -63,11 +63,25 @@ void DrawLogWindow()
 	ImGui::End();
 }
 
+std::string GetTimeStamp()
+{
+	std::time_t timeNow;
+	timeNow = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+
+	tm tmStruct;// = gmtime(&timeNow);
+	gmtime_s(&tmStruct, &timeNow);
+
+	std::string timeSamp = std::to_string(tmStruct.tm_year + 1900) + "/" + std::to_string(tmStruct.tm_mon + 1) + "/" + std::to_string(tmStruct.tm_mday) + " "
+							+ std::to_string(tmStruct.tm_hour) + ":" + std::to_string(tmStruct.tm_min) + ":" + std::to_string(tmStruct.tm_sec) + " | ";
+	return timeSamp;
+}
+
 void Log(std::string & content, LogEntryType type)
 {
 	//TODO enrich the logging mechanism with a max value, after which the oldest logs are removed.
+	logHistory.push_back(LogEntry(GetTimeStamp() + content, type));
 
-	logHistory.push_back(LogEntry(content, type));
+	std::cout << content.c_str() << std::endl;//test
 }
 
 void Log(char * content, LogEntryType type)
