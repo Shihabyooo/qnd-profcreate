@@ -250,6 +250,77 @@ void ProfileMaker::DisplayPath()
 		profile.DisplayArrayInCLI();
 }
 
+//Argubly the ugliest method of this class...
+std::unique_ptr<DEMSummary> ProfileMaker::GetDEMSummary(std::string & demLocation)
+{
+	if (!LoadGeoTIFFHeaders(demLocation))
+		return std::unique_ptr<DEMSummary>(nullptr);
+
+	std::string compressionMethod;
+	bool isSupported = false; //because most of the cases bellow will be false, to save lines.
+
+	switch (tiffDetails.compression)
+	{
+	case (1): //no compression
+		compressionMethod = "Uncompressed.";
+		isSupported = true;
+		break;
+	case (32773): //PackBits (Macintosh RLE)
+		compressionMethod = "Packbits RLE.";
+		isSupported = true;
+		break;
+	case (2): //CCITT modified Huffman RLE
+		compressionMethod = "CCITT modified Huffman RLE.";
+		break;
+	case (3): //CCITT Group 3 fax encoding
+		compressionMethod = "CCITT Group 3 fax encoding.";
+		break;
+	case (4): //CCITT Group 4 fax encoding
+		compressionMethod = "CCITT Group 4 fax encoding.";
+		break;
+	case (5): //LZW
+		compressionMethod = "LZW.";
+		break;
+	case (6): //JPEG (old style, deprecated?)
+		compressionMethod = "JPEG (Deprecated).";
+		break;
+	case (7): //JPEG (new style)
+		compressionMethod = "JPEG.";
+		break;
+	case (8): //Deflate
+		compressionMethod = "Deflate.";
+		break;
+	case (9): //"Defined by TIFF-F and TIFF-FX standard (RFC 2301) as ITU-T Rec. T.82 coding, using ITU-T Rec. T.85 (which boils down to JBIG on black and white). "
+				//https://www.awaresystems.be/imaging/tiff/tifftags/compression.html
+		compressionMethod = "ITU-T Rec. T.82 coding, using ITU-T Rec. T.85.";
+		break;
+	case (10): //"Defined by TIFF-F and TIFF-FX standard (RFC 2301) as ITU-T Rec. T.82 coding, using ITU-T Rec. T.43 (which boils down to JBIG on color). "
+		compressionMethod = "ITU-T Rec. T.82 coding, using ITU-T Rec. T.43.";
+		break;
+	default:
+		compressionMethod = "Unknown.";
+		break;
+	}
+
+	//for the crsCitation, easiest solution to avoid long conditional statements is to add them all together, since all except one should be empty, it would practically give same result.
+	std::string crsCitation = geoDetails.geotiffCitation + geoDetails.geodeticCRSCitation + geoDetails.projectedCRSCitation + " - "  + geoDetails.verticalCRSCitation;
+
+	unsigned int crsCode = geoDetails.modelType == 1 || geoDetails.modelType == 3 ? geoDetails.projectedCRS : (geoDetails.modelType == 2 ? geoDetails.geodeticCRS : 0);
+
+	double boundingRect[4] = {geoDetails.cornerSW[0], geoDetails.cornerSW[1], geoDetails.cornerNE[0], geoDetails.cornerNE[1]};
+
+	return std::unique_ptr<DEMSummary>(new DEMSummary(
+		tiffDetails.width,
+		tiffDetails.height,
+		compressionMethod,
+		crsCode,
+		crsCitation,
+		boundingRect,
+		isSupported
+	));
+	
+}
+
 void ProfileMaker::InterpolateProfile(const double step, const bool maintainBends)
 {
 	//int newVertsSum = profile.Rows();

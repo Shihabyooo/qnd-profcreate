@@ -37,6 +37,8 @@ public:
 	
 	void DisplayPath(); //For CLI implementations.
 
+	std::unique_ptr<DEMSummary> GetDEMSummary(std::string & demLocation);
+
 private: 
 	//Utilities
 	FileFormat DetermineFileFormat(std::string geometryPath);

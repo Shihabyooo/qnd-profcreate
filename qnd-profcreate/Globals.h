@@ -65,6 +65,38 @@ public:
 	long int height;
 };
 
+struct DEMSummary //To be used for GUI, since the info required are spread over two structs (TIFFDetails and GeoTIFFDetails) but we require one struct to be retured from a ProfileMaker method.
+{
+public:
+	DEMSummary() {}
+	DEMSummary(unsigned long int _width, unsigned long int _height, std::string & _compressionMethod, unsigned int _crsCode, std::string & _crsCitation, double _boundingRect[4], bool _isSupported)
+	{
+		width = _width;
+		height = _height;
+		compressionMethod = _compressionMethod;
+		crsCode = _crsCode;
+		crsCitation = _crsCitation;
+		
+		for (int i = 0; i < 4; i++)
+			boundingRect[i] = _boundingRect[i];
+
+		isSupported = _isSupported;
+	}
+
+
+	unsigned long int width;
+	unsigned long int height;
+	std::string compressionMethod;
+	
+	//CRS crsType;
+	unsigned int crsCode;
+	std::string crsCitation;
+	double boundingRect[4]; //MinX, minY, maxX, maxY
+
+	bool isSupported; //Since current implementation of GeoTIFF-Parser is highly limited in its decompressor support.
+};
+
+
 class FileParser
 {
 public:
