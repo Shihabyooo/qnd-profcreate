@@ -1,7 +1,7 @@
 #include "GeoTIFF_Parser.h"
 
 //variables
-bool viewTagsInCLI = false;
+bool viewTagsInCLI = true;
 unsigned long int firstIFDOffset;
 Array2D * bitMap = NULL; //the actual holder of the geoTIFF raster's data.
 
@@ -455,7 +455,7 @@ long int GetFieldIntData(const Tag * tag)
 		//std::cout << "Field value size is greater than header value field capacity. These bytes are pointers." << std::endl; //test
 		isOffsetData = true;
 	}
-	long int currentFileStreamLocation = stream.tellg();
+	std::streampos currentFileStreamLocation = stream.tellg();
 
 	long int value;
 
@@ -500,7 +500,7 @@ void GetFieldIntArrayData(const Tag * tag, long int * outputArray)
 		isOffsetData = true;
 	}
 
-	long int currentFileStreamLocation = stream.tellg();
+	std::streampos currentFileStreamLocation = stream.tellg();
 
 	if (isOffsetData)
 		stream.seekg(tag->offsetValue);
@@ -508,7 +508,7 @@ void GetFieldIntArrayData(const Tag * tag, long int * outputArray)
 	if (tag->fieldTypeID == 3) //short
 	{
 		char buffer[2];
-		for (int i = 0; i < tag->count; i++)
+		for (unsigned long int i = 0; i < tag->count; i++) //all arithmatic uses of i bellow are always positive, safe to use unsigned integers.
 		{
 			if (isOffsetData)
 				stream.read(buffer, sizeof(buffer));
@@ -533,7 +533,7 @@ void GetFieldIntArrayData(const Tag * tag, long int * outputArray)
 	else if (tag->fieldTypeID == 4) //long
 	{
 		char buffer[4];
-		for (int i = 0; i < tag->count; i++)
+		for (unsigned long int i = 0; i < tag->count; i++)
 		{
 			/*if (isOffsetData)
 			{
@@ -575,7 +575,7 @@ void GetFieldIntArrayData(const Tag * tag, long int * outputArray)
 	stream.seekg(currentFileStreamLocation);
 }
 
-short int GetGeoKeyIntData(const GeoKey * geoKey, short int * dataArray, int valueOrderInKey = 0)
+short int GetGeoKeyIntData(const GeoKey * geoKey, const short int * dataArray, int valueOrderInKey = 0)
 {
 	short int result;
 	if (dataArray == NULL || geoKey->tiffTagLocation == 0) //This assumes that this function is called only when value is set in a key's valueOffset field. This assumption also includes the GeoTIFF spec that values stored in key offsetValue
@@ -587,30 +587,37 @@ short int GetGeoKeyIntData(const GeoKey * geoKey, short int * dataArray, int val
 		result = dataArray[geoKey->offsetValue + valueOrderInKey];
 	}
 
+	std::cout << "GetGeoKeyIntData() returning: " << result << std::endl; //test
 	return result;
 }
 
-double GetGeoKeyDoubleData(const GeoKey * geoKey, double * dataArray, int valueOrderInKey = 0)
+double GetGeoKeyDoubleData(const GeoKey * geoKey, const double * dataArray, int valueOrderInKey = 0)
 {
-	short int result;
+	double result;
 	if (dataArray == NULL || geoKey->tiffTagLocation == 0) //This assumes that this function is called only when value is set in a key's valueOffset field. This assumption also includes the GeoTIFF spec that values stored in key offsetValue
 	{						//are of type short (not used here, but can cause issues) and that the count = 1 (so we return a single value)
 		result = geoKey->offsetValue;
 	}
 	else
 	{
+		std::cout << "Getting a double value of order: " << geoKey->offsetValue + valueOrderInKey << std::endl; //test
 		result = dataArray[geoKey->offsetValue + valueOrderInKey];
 	}
 
 	return result;
 }
 
-std::string ExtractAndMergeMultiASCIIValues(const GeoKey * geoKey, char * dataArray)
+std::string ExtractAndMergeMultiASCIIValues(const GeoKey * geoKey, const char * dataArray)
 {
 	std::string result = "";
 
-	for (int i = geoKey->offsetValue; i < geoKey->offsetValue + geoKey->count; i++)
+	std::cout << "ExtractAndMergeMultiASCIIValues() recieved a geoKey with offset: " << geoKey->offsetValue << std::endl; //test
+
+	for (unsigned int i = geoKey->offsetValue; i < geoKey->offsetValue + geoKey->count; i++)
+	{
+		std::cout << "Getting a ascii value of order: " << i << std::endl; //test
 		result += dataArray[i];
+	}
 
 	result += '\0';
 
@@ -618,7 +625,7 @@ std::string ExtractAndMergeMultiASCIIValues(const GeoKey * geoKey, char * dataAr
 }
 
 template <typename T>
-void ProcessGeoKey(const GeoKey * geoKey, T * dataArray = NULL)
+void ProcessGeoKey(const GeoKey * geoKey, const T * dataArray = NULL)
 {
 	switch (geoKey->keyID)
 	{
@@ -671,14 +678,17 @@ void ProcessGeoKeyDirectory(const Tag * geoKeyDirectoryTag)
 	stream.seekg(geoKeyDirectoryTag->offsetValue, stream.beg);
 
 	char word[2];
-	unsigned short int keyDirectoryVersion, keyRevision, minorRevision, numberOfKeys;
+	unsigned int keyDirectoryVersion, keyRevision, minorRevision, numberOfKeys;
 
 	stream.read(word, sizeof(word));
 	keyDirectoryVersion = BytesToInt16(word);
+	
 	stream.read(word, sizeof(word));
 	keyRevision = BytesToInt16(word);
+	
 	stream.read(word, sizeof(word));
 	minorRevision = BytesToInt16(word);
+	
 	stream.read(word, sizeof(word));
 	numberOfKeys = BytesToInt16(word);
 
@@ -689,7 +699,7 @@ void ProcessGeoKeyDirectory(const Tag * geoKeyDirectoryTag)
 
 	//TODO add a check here to make sure versions match the ones adopted in this code. Else stop execution of remainin of program (a universal bool and int for error code that LoadTIFF() checks after processing tags? Throw Exception?)
 
-	for (int i = 0; i < numberOfKeys; i++)
+	for (unsigned long int i = 0; i < numberOfKeys; i++)
 	{
 		std::unique_ptr<GeoKey> geoKey = std::unique_ptr<GeoKey>(new GeoKey);
 
@@ -701,10 +711,10 @@ void ProcessGeoKeyDirectory(const Tag * geoKeyDirectoryTag)
 		geoKey.get()->tiffTagLocation = BytesToInt16(word);
 		//-----------------------------------------
 		stream.read(word, sizeof(word));
-		geoKey.get()->count = BytesToInt32(word);
+		geoKey.get()->count = BytesToInt16(word);
 		//-----------------------------------------
 		stream.read(word, sizeof(word));
-		geoKey.get()->offsetValue = BytesToInt32(word);
+		geoKey.get()->offsetValue = BytesToInt16(word);
 
 
 		if (viewTagsInCLI)
@@ -833,9 +843,10 @@ void ProcessTag(const Tag * tag)
 			//extract the params stored in this tag.
 			std::unique_ptr<double> doubleParamsData = std::unique_ptr<double>(new double[tag->count]);
 			double buffer;
+			std::cout << "count of doubleParamsData: " << tag->count <<std::endl; //test
 
 			stream.seekg(tag->offsetValue);
-			for (int i = 0; i < tag->count; i++)
+			for (unsigned long int i = 0; i < tag->count; i++)
 			{
 				stream.read((char*)&buffer, sizeof(buffer));
 				doubleParamsData.get()[i] = buffer;
@@ -844,6 +855,7 @@ void ProcessTag(const Tag * tag)
 			//Loop over keys stored in doubleParamsGeoKeys and process them.
 			for (std::vector<GeoKey>::iterator it = doubleParamsGeoKeys.begin(); it < doubleParamsGeoKeys.end(); ++it)
 			{
+				std::cout << "Attempting to process a Double geokey of offset: " << it->offsetValue << ", and count: " << it->count << std::endl; //test
 				ProcessGeoKey(&(*it), doubleParamsData.get());
 			}
 		}
@@ -853,19 +865,24 @@ void ProcessTag(const Tag * tag)
 		{
 			//extract the params stored in this tag.
 			std::unique_ptr<char> asciiParamsData = std::unique_ptr<char>(new char[tag->count]);
+			std::cout << "count of asciiParamsData: " << tag->count << std::endl;//test
 
 			stream.seekg(tag->offsetValue);
 
 			char buffer = ' ';
-			for (int i = 0; i < tag->count; i++)
+			for (unsigned long int i = 0; i < tag->count; i++)
 			{
+
 				stream.read(&buffer, sizeof(buffer));
 				asciiParamsData.get()[i] = buffer;
 			}
 
 			//Loop over keys stored in asciiParamsGeoKeys and process them.
 			for (std::vector<GeoKey>::iterator it = asciiParamsGeoKeys.begin(); it < asciiParamsGeoKeys.end(); ++it)
+			{
+				std::cout << "Attempting to process an ASCII geokey of offset: " << it->offsetValue << ", and count: " << it->count << std::endl; //test
 				ProcessGeoKey(&(*it), asciiParamsData.get());
+			}
 		}
 		break;
 	case (33550): //ModelPixelScaleTag
@@ -1124,6 +1141,7 @@ void DisplayGeoTIFFDetailsOnCLI()
 
 bool OpenTIFFFile(std::string filePath)
 {
+	stream.clear();
 	stream.open(filePath, std::ios::binary | std::ios::in);
 
 	if (!stream.is_open())
@@ -1137,7 +1155,7 @@ bool OpenTIFFFile(std::string filePath)
 
 bool ParseTIFFHeader()
 {
-	char byte[1];
+	//char byte[1];
 	char word[2];
 	char dword[4];
 	//char qword[8];
@@ -1184,7 +1202,7 @@ bool ParseTIFFHeader()
 
 bool ParseFirstIFDHeader()
 {
-	char byte[1];
+	//char byte[1];
 	char word[2];
 	char dword[4];
 
@@ -1197,7 +1215,7 @@ bool ParseFirstIFDHeader()
 	short int noOfTagsInIFD = BytesToInt16(word);
 	//std::cout << "Number of IFD enteries: " << noOfTagsInIFD << std::endl;
 
-	unsigned long int endOfLastTag = stream.tellg(); //Because ProcessTag() may modify the position in the stream and is called at end of loop, any further reading of tags wouldn't be correct.
+	std::streampos endOfLastTag = stream.tellg(); //Because ProcessTag() may modify the position in the stream and is called at end of loop, any further reading of tags wouldn't be correct.
 													//So, we cache the position of the tag end before we call ProcessTag()
 	for (int i = 0; i < noOfTagsInIFD; i++)
 	{
@@ -1259,7 +1277,7 @@ bool AllocateBitmapMemory()
 	try
 	{
 		bitMap = new Array2D[tiffDetails.width];
-		for (int i = 0; i < tiffDetails.width; i++)
+		for (unsigned long int i = 0; i < tiffDetails.width; i++)
 		{
 			bitMap[i] = Array2D(tiffDetails.height, tiffDetails.samplesPerPixel);
 		}
@@ -1278,8 +1296,9 @@ void DeallocateBitmapMemory()
 {
 	if (bitMap != NULL)
 	{
-		for (int i = 0; i < tiffDetails.height; i++)
+		for (unsigned long int i = 0; i < tiffDetails.width; i++)
 			bitMap[i].~Array2D();
+		
 		delete[] bitMap;
 		bitMap = NULL;
 	}
@@ -1331,7 +1350,7 @@ bool ParseFirstBitmap()
 	}
 	else
 	{
-		for (int i = 0; i < tiffDetails.noOfTilesOrStrips; i++)
+		for (unsigned long int i = 0; i < tiffDetails.noOfTilesOrStrips; i++)
 		{
 			if (!ParseStripOrTileData(i))
 				return false;
@@ -1349,11 +1368,11 @@ void DisplayBitmapOnCLI()
 		return;
 	}
 
-	for (int i = 0; i < tiffDetails.height; i++)
+	for (unsigned long int i = 0; i < tiffDetails.height; i++)
 	{
-		for (int j = 0; j < tiffDetails.width; j++)
+		for (unsigned long int j = 0; j < tiffDetails.width; j++)
 		{
-			for (int k = 0; k < tiffDetails.samplesPerPixel; k++)
+			for (unsigned long int k = 0; k < tiffDetails.samplesPerPixel; k++)
 			{
 				if (k > 0)
 					std::cout << ",";
@@ -1365,20 +1384,56 @@ void DisplayBitmapOnCLI()
 	}
 }
 
-bool LoadGeoTIFF(const std::string filePath) //Primary entry point
+bool LoadGeoTIFFHeaders(const char * filePath, bool closeStreamAtEnd) //Loads only the headers of the file. Usefull in case we want to check the file's specs before loading its bitmap content
 {
-	
+	std::string path(filePath);
+	return LoadGeoTIFFHeaders(path);
+}
+
+bool LoadGeoTIFFHeaders(const std::string &filePath, bool closeStreamAtEnd) //Loads only the headers of the file. Usefull in case we want to check the file's specs before loading its bitmap content
+{
 	if (!OpenTIFFFile(filePath))
 		return false;
 
 	if (!ParseTIFFHeader())
+	{
+		if (stream.is_open())
+			stream.close();
 		return false;
+	}
 
 	if (!ParseFirstIFDHeader()) //Currently, no error checking is done in ParseFirstIFDHeader(), but future work should include some.
+	{
+
+		if (stream.is_open())
+			stream.close();
+		return false;
+	}
+
+	if (closeStreamAtEnd && stream.is_open())
+		stream.close();
+
+
+	return true;
+}
+
+bool LoadGeoTIFF(const char * filePath) //Load entire GeoTIFF file -including bitmap- to memory.
+{
+	std::string path(filePath);
+	return LoadGeoTIFF(path);
+}
+
+bool LoadGeoTIFF(const std::string &filePath) //Load entire GeoTIFF file -including bitmap- to memory.
+{
+	if (!LoadGeoTIFFHeaders(filePath, false)) //file open-ability check is done inside LoadGeoTIFFHeaders().
 		return false;
 
 	if (!AllocateBitmapMemory())
+	{
+		if (stream.is_open())
+			stream.close();
 		return false;
+	}
 
 	if (!ParseFirstBitmap())
 	{
@@ -1414,7 +1469,7 @@ const Array2D * GetPointerToBitmap()
 	return bitMap;
 }
 
-double GetSample(int x, int y, int sampleOrder)
+double GetSample(unsigned long int x, unsigned long int y, unsigned int sampleOrder)
 {
 
 	if (x > tiffDetails.width || y > tiffDetails.height || sampleOrder > tiffDetails.samplesPerPixel)
@@ -1425,4 +1480,3 @@ double GetSample(int x, int y, int sampleOrder)
 	else
 		return bitMap[x][y][sampleOrder];
 }
-
