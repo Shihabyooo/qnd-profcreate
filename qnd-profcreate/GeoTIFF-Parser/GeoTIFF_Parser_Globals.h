@@ -70,7 +70,7 @@ public:
 	double ellipsoidInvFlattening;
 
 	//vertical datum
-	unsigned short int verticalDatum; //Ranges 1-1023 reserved, 1024-32766 EPSG Geographic 2D or Geocentric CRS, 32767 User Defined, 32768-65535 private.
+	unsigned short int verticalDatum; //Ranges 1-1023 reserved, 1024-32766 EPSG Geographic 2D or Geocentric CRS, 32767 User Defined, 32768-65535 private.s
 
 	//TODO add remaining parts relevant to User Defined CRSs (Section 7.5 of standard)
 

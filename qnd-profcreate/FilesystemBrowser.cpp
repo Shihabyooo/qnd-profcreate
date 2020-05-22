@@ -7,6 +7,7 @@ char * browserOutPath = NULL;
 DataType currentTargetType;
 std::vector<std::string> * fileList;
 std::unique_ptr<bool> * selectionFlags;
+bool defaultSelectionState;
 
 void PopulateDrivesList()
 {
@@ -247,7 +248,7 @@ void UpdateFileList(std::string directoryPath, std::vector<std::string> * _fileL
 		*_selectionFlags = std::unique_ptr<bool>(new bool[_fileList->size()]);
 
 		for (int i = 0; i < _fileList->size(); i++)
-			_selectionFlags->get()[i] = defaulSelectionState;
+			_selectionFlags->get()[i] = defaultSelectionState;
 	}
 }
 
@@ -345,13 +346,14 @@ std::string ToUTF8(std::wstring wideString)
 	return result;
 }
 
-void OpenFileBrowser(char * outPath, std::vector<std::string> * fileListBuffer, std::unique_ptr<bool> * selectionFlagsBuffer, DataType dataType) 
+void OpenFileBrowser(char * outPath, std::vector<std::string> * fileListBuffer, std::unique_ptr<bool> * selectionFlagsBuffer, DataType dataType, bool _defaultSelectionState)
 {
 	isBrowserOpen = true;
 	browserOutPath = outPath;
 	currentTargetType = dataType;
 	fileList = fileListBuffer;
 	selectionFlags = selectionFlagsBuffer;
+	defaultSelectionState = _defaultSelectionState;
 
 	ImGui::OpenPopup("Browse");
 	PopulateDrivesList();

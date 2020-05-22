@@ -10,7 +10,7 @@ std::unique_ptr<bool> selectedDEM;
 std::vector<std::string> geometryNames;
 std::vector<std::string> demNames;
 std::string outputDirectory;
-bool defaulSelectionState = true;
+//bool defaulSelectionState = false;
 double chainageSteps = 0.0f;
 bool mainatainBends = false;
 bool useInputDirForOutput = false;
@@ -19,6 +19,7 @@ bool processingPopupState = false;
 
 static bool updateDimensions = false;
 static WindowDimensions dimensions;
+
 
 
 void DrawFileList(char * filePath, std::vector<std::string> * fileNames, std::unique_ptr<bool> * selectionStates, DataType dataType, bool singleSelection, char listID)
@@ -35,6 +36,13 @@ void DrawFileList(char * filePath, std::vector<std::string> * fileNames, std::un
 	if (ImGui::Button(buttonLabel, ImVec2(100, 20)))
 	{
 		UpdateFileList(filePath, fileNames, selectionStates, dataType);
+
+		if (listID == DEM_LIST_ID) //ugly hack, but the alternative is even uglier modifications to FileSystemBrowser...
+		{
+			for (size_t i = 0; i < fileNames->size(); i++)
+				selectionStates->get()[i] = false;
+		}
+
 		//std::cout << "Updating with path: " << std::string(filePath).c_str() << ", dataype: " << (int)dataType << std::endl; //test
 	}
 
@@ -42,15 +50,18 @@ void DrawFileList(char * filePath, std::vector<std::string> * fileNames, std::un
 	for (int i = 0; i < fileNames->size(); i++)
 	{		
 		bool state = selectionStates->get()[i]; //feeding selectedGeometry.get()[i] directly to ImGui::Selectable() prevents it from switching selection state.
-		ImGui::Selectable(ExtractFileName((*fileNames)[i]).c_str(), &state);
-		selectionStates->get()[i] = state;
-		
-		//for single selection mode, check if this item is selected, and if so unselect remaining items. Ugly hack, but works.
-		if (singleSelection && state == true)
+		if (ImGui::Selectable(ExtractFileName((*fileNames)[i]).c_str(), &state))
 		{
-			for (int j = 0; j < fileNames->size(); j++)
-				if (selectionStates->get()[j] && j != i)
-					selectionStates->get()[j] = false;
+			selectionStates->get()[i] = state;
+
+			//for single selection mode, check if this item is selected, and if so unselect remaining items. Ugly hack, but works.
+			//if (singleSelection && state)
+			if (singleSelection)
+			{
+				for (int j = 0; j < fileNames->size(); j++)
+					if (selectionStates->get()[j] && j != i)
+						selectionStates->get()[j] = false;
+			}
 		}
 	}
 	ImGui::Separator();
@@ -256,7 +267,7 @@ void DrawMainWindow()
 		OpenFileBrowser(geometryFilePath, &geometryNames, &selectedGeometry, DataType::geometry);
 	
 	DrawFileBrowser();
-	DrawFileList(geometryFilePath, &geometryNames, &selectedGeometry, DataType::geometry, false, '0');
+	DrawFileList(geometryFilePath, &geometryNames, &selectedGeometry, DataType::geometry, false, GEOMETRY_LIST_ID);
 	ImGui::NewLine();
 
 	//DEM data
@@ -264,9 +275,9 @@ void DrawMainWindow()
 	ImGui::InputText("DEM File Path", demFilePath, IM_ARRAYSIZE(demFilePath));
 
 	if (ImGui::Button("Browse for DEM directory"))
-		OpenFileBrowser(demFilePath, &demNames, &selectedDEM, DataType::dem);
+		OpenFileBrowser(demFilePath, &demNames, &selectedDEM, DataType::dem, false);
 	//DrawFileBrowser(); //The call is already made above...
-	DrawFileList(demFilePath, &demNames, &selectedDEM, DataType::dem, true, '1');
+	DrawFileList(demFilePath, &demNames, &selectedDEM, DataType::dem, true, DEM_LIST_ID);
 	ImGui::NewLine();
 
 	//Other input

@@ -25,7 +25,7 @@
 
 
 extern bool isDebug;
-extern bool defaulSelectionState;
+//extern bool defaulSelectionState;
 
 enum class DataType
 {

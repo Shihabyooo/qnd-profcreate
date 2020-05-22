@@ -6,6 +6,9 @@
 #include "Globals.h"
 #include "LogWindow.h"
 
+#define DEM_LIST_ID 'D'
+#define GEOMETRY_LIST_ID 'I'
+
 extern ProfileMaker * profileMaker;
 
 void DrawMainWindow();
