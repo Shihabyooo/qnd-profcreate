@@ -21,6 +21,38 @@ static bool updateDimensions = false;
 static WindowDimensions dimensions;
 
 
+void DisplayDEMSummary(std::string &path)
+{
+	std::unique_ptr<DEMSummary> summary = profileMaker->GetDEMSummary(path);
+
+	if (summary.get() == NULL)
+	{
+		Log("Selected DEM could not be parsed.", LOG_WARN);
+		return;
+	}
+
+	std::string _message;
+	_message = "Summary for DEM " + path;
+	Log(_message, LOG_SUCCESS);
+
+	_message = "Dimensions: " + std::to_string(summary.get()->width) + "x" + std::to_string(summary.get()->width);
+	Log(_message);
+
+	_message = "Compression: " + summary.get()->compressionMethod;
+	Log(_message);
+
+	_message = "Coordinate Reference System: " + std::to_string(summary.get()->crsCode) ;
+	Log(_message);
+
+	_message = summary.get()->crsCitation;
+	Log(_message);
+
+	_message = "Extent: min:" + std::to_string(summary.get()->boundingRect[0]) + "x" + std::to_string(summary.get()->boundingRect[1]) + ", max:" + std::to_string(summary.get()->boundingRect[2]) + std::to_string(summary.get()->boundingRect[3]);
+	Log(_message);
+
+	if (!summary.get()->isSupported)
+		Log("WARNING: This DEM file is not supported.", LOG_WARN);
+}
 
 void DrawFileList(char * filePath, std::vector<std::string> * fileNames, std::unique_ptr<bool> * selectionStates, DataType dataType, bool singleSelection, char listID)
 {	
@@ -61,6 +93,10 @@ void DrawFileList(char * filePath, std::vector<std::string> * fileNames, std::un
 				for (int j = 0; j < fileNames->size(); j++)
 					if (selectionStates->get()[j] && j != i)
 						selectionStates->get()[j] = false;
+			}
+			if (listID == DEM_LIST_ID)
+			{
+				DisplayDEMSummary((*fileNames)[i]);
 			}
 		}
 	}

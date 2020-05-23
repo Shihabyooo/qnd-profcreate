@@ -305,9 +305,13 @@ std::unique_ptr<DEMSummary> ProfileMaker::GetDEMSummary(std::string & demLocatio
 	//for the crsCitation, easiest solution to avoid long conditional statements is to add them all together, since all except one should be empty, it would practically give same result.
 	std::string crsCitation = geoDetails.geotiffCitation + geoDetails.geodeticCRSCitation + geoDetails.projectedCRSCitation + " - "  + geoDetails.verticalCRSCitation;
 
+	//std::cout << geoDetails.geotiffCitation << " - " << geoDetails.geodeticCRSCitation << " - " << geoDetails.projectedCRSCitation << " - " << geoDetails.verticalCRSCitation << std::endl;; //test
+
 	unsigned int crsCode = geoDetails.modelType == 1 || geoDetails.modelType == 3 ? geoDetails.projectedCRS : (geoDetails.modelType == 2 ? geoDetails.geodeticCRS : 0);
 
 	double boundingRect[4] = {geoDetails.cornerSW[0], geoDetails.cornerSW[1], geoDetails.cornerNE[0], geoDetails.cornerNE[1]};
+
+	//std::cout << geoDetails.cornerSW[0] << "x" << geoDetails.cornerSW[1] << "x" << geoDetails.cornerNE[0] << "x" << geoDetails.cornerNE[1] << std::endl; //test
 
 	return std::unique_ptr<DEMSummary>(new DEMSummary(
 		tiffDetails.width,
