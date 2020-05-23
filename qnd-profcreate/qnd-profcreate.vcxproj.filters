@@ -25,6 +25,18 @@
     <Filter Include="Array2D">
       <UniqueIdentifier>{3c2befc3-cf36-47b8-b796-d5fe78e9c204}</UniqueIdentifier>
     </Filter>
+    <Filter Include="DearIMGUI">
+      <UniqueIdentifier>{1b0503c5-130e-4b95-8e3b-e5d382df66d5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DearIMGUI\Header Files">
+      <UniqueIdentifier>{78f4f88a-9014-458c-b699-54bebf1f4cdc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DearIMGUI\Source Files">
+      <UniqueIdentifier>{7294e54c-8887-477f-b367-700d0c4be1c7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GUI">
+      <UniqueIdentifier>{febe2679-9c75-40b7-a642-0d8fa91e3fcd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -53,6 +65,36 @@
     </ClCompile>
     <ClCompile Include="Array2D\Array2D.cpp">
       <Filter>Array2D</Filter>
+    </ClCompile>
+    <ClCompile Include="DearIMGUI\Implementation\imgui_impl_dx11.cpp">
+      <Filter>DearIMGUI\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DearIMGUI\Implementation\imgui_impl_win32.cpp">
+      <Filter>DearIMGUI\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DearIMGUI\imgui.cpp">
+      <Filter>DearIMGUI\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DearIMGUI\imgui_demo.cpp">
+      <Filter>DearIMGUI\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DearIMGUI\imgui_draw.cpp">
+      <Filter>DearIMGUI\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DearIMGUI\imgui_widgets.cpp">
+      <Filter>DearIMGUI\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GUIHandler.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="FilesystemBrowser.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="MainWindow.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="LogWindow.cpp">
+      <Filter>GUI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -85,6 +127,42 @@
     </ClInclude>
     <ClInclude Include="Array2D\Array2D.h">
       <Filter>Array2D</Filter>
+    </ClInclude>
+    <ClInclude Include="DearIMGUI\imconfig.h">
+      <Filter>DearIMGUI\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DearIMGUI\imgui.h">
+      <Filter>DearIMGUI\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DearIMGUI\imgui_internal.h">
+      <Filter>DearIMGUI\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DearIMGUI\imstb_rectpack.h">
+      <Filter>DearIMGUI\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DearIMGUI\imstb_textedit.h">
+      <Filter>DearIMGUI\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DearIMGUI\imstb_truetype.h">
+      <Filter>DearIMGUI\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DearIMGUI\Implementation\imgui_impl_dx11.h">
+      <Filter>DearIMGUI\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DearIMGUI\Implementation\imgui_impl_win32.h">
+      <Filter>DearIMGUI\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GUIHandler.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="FilesystemBrowser.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="MainWindow.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="LogWindow.h">
+      <Filter>GUI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

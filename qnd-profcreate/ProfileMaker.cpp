@@ -1,5 +1,40 @@
 #include "ProfileMaker.h"
 
+std::string supportedGeometryFormats[] = { ".shp", ".kml" };
+std::string supportedDEMFormats[] = { ".tif" };
+
+//std::vector<std::string> geometryList;
+//std::string demLocation;
+
+bool CheckFileFormatSupport(std::string path, DataType dataType)
+{
+	if (path.length() < 4)
+		return false;
+
+	std::string extension = path.substr(path.length() - 4, 4);
+	
+	switch (dataType)
+	{
+	case DataType::dem:
+		for each (std::string _extension in supportedDEMFormats)
+		{
+			if (extension == _extension)
+				return true;
+		}
+		break;
+	case DataType::geometry:
+		for each (std::string _extension in supportedGeometryFormats)
+		{
+			if (extension == _extension)
+				return true;
+		}
+		break;
+	default:
+		return false;
+	}
+	
+	return false;
+}
 
 ProfileMaker::ProfileMaker()
 {
@@ -30,22 +65,105 @@ ProfileMaker::~ProfileMaker()
 	UnloadGeoTIFF();
 }
 
-bool ProfileMaker::LoadDEM(std::string inDEMLoc)
+bool ProfileMaker::BatchProfileProcessing(	std::vector<std::string> & geometryList,
+											std::string & demLocation,
+											std::string & outputDirectory,
+											double chainageSteps,
+											InterpolationMethods interpolationMethod,
+											bool maintainBends)
+{
+	if (!CheckDEMLoaded(demLocation))
+	{
+		//std::cout << "\nLoading DEM" << demLocation.c_str() << "\n\n";
+		Log((std::string("Attempting to load Dem: ") + demLocation));
+		if (!LoadDEM(demLocation))
+			return false;
+	}
+
+	for (int i = 0; i < geometryList.size(); i++)
+	{
+		std::string geometryPath = geometryList[i];
+		//std::cout << "\n Processing file: " << geometryPath << std::endl;
+		Log((std::string("Processing file: ") + geometryPath));
+
+		std::string outputPath = outputDirectory;
+		outputPath += "\\" + ExtractFileName(geometryPath) + ".csv";
+
+		//std::cout << "\nLoading geometry\n\n";
+		Log("Loading geometry.");
+		if (!LoadGeometry(geometryPath))
+		{
+			//std::cout << "ERROR! Failed to load geometry file " << geometryPath << std::endl;
+			Log((std::string("ERROR! Failed to load geometry file: ") + geometryPath), LOG_ERROR);
+			//std::cout << "Skipping this geometry" << std::endl;
+			Log("Skipping this geometry.");
+			continue;
+		}
+
+		if (isDebug)
+		{
+			std::cout << "\nBefore interpolation\n\n";
+			DisplayPath();
+		}
+
+		//std::cout << "\nInterpolating Profile\n\n";
+		Log("Interpolating Profile.");
+
+		InterpolateProfile(chainageSteps, maintainBends);
+
+		//std::cout << "\nCalculating Profile\n\n";
+		Log("Extracting profile heights.");
+		
+		if (CalculateProfile(interpolationMethod) == 2)
+		{
+			Log("Skipping this geometry.");
+			continue;
+		}
+
+		if (isDebug)
+		{
+			std::cout << "\nAfter Z calculations\n\n";
+			DisplayPath();
+		}
+
+		//std::cout << "\nWriting\n\n";
+		Log("Writing results to disk.");
+		WriteProfileToDisk(outputPath, false);
+
+		//std::cout << "Finished extracting profile for " << geometryPath << std::endl;
+		Log((std::string("Finished extracting profile for: ") + geometryPath), LOG_SUCCESS);
+
+		//std::cout << "\nPrepping for Next Path\n\n";
+		Log("Preparing for next path.");
+		ResetProfile();
+	}
+
+	//std::cout << "Finished processing geometries." << std::endl;
+	Log("Finished processing all geometries.", LOG_SUCCESS);
+
+	return true;
+}
+
+bool ProfileMaker::LoadDEM(std::string demPath)
 {
 
-	if (!LoadGeoTIFF(inDEMLoc))
+	if (!LoadGeoTIFF(demPath))
 	{
-		std::cout << "Error! Could not load DEM file: " << inDEMLoc << std::endl;
+		//std::cout << "Error! Could not load DEM file: " << demPath << std::endl;
+		Log("ERROR! Could not load DEM file.", LOG_ERROR);
 		return false;
 	}
 			
 	//TODO check that geoDetails are set properly and to values this code supports.
+	if (isDebug)
+	{
+		DisplayTIFFDetailsOnCLI();
+		DisplayGeoTIFFDetailsOnCLI();
+		//DisplayBitmapOnCLI();
+	}
 
-	DisplayTIFFDetailsOnCLI();
-	DisplayGeoTIFFDetailsOnCLI();
-	//DisplayBitmapOnCLI();
-
-	std::cout << "Successfully loaded DEM file: " << inDEMLoc << "\n\n";
+	loadedDEMPath = demPath;
+	std::cout << "Successfully loaded DEM file: " << demPath << "\n\n";
 	return true;
 }
 
@@ -70,22 +188,22 @@ bool ProfileMaker::LoadGeometry(std::string geometryPath)
 	{
 		switch (format)
 		{
-		case shapeFile:
+		case FileFormat::shapeFile:
 			shpParser = new SHPParser();
 			geometryParser = shpParser;
 			break;
-		case kml:
+		case FileFormat::kml:
 			kmlParser = new KMLParser();
 			geometryParser = kmlParser;
 			break;
-		case csv:
+		case FileFormat::csv:
 			//csvParser = new CSVParser();
 			//geometryParser = csvParser;
 			break;
 		default:
-			std::cout << "ERROR! Loaded filel format is not supported" << std::endl;
+			//std::cout << "ERROR! Loaded filel format is not supported" << std::endl;
+			Log("ERROR! Could not load a parser for provided geometry file.", LOG_ERROR);
 			return false;
-			break;
 		}
 	}
 	
@@ -113,7 +231,7 @@ bool ProfileMaker::LoadGeometry(std::string geometryPath)
 	//Fill out the distances column
 	profile[0][3] = 0.0f;
 	for (int i = 1; i < profile.Rows(); i++)
-		profile[i][3] = CalculateDistance(profile[i - 1][0], profile[i - 1][1], profile[i][0], profile[i][1]);
+		profile[i][3] = CalculateDistance(profile[i - 1][0], profile[i - 1][1], profile[i][0], profile[i][1], isPathUTM);
 
 	if (isDebug)
 	{
@@ -124,7 +242,7 @@ bool ProfileMaker::LoadGeometry(std::string geometryPath)
 	return true;
 }
 
-void ProfileMaker::DisplayPathInfo()
+void ProfileMaker::DisplayPath()
 {
 	if (isInterpolated)
 		profile_i.DisplayArrayInCLI();
@@ -132,16 +250,90 @@ void ProfileMaker::DisplayPathInfo()
 		profile.DisplayArrayInCLI();
 }
 
-void ProfileMaker::InterpolateProfile(float step, bool maintainBends)
+//Argubly the ugliest method of this class...
+std::unique_ptr<DEMSummary> ProfileMaker::GetDEMSummary(std::string & demLocation)
 {
-	int newVertsSum = profile.Rows();
+	if (!LoadGeoTIFFHeaders(demLocation))
+		return std::unique_ptr<DEMSummary>(nullptr);
 
-	float totalLength = 0.0f;
+	std::string compressionMethod;
+	bool isSupported = false; //because most of the cases bellow will be false, to save lines.
 
+	switch (tiffDetails.compression)
+	{
+	case (1): //no compression
+		compressionMethod = "Uncompressed.";
+		isSupported = true;
+		break;
+	case (32773): //PackBits (Macintosh RLE)
+		compressionMethod = "Packbits RLE.";
+		isSupported = true;
+		break;
+	case (2): //CCITT modified Huffman RLE
+		compressionMethod = "CCITT modified Huffman RLE.";
+		break;
+	case (3): //CCITT Group 3 fax encoding
+		compressionMethod = "CCITT Group 3 fax encoding.";
+		break;
+	case (4): //CCITT Group 4 fax encoding
+		compressionMethod = "CCITT Group 4 fax encoding.";
+		break;
+	case (5): //LZW
+		compressionMethod = "LZW.";
+		break;
+	case (6): //JPEG (old style, deprecated?)
+		compressionMethod = "JPEG (Deprecated).";
+		break;
+	case (7): //JPEG (new style)
+		compressionMethod = "JPEG.";
+		break;
+	case (8): //Deflate
+		compressionMethod = "Deflate.";
+		break;
+	case (9): //"Defined by TIFF-F and TIFF-FX standard (RFC 2301) as ITU-T Rec. T.82 coding, using ITU-T Rec. T.85 (which boils down to JBIG on black and white). "
+				//https://www.awaresystems.be/imaging/tiff/tifftags/compression.html
+		compressionMethod = "ITU-T Rec. T.82 coding, using ITU-T Rec. T.85.";
+		break;
+	case (10): //"Defined by TIFF-F and TIFF-FX standard (RFC 2301) as ITU-T Rec. T.82 coding, using ITU-T Rec. T.43 (which boils down to JBIG on color). "
+		compressionMethod = "ITU-T Rec. T.82 coding, using ITU-T Rec. T.43.";
+		break;
+	default:
+		compressionMethod = "Unknown.";
+		break;
+	}
+
+	//for the crsCitation, easiest solution to avoid long conditional statements is to add them all together, since all except one should be empty, it would practically give same result.
+	std::string crsCitation = geoDetails.geotiffCitation + geoDetails.geodeticCRSCitation + geoDetails.projectedCRSCitation + " - "  + geoDetails.verticalCRSCitation;
+
+	//std::cout << geoDetails.geotiffCitation << " - " << geoDetails.geodeticCRSCitation << " - " << geoDetails.projectedCRSCitation << " - " << geoDetails.verticalCRSCitation << std::endl;; //test
+
+	unsigned int crsCode = geoDetails.modelType == 1 || geoDetails.modelType == 3 ? geoDetails.projectedCRS : (geoDetails.modelType == 2 ? geoDetails.geodeticCRS : 0);
+
+	double boundingRect[4] = {geoDetails.cornerSW[0], geoDetails.cornerSW[1], geoDetails.cornerNE[0], geoDetails.cornerNE[1]};
+
+	//std::cout << geoDetails.cornerSW[0] << "x" << geoDetails.cornerSW[1] << "x" << geoDetails.cornerNE[0] << "x" << geoDetails.cornerNE[1] << std::endl; //test
+
+	return std::unique_ptr<DEMSummary>(new DEMSummary(
+		tiffDetails.width,
+		tiffDetails.height,
+		compressionMethod,
+		crsCode,
+		crsCitation,
+		boundingRect,
+		isSupported
+	));
+	
+}
+
+void ProfileMaker::InterpolateProfile(const double step, const bool maintainBends)
+{
+	//int newVertsSum = profile.Rows();
+
+	double totalLength = 0.0f;
 	for (int i = 1; i < profile.Rows(); i++)
 		totalLength += profile[i][3];
 
-	newVertsSum = floor(totalLength / step) + 2; //the 2 are begining and ending verts
+	unsigned long int newVertsSum = (unsigned long int)floor(totalLength / step) + 2; //the 2 are begining and ending verts
 
 	if (maintainBends)
 		newVertsSum += profile.Rows() - 2;
@@ -151,8 +343,8 @@ void ProfileMaker::InterpolateProfile(float step, bool maintainBends)
 	profile_i[0][1] = profile[0][1];
 
 
-	int currentSegment = 1;
-	float lastBendChainage = 0.0f;
+	unsigned int currentSegment = 1;
+	double lastBendChainage = 0.0f;
 
 	std::function<double(double, double, double, double) > interpolate = [&](double x0, double x1, double l, double dist)->double
 	{ //too many methods in this class already, plus I already have other methods with interpolate in the name. This is a small one, leave it as a lambda
@@ -163,7 +355,7 @@ void ProfileMaker::InterpolateProfile(float step, bool maintainBends)
 	{
 		if (i*step >= lastBendChainage + profile[currentSegment][3])
 		{
-			lastBendChainage += profile[currentSegment - 1][3];
+			lastBendChainage += profile[currentSegment][3];
 			currentSegment++;
 
 			if (maintainBends)
@@ -171,13 +363,15 @@ void ProfileMaker::InterpolateProfile(float step, bool maintainBends)
 				profile_i[i][0] = profile[i][0];
 				profile_i[i][1] = profile[i][1];
 				i++;
-				if (i >= profile_i.Rows() - 1)
+				if (i >= profile_i.Rows() - 1) //This would happen if the reach between last two vertices is less than interpolation step.
 					break;
 			}
+			//std::cout << std::endl; //test
 		}
 
-		float distFromLastBend = (step * i) - lastBendChainage;
-
+		double distFromLastBend = (step * i) - lastBendChainage;
+		
+		//std::cout << i << " of " << profile_i.Rows() - 3 << " : " << i * step << " of " << totalLength << "\t--\tlastBend: " << lastBendChainage << ",segment: " << profile[currentSegment][3] << ",\tdist: " << distFromLastBend << std::endl; //test
 		profile_i[i][0] = interpolate(profile[currentSegment - 1][0], profile[currentSegment][0], profile[currentSegment][3], distFromLastBend);
 		profile_i[i][1] = interpolate(profile[currentSegment - 1][1], profile[currentSegment][1], profile[currentSegment][3], distFromLastBend);
 
@@ -188,7 +382,7 @@ void ProfileMaker::InterpolateProfile(float step, bool maintainBends)
 
 
 	for (int i = 1; i < profile_i.Rows(); i++)
-		profile_i[i][3] = CalculateDistance(profile_i[i][0], profile_i[i][1], profile_i[i - 1][0], profile_i[i - 1][1]);
+		profile_i[i][3] = CalculateDistance(profile_i[i][0], profile_i[i][1], profile_i[i - 1][0], profile_i[i - 1][1], isPathUTM);
 
 	isInterpolated = true;
 
@@ -200,7 +394,7 @@ bool ProfileMaker::IsPathOOB()
 {
 	if (isDebug)
 	{
-		std::cout << "Checking path OOB for DEM boundaries:" << std::endl;
+		std::cout << "Checking path OOB for DEM boundaries: " << std::endl;
 		std::cout << "Min = " << geoDetails.cornerSW[0] << ", " << geoDetails.cornerSW[1] << std::endl;
 		std::cout << "Max = " << geoDetails.cornerNE[0] << ", " << geoDetails.cornerNE[1] << std::endl;
 	}
@@ -255,8 +449,16 @@ bool ProfileMaker::IsPointOOB(double x, double y)
 	}
 }
 
-int ProfileMaker::CalculateProfile() //returning int for end state. 0: failure, 1: success, 2: success with gaps (for when implementing 
-										//choice to calculate profile for paths that are partially within the provided DEM's boundaries.
+bool ProfileMaker::CheckDEMLoaded(std::string demPath)
+{
+	if (demPath == loadedDEMPath)
+		return true;
+	else
+		return false;
+}
+
+int ProfileMaker::CalculateProfile(InterpolationMethods method) //returning int for end state. 0: success,	1: success with gaps, 2: failure, path OOB 
+																//return 1 is for when implementing choice to calculate profile for paths that are partially within the provided DEM's boundaries.
 {
 	//in case dem is in UTM
 	if (geoDetails.modelType ==  1 && !isPathUTM) //Note that testing modelType == 1 guarantees that the DTM is "Projected," but not necessarily UTM. Must check the projectedCRS for that.
@@ -274,11 +476,9 @@ int ProfileMaker::CalculateProfile() //returning int for end state. 0: failure, 
 	//check if profile is out of bounds
 	if (IsPathOOB()) //TODO remove the exit, return a custom error code, modify calling function to handle the code accordingly
 	{
-		std::cout << "Error: Loaded path is outside the boundry of the loaded DEM!\n";
-		std::cout << "Press Enter to Continue.\n";
-		std::cin.sync();
-		std::cin.get();
-		exit(1);
+		//std::cout << "Error: Loaded path is outside the boundry of the loaded DEM!\n";
+		Log("ERROR! Loaded path is outside the boundry of the loaded DEM.", LOG_ERROR);
+		return 2;
 	}
 
 	int first_larger_x_order, first_larger_y_order;
@@ -302,7 +502,8 @@ int ProfileMaker::CalculateProfile() //returning int for end state. 0: failure, 
 			}
 		}
 
-		profile_i[i][2] = BicubicInterp(first_larger_x_order, first_larger_y_order, i);
+		//profile_i[i][2] = BicubicInterpolation(first_larger_x_order, first_larger_y_order, i);
+		profile_i[i][2] = InterpolatePointHeight(first_larger_x_order, first_larger_y_order, i, method);
 	}
 
 	isCalculated = true;
@@ -313,86 +514,48 @@ int ProfileMaker::CalculateProfile() //returning int for end state. 0: failure, 
 	return 0;
 }
 
-void ProfileMaker::CalculatePoint(double x, double y)
+bool ProfileMaker::WriteProfileToDisk(std::string &out_csv, bool overWrite)
 {
-	//check if profile is out of bounds
-	if (!IsPointOOB(x, y))
-	{
-		std::cout << "Point is outside the DEM boundries!\n";
-		return;
-	}
-
-	float result;
-	double boundingx[2], boundingy[2];
-	float boundingz[4]; //NW -> NE -> SE -> SW
-	int first_larger_x_order, first_larger_y_order;
-	double A, B; //used as temp holders to clean up bilinear interp forumla
-
-	for (int j = 0; j < tiffDetails.height; j++)
-	{
-		if (y >  geoDetails.tiePoints[1][1] - j * geoDetails.pixelScale[1])
-		{
-			boundingy[0] = geoDetails.tiePoints[1][1] - (j - 1) * geoDetails.pixelScale[1];
-			boundingy[1] = geoDetails.tiePoints[1][1] - j * geoDetails.pixelScale[1];
-			first_larger_y_order = j;
-			break;
-		}
-	}
-	for (int k = 0; k < tiffDetails.width; k++)
-	{
-		if (x < geoDetails.tiePoints[1][0] + k * geoDetails.pixelScale[0])
-		{
-			boundingx[0] = geoDetails.tiePoints[1][0] + (k - 1) * geoDetails.pixelScale[0];
-			boundingx[1] = geoDetails.tiePoints[1][0] + k * geoDetails.pixelScale[0];
-			first_larger_x_order = k;
-			break;
-		}
-	}
-
-	boundingz[0] = GetSample(first_larger_x_order - 1, first_larger_y_order - 1, 0);
-	boundingz[1] = GetSample(first_larger_x_order, first_larger_y_order - 1, 0);
-	boundingz[2] = GetSample(first_larger_x_order, first_larger_y_order, 0);
-	boundingz[3] = GetSample(first_larger_x_order - 1, first_larger_y_order, 0);
-
-	if (isDebug)
-	{
-		std::cout << "Boundingz[0]: " << boundingz[0] << std::endl; //test
-		std::cout << "Boundingz[1]: " << boundingz[1] << std::endl; //test
-		std::cout << "Boundingz[2]: " << boundingz[2] << std::endl; //test
-		std::cout << "Boundingz[3]: " << boundingz[3] << std::endl; //test
-		std::cout << "x: " << x << std::endl; //test
-		std::cout << "y: " << y << std::endl; //test
-		std::cout << "Boundingx[0]: " << boundingx[0] << std::endl; //test
-		std::cout << "Boundingx[1]: " << boundingx[1] << std::endl; //test
-		std::cout << "Boundingy[0]: " << boundingy[0] << std::endl; //test
-		std::cout << "Boundingy[1]: " << boundingy[1] << std::endl; //test
-	}
-
-	A = boundingz[0] * (boundingx[1] - x) / (boundingx[1] - boundingx[0]) + boundingz[1] * (x - boundingx[0]) / (boundingx[1] - boundingx[0]);
-	B = boundingz[2] * (boundingx[1] - x) / (boundingx[1] - boundingx[0]) + boundingz[3] * (x - boundingx[0]) / (boundingx[1] - boundingx[0]);
-
-	result = A * (boundingy[1] - y) / (boundingy[1] - boundingy[0]) + B * (y - boundingy[0]) / (boundingy[1] - boundingy[0]);
-
-	if (isDebug) std::cout << "Resultant Z: " << result << std::endl; //test
-}
-
-bool ProfileMaker::WriteProfile(std::string out_csv)
-{
-	if (!FileIsExist(out_csv))
-		std::cout << "Attempting to create output file\n";
-
-	result.open(out_csv);
-
-	if (!result.is_open())
-	{
-		std::cout << "Error: failed to create or open file!\n";
+	if (out_csv.length() < 5) //min: a single character file name plus four characters for extension (including the dot).
+	{							//This check needs to be enriched, but I'm leaving it as is assuming the GUI implementation does that.
+		std::cout << "ERROR! Illegal outputfile name." << std::endl;
 		return false;
 	}
 
-	std::cout << "File creation is successfull\n";
+	if (FileIsExist(out_csv) && !overWrite)
+		//out_csv = AppendSuffixToFileName(out_csv, std::numeric_limits<unsigned int>::max());
+		out_csv = AppendSuffixToFileName(out_csv, 4294967295); //Windows.h has "max" as a macro, so the version above fails to execute. Hardcoding the max value of uint (in msvc) to get around this.
+	
+	if (out_csv == "") //practically speaking, this a very, very remote probability.
+	{
+		//std::cout << "ERROR! All possible output filenames exist on disk and overwriting is disabled." << std::endl;
+		Log("ERROR! All possible output filenames exist on disk and overwriting is disabled.");
 
-	std::cout << "\nWriting results to disk" << std::endl;
-	result << "Longitude,Latitude,Chainage,Height" << std::endl;
+		return false;
+	}
+
+	//std::cout << "Attempting to create output file\n";
+	Log("Attempting to create output file");
+
+	std::ofstream result;
+	result.open(out_csv);
+	if (!result.is_open())
+	{
+		//std::cout << "Error: failed to create or open file!\n";
+		Log("ERROR! Failed to create or open file.", LOG_ERROR);
+		return false;
+	}
+
+	//std::cout << "File creation is successfull\n";
+	Log("File creation is successfull.", LOG_SUCCESS);
+
+	//std::cout << "\nWriting results to disk" << std::endl;
+	Log("Writing results to disk.");
+
+	if (isPathUTM)
+		result << "Easting,Northing,Chainage,Height" << std::endl;
+	else
+		result << "Longitude,Latitude,Chainage,Height" << std::endl;
 
 	for (int i = 0; i < profile_i.Rows(); i++)
 	{
@@ -405,16 +568,16 @@ bool ProfileMaker::WriteProfile(std::string out_csv)
 	return true;
 }
 
-double ProfileMaker::CalculateDistance(double x1, double y1, double x2, double y2)
+double ProfileMaker::CalculateDistance(double x1, double y1, double x2, double y2, bool isUTM)
 {
 	double result = 0;
 	//distance calculation for UTM coords is very simple, doing it here and returning value immediatly.
-	if (isPathUTM)
+	if (isUTM)
 	{
 		result = sqrt(pow(abs(x1 - x2), 2.0) + pow(abs(y1 - y2), 2.0));
 
-		if (isDebug)
-			std::cout << "Calculating distance for UTM, result= " << result << std::endl; //test
+		//if (isDebug)
+		//	std::cout << "Calculating distance for UTM, result= " << result << std::endl; //test
 
 		return result;
 	}
@@ -422,7 +585,7 @@ double ProfileMaker::CalculateDistance(double x1, double y1, double x2, double y
 	//distance calculation for decimal degrees using Vincenty's formulae 
 	////https://en.wikipedia.org/wiki/Vincenty%27s_formulae#cite_note-opposite-3
 
-	double azim; //azimuth
+	//double azim; //azimuth
 	double sigma;
 	double u1, u2, dx;
 	double lambda, lambda_old = 0.0;
@@ -505,7 +668,7 @@ FileFormat ProfileMaker::DetermineFileFormat(std::string geometryPath)
 	//TODO consider having a const public method in each of the geometry parsing classes that only checks if the provided string is of said file type, which you loop over them here.
 
 	std::string extension = geometryPath.substr(geometryPath.length() - 4, 4);
-	std::cout << "file extension: " << extension << std::endl; //test
+	//std::cout << "file extension: " << extension << std::endl; //test
 
 	if (extension == ".kml" || extension == ".KML")
 	{
@@ -514,6 +677,7 @@ FileFormat ProfileMaker::DetermineFileFormat(std::string geometryPath)
 	else if (extension == ".kmz" || extension == ".KMZ")
 	{
 		std::cout << "WARNING! compressed KMZ format is not supported yet. Please recreate your path in uncompressed kml format and try again." << std::endl;
+		Log("ERROR! compressed KMZ format is not supported yet. Please recreate your path in uncompressed kml format and try again.", LOG_ERROR);
 		return FileFormat::unsupported;
 	}
 	else if (extension == ".shp" || extension == ".SHP")
@@ -530,18 +694,35 @@ FileFormat ProfileMaker::DetermineFileFormat(std::string geometryPath)
 	}
 }
 
-float ProfileMaker::BilinearInterp(int first_larger_x, int first_larger_y, int point_order)
+double ProfileMaker::InterpolatePointHeight(unsigned long int first_larger_x, unsigned long int first_larger_y, unsigned long int point_order, InterpolationMethods method)
+{
+	switch (method)
+	{
+	case InterpolationMethods::nearestNeighbour:
+		return NearestNeighbourInterpolation(first_larger_x, first_larger_y, point_order);
+	case InterpolationMethods::bilinear:
+		return BilinearInterpolation(first_larger_x, first_larger_y, point_order);
+	case InterpolationMethods::bicubic:
+		return BicubicInterpolation(first_larger_x, first_larger_y, point_order);
+	default:
+		//std::cout << "ERROR! Recieved an unexpected InterpolationMethods flag" << std::endl;
+		Log("ERROR! Recieved an unexpected InterpolationMethods flag", LOG_ERROR);
+		return 0.0f;
+	}
+}
+
+double ProfileMaker::BilinearInterpolation(unsigned long int first_larger_x, unsigned long int first_larger_y, unsigned long int point_order)
 {
 	//TODO Check this implementation
 	double A, B;
-	float  result_depth;
+	double  result_depth;
 
-	float boundingz[4];
+	double boundingz[4];
 	double boundingx[2];
 	double boundingy[2];
-	double pointx, pointy;
+	//double pointx, pointy;
 
-	for (int i = 0; i < 2; i++)
+	for (int i = 0; i < 2; i++) //This is just stupid. The entire block is 5 lines long, what it replaces would be only 4. -_-
 	{
 		boundingx[i] = geoDetails.tiePoints[1][0] + (first_larger_x - 1 + i) * geoDetails.pixelScale[0];
 		boundingy[i] = geoDetails.tiePoints[1][1] - (first_larger_y - 1 + i) * geoDetails.pixelScale[1];
@@ -552,22 +733,22 @@ float ProfileMaker::BilinearInterp(int first_larger_x, int first_larger_y, int p
 	boundingz[2] = GetSample(first_larger_x, first_larger_y, 0);
 	boundingz[3] = GetSample(first_larger_x - 1, first_larger_y, 0);
 
-	A = boundingz[0] * CalculateDistance(boundingx[1], boundingy[0], profile_i[point_order][0], boundingy[0]) / CalculateDistance(boundingx[1], boundingy[0], boundingx[0], boundingy[0]) + boundingz[1] * CalculateDistance(profile_i[point_order][0], boundingy[0], boundingx[0], boundingy[0]) / CalculateDistance(boundingx[1], boundingy[0], boundingx[0], boundingy[0]);
-	B = boundingz[2] * CalculateDistance(boundingx[1], boundingy[1], profile_i[point_order][0], boundingy[1]) / CalculateDistance(boundingx[1], boundingy[1], boundingx[0], boundingy[1]) + boundingz[3] * CalculateDistance(profile_i[point_order][0], boundingy[1], boundingx[0], boundingy[1]) / CalculateDistance(boundingx[1], boundingy[1], boundingx[0], boundingy[1]);
-	result_depth = A * CalculateDistance(boundingx[0], boundingy[1], boundingx[0], profile_i[point_order][1]) / CalculateDistance(boundingx[0], boundingy[0], boundingx[0], boundingy[1]);
-	result_depth = result_depth + B * CalculateDistance(boundingx[0], profile_i[point_order][1], boundingx[0], boundingy[0]) / CalculateDistance(boundingx[0], boundingy[0], boundingx[0], boundingy[1]);
+	A = boundingz[0] * CalculateDistance(boundingx[1], boundingy[0], profile_i[point_order][0], boundingy[0], isPathUTM) / CalculateDistance(boundingx[1], boundingy[0], boundingx[0], boundingy[0], isPathUTM) + boundingz[1] * CalculateDistance(profile_i[point_order][0], boundingy[0], boundingx[0], boundingy[0], isPathUTM) / CalculateDistance(boundingx[1], boundingy[0], boundingx[0], boundingy[0], isPathUTM);
+	B = boundingz[2] * CalculateDistance(boundingx[1], boundingy[1], profile_i[point_order][0], boundingy[1], isPathUTM) / CalculateDistance(boundingx[1], boundingy[1], boundingx[0], boundingy[1], isPathUTM) + boundingz[3] * CalculateDistance(profile_i[point_order][0], boundingy[1], boundingx[0], boundingy[1], isPathUTM) / CalculateDistance(boundingx[1], boundingy[1], boundingx[0], boundingy[1], isPathUTM);
+	result_depth = A * CalculateDistance(boundingx[0], boundingy[1], boundingx[0], profile_i[point_order][1], isPathUTM) / CalculateDistance(boundingx[0], boundingy[0], boundingx[0], boundingy[1], isPathUTM);
+	result_depth = result_depth + B * CalculateDistance(boundingx[0], profile_i[point_order][1], boundingx[0], boundingy[0], isPathUTM) / CalculateDistance(boundingx[0], boundingy[0], boundingx[0], boundingy[1], isPathUTM);
 
 	return result_depth;
 }
 
-float ProfileMaker::BicubicInterp(int first_larger_x, int first_larger_y, int point_order)
+double ProfileMaker::BicubicInterpolation(unsigned long int first_larger_x, unsigned long int first_larger_y, unsigned long int point_order)
 {
 	//reference:
 	//http://www.paulinternet.nl/?page=bicubic
 
-	float result_depth;
+	double result_depth;
 
-	float boundingz[4][4];
+	double boundingz[4][4];
 	double boundingx[4];
 	double boundingy[4];
 	double temp_value[4];
@@ -604,9 +785,35 @@ float ProfileMaker::BicubicInterp(int first_larger_x, int first_larger_y, int po
 	return result_depth;
 }
 
+double ProfileMaker::NearestNeighbourInterpolation(unsigned long int first_larger_x, unsigned long int first_larger_y, unsigned long int point_order)
+{
+	//possible approaches:
+	//	- Compute the distance between the point and all four surrounding pixels, then test for shortest distance (should be expensives, specially with geographic CRS)
+	//	- [Implementation bellow] Compute the pixel boundaries joint between our pixels (basically, 2 lines corrosponding the position of the average of each two adjacent 
+	//	  pixels) then test whether the point is above/bellow, or left/right of those lines.
+
+	double verticalBoundary = geoDetails.tiePoints[1][0] + ((float)(first_larger_x + first_larger_x - 1) / 2.0f) * geoDetails.pixelScale[0];
+	double horizontalBoundary = geoDetails.tiePoints[1][1] + ((float)(first_larger_y + first_larger_y - 1) / 2.0f) * geoDetails.pixelScale[1];
+
+	double point[2] = { profile_i[point_order][0], profile_i[point_order][1] }; //just to make the code bellow somewhat simpler.
+
+	if (profile_i[point_order][0] <= verticalBoundary && profile_i[point_order][1] <= horizontalBoundary) //SW
+		return GetSample(first_larger_x - 1, first_larger_y - 1, 0);
+	else if (profile_i[point_order][0] <= verticalBoundary && profile_i[point_order][1] > horizontalBoundary) //NW
+		return GetSample(first_larger_x - 1, first_larger_y, 0);
+	else if (profile_i[point_order][0] > verticalBoundary &&  profile_i[point_order][1] > horizontalBoundary) //NE
+		return GetSample(first_larger_x, first_larger_y, 0);
+	else if (profile_i[point_order][0] > verticalBoundary &&  profile_i[point_order][1] <= horizontalBoundary) //SE
+		return GetSample(first_larger_x, first_larger_y - 1, 0);
+
+	return 0.0;
+}
+
 bool ProfileMaker::FileIsExist(std::string location) const
 {
-	std::cout << "Attempting to open " << location << std::endl;
+	if (isDebug)
+		std::cout << "Attempting to check existence of file: " << location << std::endl;
+
 	std::ifstream file_to_check;
 
 	file_to_check.open(location);
@@ -620,6 +827,28 @@ bool ProfileMaker::FileIsExist(std::string location) const
 		file_to_check.close();
 		return false;
 	}
+}
+
+std::string ProfileMaker::AppendSuffixToFileName(std::string &path, unsigned int maxSuffix)
+{
+	unsigned int counter = 1; 
+	
+	std::string _path = path.substr(0, path.length() - 4);
+	_path += "_";
+
+	while (counter < maxSuffix)
+	{
+		std::string appendedPath = _path;		
+		appendedPath += std::to_string(counter) + ".csv";
+
+		if (!FileIsExist(appendedPath))
+			return appendedPath;
+		
+		counter++;
+	}
+
+	return ""; //An empty string is an error state.
+				//TODO consider replacing this with exception throwing.
 }
 
 std::unique_ptr<double> ProfileMaker::ToUTM(double lng, double lat) const
@@ -638,7 +867,7 @@ std::unique_ptr<double> ProfileMaker::ToUTM(double lng, double lat) const
 	//const double utm_scale_at_meridian = 0.9996;
 	//const double falseEasting = 500000, falseNorthing = 10000000;
 
-	int zone = floor((lng + 180.0) / 6.0) + 1;
+	unsigned int zone = (unsigned int)floor((lng + 180.0) / 6.0) + 1;
 	double central_meridian_longitude = ((zone - 1.0) * 6.0 - 180.0 + 3.0) * PI_CONSTANT / 180.0; //in radians
 	//TODO consider Norway/Svalbard exceptions, not really necessary.
 
@@ -684,18 +913,19 @@ std::unique_ptr<double> ProfileMaker::ToUTM(double lng, double lat) const
 	coords.get()[0] = y;
 	coords.get()[1] = x;
 
-	if (isDebug)
-		std::cout << "\n in ToUTM, returning coords: " << coords.get()[0] << " and " << coords.get()[1];
+	//The part bellow would severely impact performance, in case of large profiles.
+	/*if (isDebug)
+		std::cout << "\n in ToUTM, returning coords: " << coords.get()[0] << " and " << coords.get()[1];*/
 	
 	return coords;
 }
 
-std::unique_ptr<double> ProfileMaker::ToWGS84(double easting, double northing) const
+std::unique_ptr<double> ProfileMaker::ToWGS84(double easting, double northing, bool isNortherHemisphere, int zone) const
 {
 	//Using the some source-code referenced in ToUTM() and converting it to C++
 
 	double _easting = easting - UTM_FALSE_EASTING;
-	double _northing = isPathInNorthernHemisphere ? northing : northing - UTM_FALSE_NORTHING;
+	double _northing = isNortherHemisphere ? northing : northing - UTM_FALSE_NORTHING;
 
 	double eccentricity = sqrt(WGS84_ELIPSOID_FLATTENING * (2.0f - WGS84_ELIPSOID_FLATTENING)); //this could be calculted outside and hardcoded into this program.
 	double n = WGS84_ELIPSOID_FLATTENING / (2.0f - WGS84_ELIPSOID_FLATTENING); //ditto
@@ -768,7 +998,7 @@ std::unique_ptr<double> ProfileMaker::ToWGS84(double easting, double northing) c
 	double k_prime_prime = (A / WGS84_EARTH_RADIUS_EQUATOR ) * sqrt(p * p + q * q);
 	double k = UTM_MERIDIAN_SCALE * k_prime * k_prime_prime;
 
-	double lambda_0 = (PI_CONSTANT / 180.0f)* (double)((pathZone - 1) * 6 - 180 + 3);
+	double lambda_0 = (PI_CONSTANT / 180.0f)* (double)((zone - 1) * 6 - 180 + 3);
 	lambda += lambda_0;
 
 	std::unique_ptr<double> coords = std::unique_ptr<double>(new double[2]);
@@ -780,18 +1010,20 @@ std::unique_ptr<double> ProfileMaker::ToWGS84(double easting, double northing) c
 	double convergence = gamma * 180.0f / PI_CONSTANT;
 	double scale = k;
 
-	if (isDebug)
+	//The part bellow would severely impact performance, in case of large profiles.
+	/*if (isDebug)
 	{
 		std::cout << "\n in ToUTM, returning coords: " << std::fixed << std::setprecision(11) << coords.get()[0] << " and " << coords.get()[1] << std::endl;
 		std::cout << "Convergence: " << std::fixed << std::setprecision(11) << convergence << ", scale" << scale << std::endl;
-	}
+	}*/
 
 	return coords;
 }
 
 void ProfileMaker::ConvertPathToUTM()
 {
-	if (isDebug) std::cout << "\nConverting path to UTM\n"; //test
+	if (isDebug)
+		std::cout << "\nConverting path to UTM\n"; //test
 	
 	std::unique_ptr<double> tempreturn;
 
@@ -817,7 +1049,7 @@ void ProfileMaker::ConvertPathToWGS84()
 
 	for (int i = 0; i < profile_i.Rows(); i++)
 	{
-		tempreturn = ToWGS84(profile_i[i][0], profile_i[i][1]);
+		tempreturn = ToWGS84(profile_i[i][0], profile_i[i][1], isPathInNorthernHemisphere, pathZone);
 		//std::cout << "\n Recieved: " << tempreturn.get()[0] << " and " << tempreturn.get()[1];
 
 		profile_i[i][0] = tempreturn.get()[0];

@@ -71,19 +71,19 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>GeoTIFF-Parser/;Array2D/;/;$(IncludePath)</IncludePath>
+    <IncludePath>GeoTIFF-Parser/;Array2D/;/;../;..;DearIMGUI/;DearIMGUI/Implementation;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>GeoTIFF-Parser/;Array2D/;/;$(IncludePath)</IncludePath>
+    <IncludePath>GeoTIFF-Parser/;Array2D/;/;../;..;DearIMGUI/;DearIMGUI/Implementation;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>GeoTIFF-Parser/;Array2D/;/;$(IncludePath)</IncludePath>
+    <IncludePath>GeoTIFF-Parser/;Array2D/;/;../;..;DearIMGUI/;DearIMGUI/Implementation;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>GeoTIFF-Parser/;Array2D/;/;$(IncludePath)</IncludePath>
+    <IncludePath>GeoTIFF-Parser/;Array2D/;/;../;..;DearIMGUI/;DearIMGUI/Implementation;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -93,14 +93,15 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(DXSDK_DIR)Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ShowIncludes>false</ShowIncludes>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -111,13 +112,14 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(DXSDK_DIR)Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ShowIncludes>false</ShowIncludes>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -131,8 +133,9 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(DXSDK_DIR)Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ShowIncludes>false</ShowIncludes>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -140,7 +143,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -153,25 +156,36 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(DXSDK_DIR)Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ShowIncludes>false</ShowIncludes>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Array2D\Array2D.cpp" />
+    <ClCompile Include="DearIMGUI\imgui.cpp" />
+    <ClCompile Include="DearIMGUI\imgui_demo.cpp" />
+    <ClCompile Include="DearIMGUI\imgui_draw.cpp" />
+    <ClCompile Include="DearIMGUI\imgui_widgets.cpp" />
+    <ClCompile Include="DearIMGUI\Implementation\imgui_impl_dx11.cpp" />
+    <ClCompile Include="DearIMGUI\Implementation\imgui_impl_win32.cpp" />
+    <ClCompile Include="FilesystemBrowser.cpp" />
     <ClCompile Include="GeoTIFF-Parser\Decompressor.cpp" />
     <ClCompile Include="GeoTIFF-Parser\GeoTIFF_Parser.cpp" />
     <ClCompile Include="GeoTIFF-Parser\GeoTIFF_Parser_Globals.cpp" />
+    <ClCompile Include="GUIHandler.cpp" />
     <ClCompile Include="KML_Parser.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MainWindow.cpp" />
+    <ClCompile Include="LogWindow.cpp" />
     <ClCompile Include="ProfileMaker.cpp" />
     <ClCompile Include="SHP_Parser.cpp" />
     <ClCompile Include="Source.cpp" />
@@ -179,12 +193,24 @@
   <ItemGroup>
     <ClInclude Include="Array2D.h" />
     <ClInclude Include="Array2D\Array2D.h" />
+    <ClInclude Include="DearIMGUI\imconfig.h" />
+    <ClInclude Include="DearIMGUI\imgui.h" />
+    <ClInclude Include="DearIMGUI\imgui_internal.h" />
+    <ClInclude Include="DearIMGUI\Implementation\imgui_impl_dx11.h" />
+    <ClInclude Include="DearIMGUI\Implementation\imgui_impl_win32.h" />
+    <ClInclude Include="DearIMGUI\imstb_rectpack.h" />
+    <ClInclude Include="DearIMGUI\imstb_textedit.h" />
+    <ClInclude Include="DearIMGUI\imstb_truetype.h" />
+    <ClInclude Include="FilesystemBrowser.h" />
     <ClInclude Include="GeoTIFF-Parser\Decompressor.h" />
     <ClInclude Include="GeoTIFF-Parser\GeoTIFF_Parser.h" />
     <ClInclude Include="GeoTIFF-Parser\GeoTIFF_Parser_Globals.h" />
     <ClInclude Include="Globals.h" />
+    <ClInclude Include="GUIHandler.h" />
     <ClInclude Include="KML_Parser.h" />
     <ClInclude Include="main.h" />
+    <ClInclude Include="MainWindow.h" />
+    <ClInclude Include="LogWindow.h" />
     <ClInclude Include="ProfileMaker.h" />
     <ClInclude Include="SHP_Parser.h" />
   </ItemGroup>
