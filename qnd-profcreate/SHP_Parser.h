@@ -24,22 +24,26 @@ public:
 	SHPParser();
 	~SHPParser();
 
-	bool LoadGeometry(std::string fileName);
+	bool LoadGeometry(std::string &fileName);
 	void UnLoadGeometry();
 
 	Array2D const * const GetPathByID(int id);
 	bool IsPathLoaded();
 
 	virtual CRS GeometryCRS();
+	virtual unsigned int UTMZone();
+	virtual bool IsNorthernHemisphere();
 
 private:
-	const std::string RemoveFileExtension(const std::string fileName) const;
-	bool CheckFileExistance(const std::string fileNamePrefix) const;
+	const std::string RemoveFileExtension(const std::string &fileName) const;
+	bool CheckFileExistance(const std::string &fileNamePrefix) const;
 	void AllocateVertsArray();
-	bool LoadSHPParameters(const std::string fileNamePrefix);	//this method will load the SHX file, and fill out pathsCount and vertsCount. Future implementation: parse DBF file to look for path names.
-	bool ExtractPaths(const std::string fileNamePrefix);
+	bool LoadSHPParameters(const std::string &fileNamePrefix);	//this method will load the SHX file, and fill out pathsCount and vertsCount. Future implementation: parse DBF file to look for path names.
+	bool LoadCRSDetails(const std::string &fileNamePrefix);
+	bool ExtractPaths(const std::string &fileNamePrefix);
 	long int BytesToInt32(const char bytes[4], bool isBigEndian) const;
 	double BytesToDouble(char byte[8], bool isBigEndian) const;	//for Future implementation. For now, I'm sticking to static_cast<double> when reading the file.
+
 
 public: 
 	const FileFormat parserSupportedFormat = FileFormat::shapeFile;
@@ -52,5 +56,7 @@ private:
 	long int pathsCount = 0;
 	long int * vertsCount;
 
-	CRS geometryCRS = CRS::UTM; //TODO Implement CRS reading from .prj files.
+	CRS geometryCRS = CRS::undefined;
+	unsigned int zone; //For use with UTM CRS only
+	bool isNorthernHemisphere; //For use with UTM CRS only
 };

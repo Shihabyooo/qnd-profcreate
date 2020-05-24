@@ -103,18 +103,22 @@ public:
 	FileParser() {};
 	~FileParser() {};
 
-	virtual bool LoadGeometry(std::string fileName) { return false; };
+	virtual bool LoadGeometry(std::string &fileName) { return false; };
 	virtual void UnLoadGeometry() {};
 
 	virtual Array2D const * const GetPathByID(int id) { return nullptr; };
 	virtual bool IsPathLoaded() { return false; };
 
 	virtual CRS GeometryCRS() { return geometryCRS; };
+	virtual unsigned int UTMZone() { return 0; };
+	virtual bool IsNorthernHemisphere() { return true; };
 
 public:
 	const FileFormat parserSupportedFormat = FileFormat::unsupported;
 
 private:
 	CRS geometryCRS = CRS::undefined;
+	unsigned int zone; //For use with UTM CRS only
+	bool isNorthernHemisphere; //For use with UTM CRS only
 };
 

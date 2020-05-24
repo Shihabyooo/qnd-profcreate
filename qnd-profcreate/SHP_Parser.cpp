@@ -12,7 +12,7 @@ SHPParser::~SHPParser()
 	UnLoadGeometry();
 }
 
-bool SHPParser::LoadGeometry(std::string fileName)
+bool SHPParser::LoadGeometry(std::string &fileName)
 {
 	std::string fileNamePrefix = RemoveFileExtension(fileName);
 
@@ -41,6 +41,16 @@ bool SHPParser::LoadGeometry(std::string fileName)
 	
 	isPathLoaded = true;
 	std::cout << "Succesfully loaded paths from SHP file." << std::endl; //test
+	
+	
+	
+	std::cout << "Attempting to load CRS info from .prj file." << std::endl; //test	
+	if(!LoadCRSDetails(fileNamePrefix)) //Note: Lack if CRS details, while the could be problematic for the running of the ProfileMaker, is  not program breaking and could be supplied/estimated by other means.
+	{
+		std::cout << "Failed to load CRS info from .prj file." << std::endl; //test
+	}
+	std::cout << "Successfully loaded CRS info from .prj file." << std::endl; //test
+
 	return true;
 }
 
@@ -60,6 +70,28 @@ bool SHPParser::IsPathLoaded()
 CRS SHPParser::GeometryCRS()
 {
 	return geometryCRS;
+}
+
+unsigned int SHPParser::UTMZone()
+{
+	if (geometryCRS != CRS::UTM)
+	{
+		std::cout << "WARNING! Attempting to access UTM zone details for a non-UTM geoemtry." << std::endl;
+		return 0;
+	}
+	
+	return zone;
+}
+
+bool SHPParser::IsNorthernHemisphere()
+{
+	if (geometryCRS != CRS::UTM)
+	{
+		std::cout << "WARNING! Attempting to access UTM zone details for a non-UTM geoemtry." << std::endl;
+		return true;
+	}
+
+	return isNorthernHemisphere;
 }
 
 void SHPParser::UnLoadGeometry()
@@ -83,12 +115,12 @@ void SHPParser::UnLoadGeometry()
 	isPathLoaded = false;
 }
 
-const std::string SHPParser::RemoveFileExtension(const std::string fileName) const
+const std::string SHPParser::RemoveFileExtension(const std::string &fileName) const
 {
 	return fileName.substr(0, fileName.length() - 4);
 }
 
-bool SHPParser::CheckFileExistance(const std::string fileNamePrefix) const
+bool SHPParser::CheckFileExistance(const std::string &fileNamePrefix) const
 {
 	//In this method, we will check for the existence of all of our needed files. For now, we need the SHX and SHP files.
 	//We'll have each failure set a more global bool to false instead of immediatly returning to simulate an error log message (i.e. so the user can know which files are missing).
@@ -127,7 +159,7 @@ void SHPParser::AllocateVertsArray()
 	
 }
 
-bool SHPParser::LoadSHPParameters(const std::string fileNamePrefix)
+bool SHPParser::LoadSHPParameters(const std::string &fileNamePrefix)
 {
 	//This class is a single-pass-one, meaning we only scane the file once, load content into memory and be done with it. So we have no use for the SHX file's intended use of "fast seeking."
 	//We will only use it figure out how many shapes the SHP contains, and the vertex count of each shape
@@ -205,7 +237,112 @@ bool SHPParser::LoadSHPParameters(const std::string fileNamePrefix)
 	return true;
 }
 
-bool SHPParser::ExtractPaths(const std::string fileNamePrefix)
+bool SHPParser::LoadCRSDetails(const std::string & fileNamePrefix)
+{
+	std::string prjFileName = fileNamePrefix + ".prj";
+	std::ifstream prjFile;
+	
+	std::cout << "Attempting to open " << prjFileName.c_str() << "\n";
+	prjFile.open(prjFileName);
+
+	if (!prjFile.is_open())
+	{
+		std::cout << "ERROR! Could not open " << prjFileName.c_str() << "!\n\n";
+		prjFile.close(); //necessary?
+		return false;
+	}
+
+	char crsType[6]; //According to the WKT standard, the file should begin with a 6 character, capitalized string indicating the CRS type: PROJCS, GEOGCS or GEOCCS for projected, geoegraphd and geocentric CRS respectively.
+	prjFile.read(crsType, sizeof(crsType));
+
+	std::string _crsType(crsType); //easier to compare strings than char*
+
+	if (_crsType == "PROJCS")
+	{
+		std::cout << "Loaded SHP uses a projected CRS" << std::endl; //test
+
+		prjFile.read(crsType, 2); //the next two chars are [ and ", we can safely discard them
+
+		//Extract projection name
+		char charBuffer = ' ';
+		std::string crsName = "";
+		while (charBuffer != '"')
+		{
+			prjFile.read(&charBuffer, sizeof(charBuffer));
+
+			crsName += charBuffer;
+
+			if (prjFile.eof())
+			{
+				std::cout << "ERROR! Reached EoF before parsing a correct CRS name.";
+				geometryCRS = CRS::undefined;
+				return false;
+			}
+		}
+
+		//check that projection is UTM.
+		if (crsName.length() < 12 && crsName.substr(0, 12) != "WGS_1984_UTM" && crsName.substr(0, 12) != "WGS 84 / UTM") //First test to ensure following two don't read beyond range,
+		{																													//second is ESRI WKT, third is OGC WKT
+			std::cout << "ERROR! Projection used is not WGS84 UTM. Projection used is: " << crsName.substr(0, 12).c_str() << std::endl;
+			geometryCRS = CRS::undefined;
+			return false; //though technically, this is a not a failure in "parsing" the CRS.
+		}
+
+		//Extract Zone
+		//Remember that crsName includes the delimiter quotation mark as well.
+		//Also note that the WKT names are annoying in that they don't pad the single digit zone number with zero, so the zone segment of the name could be 3 chars or 2 chars.
+		char _hemisphere = crsName[crsName.length() - 2];
+		if (_hemisphere == 'N')
+			isNorthernHemisphere = true;
+		else if (_hemisphere == 'S')
+			isNorthernHemisphere = false;
+		else
+		{
+			std::cout << "ERROR! Could not determine the hemisphere of the CRS's UTM zone.";
+			geometryCRS = CRS::undefined;
+			return false;
+		}
+		
+		std::string _zoneString = crsName.substr(crsName.length() - 4, 2);
+		if (_zoneString[0] == ' ' || _zoneString[0] == '_')
+			_zoneString[0] = '0';
+
+		unsigned int _zone = atoi(_zoneString.c_str());
+
+		if (_zone < 1 || _zone > 60)
+		{
+			std::cout << "ERROR! Could not determine the CRS's UTM zone.";
+			geometryCRS = CRS::undefined;
+			return false;
+		}
+		zone = _zone;
+
+		geometryCRS = CRS::UTM;
+		std::cout << "Set UTM CRS to Projected UTM, with zone" << zone << (isNorthernHemisphere? "N" : "S") << std::endl;//test
+	}
+	else if (_crsType == "GEOGCS") 
+	{
+		std::cout << "Loaded SHP uses a geographic CRS" << std::endl; //test
+		//TODO check that the CRS is WGS84 here
+		geometryCRS = CRS::WGS84;
+	}
+	else if (_crsType == "GEOCCS") //GEOGS and GEOCCS will be treated the same here.
+	{
+		std::cout << "Loaded SHP uses a geocentric CRS" << std::endl; //test
+		//TODO check that the CRS is WGS84 here
+		geometryCRS = CRS::WGS84;
+	}
+	else
+	{
+		geometryCRS = CRS::undefined;
+		std::cout << "ERROR! Could not determine the SHP's CRS." << std::endl; //test
+	}
+
+	prjFile.close();
+	return true;
+}
+
+bool SHPParser::ExtractPaths(const std::string &fileNamePrefix)
 {
 	std::string shpFileName = fileNamePrefix + ".shp";
 	std::ifstream shpFile;

@@ -30,7 +30,7 @@ public:
 	KMLParser();
 	~KMLParser();
 
-	bool LoadGeometry(std::string);
+	bool LoadGeometry(std::string &fileName);
 	void UnLoadGeometry();
 	
 	Array2D const * const GetPathByID(int id);
@@ -39,7 +39,7 @@ public:
 	virtual CRS GeometryCRS();
 
 private:
-	bool OpenKMLFile(std::string);
+	bool OpenKMLFile(std::string &fileName);
 	void CloseKMLFile();
 	bool ExtractPaths();
 
@@ -61,4 +61,6 @@ private:
 	long int pathsCount = 0;
 
 	CRS geometryCRS = CRS::WGS84; //KML is always WGS84
+	unsigned int zone; //For use with UTM CRS only
+	bool isNorthernHemisphere; //For use with UTM CRS only
 };

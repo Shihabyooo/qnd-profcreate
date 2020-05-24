@@ -12,7 +12,7 @@ KMLParser::~KMLParser()
 	UnLoadGeometry();
 }
 
-bool KMLParser::LoadGeometry(std::string fileName)
+bool KMLParser::LoadGeometry(std::string &fileName)
 {
 	if (!OpenKMLFile(fileName))
 	{
@@ -65,7 +65,7 @@ CRS KMLParser::GeometryCRS()
 	return geometryCRS;
 }
 
-bool KMLParser::OpenKMLFile(std::string fileName)
+bool KMLParser::OpenKMLFile(std::string &fileName)
 {
 	kmlFile.open(fileName, std::ios::in | std::ios::binary);
 	if (!kmlFile.is_open())

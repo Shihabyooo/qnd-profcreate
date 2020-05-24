@@ -254,7 +254,10 @@ void UpdateFileList(std::string directoryPath, std::vector<std::string> * _fileL
 
 std::string ExtractFileName(std::string path)
 {
-	int counter = 0;
+	if (path.length() < 1)
+		return "";
+
+	size_t counter = 0;
 	for (unsigned int i = path.length() - 1; i >= 0; i--)
 	{
 		if (path[i] == '\\')
@@ -272,7 +275,10 @@ std::string ExtractFileName(std::string path)
 
 std::string ExtractParentDirectoryPath(std::string filePath)
 {
-	int counter = 0;
+	if (filePath.length() < 1)
+		return "";
+
+	size_t counter = 0;
 	for (unsigned int i = filePath.length() - 1; i >= 0; i--)
 	{
 		if (filePath[i] == '\\')

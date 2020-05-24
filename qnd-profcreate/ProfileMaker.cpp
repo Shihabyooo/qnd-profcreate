@@ -183,7 +183,7 @@ bool ProfileMaker::LoadGeometry(std::string geometryPath)
 		else //this means we have an instantiated FileParser, and it is of the same format as the one we already have, so no need to delete anything, just prepare the parser for a new file
 			geometryParser->UnLoadGeometry();
 	}
-	
+
 	if (geometryParser == NULL) //This is a seperate if to accomodate the case of "if (geometryParser->parserSupportedFormat != format)" above.
 	{
 		switch (format)
@@ -207,6 +207,8 @@ bool ProfileMaker::LoadGeometry(std::string geometryPath)
 		}
 	}
 	
+	//std::cout << "Parser supported format: " << static_cast<int>(geometryParser->parserSupportedFormat) << std::endl;//test
+
 	//load geometry normally.
 	if (!geometryParser->LoadGeometry(geometryPath))
 		return false;
@@ -220,12 +222,18 @@ bool ProfileMaker::LoadGeometry(std::string geometryPath)
 	{
 	case (CRS::UTM):
 		isPathUTM = true;
+		pathZone = geometryParser->UTMZone();
+		isPathInNorthernHemisphere = geometryParser->IsNorthernHemisphere();
 		break;
 	case (CRS::WGS84):
 		isPathUTM = false;
 		break;
+	case (CRS::undefined):
+		Log("ERROR! Geometry file's CRS could not be determined or is unsupported.", LOG_ERROR);
+		return false;
 	default:
-		break;
+		Log("ERROR! Geometry file's CRS could not be determined or is unsupported.", LOG_ERROR);
+		return false;
 	}
 
 	//Fill out the distances column
@@ -487,7 +495,7 @@ int ProfileMaker::CalculateProfile(InterpolationMethods method) //returning int 
 	{
 		for (int j = 0; j < tiffDetails.height; j++)
 		{
-			if (profile_i[i][1] > geoDetails.tiePoints[1][1] - j * geoDetails.pixelScale[1])
+			if (profile_i[i][1] > geoDetails.tiePoints[1][1] - j * geoDetails.pixelScale[1]) //The OOB check ensures that this if will always be hit before the end of the loop.
 			{
 				first_larger_y_order = j;
 				break;
