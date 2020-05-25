@@ -65,21 +65,22 @@ ProfileMaker::~ProfileMaker()
 	UnloadGeoTIFF();
 }
 
-bool ProfileMaker::BatchProfileProcessing(	std::vector<std::string> & geometryList,
+int ProfileMaker::BatchProfileProcessing(	std::vector<std::string> & geometryList,
 											std::string & demLocation,
 											std::string & outputDirectory,
 											double chainageSteps,
 											InterpolationMethods interpolationMethod,
-											bool maintainBends)
+											bool maintainBends, bool processAllSubGeometries, bool overwriteOutputFile, int outputCRS, CRS outputCRSOverride)
 {
 	if (!CheckDEMLoaded(demLocation))
 	{
 		//std::cout << "\nLoading DEM" << demLocation.c_str() << "\n\n";
 		Log((std::string("Attempting to load Dem: ") + demLocation));
 		if (!LoadDEM(demLocation))
-			return false;
+			return PROCESSING_FAIL_DEM_LOAD;
 	}
 
+	size_t sucessfullGeometries = 0;
 	for (int i = 0; i < geometryList.size(); i++)
 	{
 		std::string geometryPath = geometryList[i];
@@ -136,12 +137,31 @@ bool ProfileMaker::BatchProfileProcessing(	std::vector<std::string> & geometryLi
 		//std::cout << "\nPrepping for Next Path\n\n";
 		Log("Preparing for next path.");
 		ResetProfile();
+		sucessfullGeometries++;
 	}
 
 	//std::cout << "Finished processing geometries." << std::endl;
-	Log("Finished processing all geometries.", LOG_SUCCESS);
+	Log("Finished cycling through all geometries.");
 
-	return true;
+	if (sucessfullGeometries == geometryList.size())
+		return PROCESSING_SUCCESS;
+	else if (sucessfullGeometries > 0)
+		return PROCESSING_PARTIAL_SUCCESS;
+	else
+		return PROCESSING_FAIL_GEOMETRY_LOAD;
+}
+
+int ProfileMaker::BatchProfileProcessing(ProcessingOrder & order)
+{
+
+	int result = BatchProfileProcessing(*order.geometryList,
+										*order.demLocation,
+										*order.outputDirectory,
+										order.chainageSteps,
+										order.interpolationMethod,
+										order.maintainBends, order.processAllSubGeometries, order.overwriteOutputFile, order.outputCRS, order.outputCRSOverride);
+
+	return result;
 }
 
 bool ProfileMaker::LoadDEM(std::string demPath)

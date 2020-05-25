@@ -96,6 +96,53 @@ public:
 	bool isSupported; //Since current implementation of GeoTIFF-Parser is highly limited in its decompressor support.
 };
 
+struct ProcessingOrder
+{
+public:
+	ProcessingOrder() {}
+	
+	ProcessingOrder(std::vector<std::string> * _geometryList,
+					std::string * _demLocation,
+					std::string * _outputDirectory,
+					double _chainageSteps,
+					InterpolationMethods _interpolationMethod,
+					bool _maintainBends,
+					bool _processAllSubGeometries,
+					bool _overwriteOutputFile,
+					int _outputCRS,
+					CRS _outputCRSOverride = CRS::WGS84)
+	{
+		geometryList = _geometryList;
+		demLocation = _demLocation;
+		outputDirectory = _outputDirectory;
+		chainageSteps = _chainageSteps;
+		InterpolationMethods interpolationMethod = _interpolationMethod;
+		maintainBends = _maintainBends;
+		processAllSubGeometries = _processAllSubGeometries; //for geometry files that contain multiple paths, if false: process only first path, else process all paths.
+		overwriteOutputFile = _overwriteOutputFile;
+		outputCRS = _outputCRS; //0: use DEM CRS, 1: use original geometry CRS, 2: use override CRS.
+		outputCRSOverride = _outputCRSOverride;
+	}
+
+	~ProcessingOrder() {} 
+
+
+
+	std::vector<std::string> * geometryList = NULL;
+	std::string * demLocation = NULL;
+	std::string * outputDirectory = NULL;
+	double chainageSteps;
+	InterpolationMethods interpolationMethod = InterpolationMethods::nearestNeighbour;
+
+	//other flags
+	bool maintainBends = false;
+	bool processAllSubGeometries = false; //for geometry files that contain multiple paths, if false: process only first path, else process all paths.
+	bool overwriteOutputFile = false;
+	int outputCRS = 0; //0: use DEM CRS, 1: use original geometry CRS, 2: use override CRS.
+	CRS outputCRSOverride = CRS::WGS84;
+
+};
+
 
 class FileParser
 {

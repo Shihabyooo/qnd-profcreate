@@ -11,6 +11,12 @@
 #include "FilesystemBrowser.h" //need to use the std::string ExtractFileName(std::string path) function in it
 #include "LogWindow.h"
 
+#define PROCESSING_SUCCESS 0
+#define PROCESSING_PARTIAL_SUCCESS 1 //i.e. not all geometries were processed.
+#define PROCESSING_FAIL_DEM_LOAD 2
+#define PROCESSING_FAIL_GEOMETRY_LOAD 3
+//#define PROCESSING_FAIL_OUTPUT 4
+
 extern std::string supportedGeometryFormats[];
 extern std::string supportedDEMFormats[];
 
@@ -23,7 +29,8 @@ public:
 	ProfileMaker();
 	~ProfileMaker();
 
-	bool BatchProfileProcessing(std::vector<std::string> & geometryList, std::string & demLocation, std::string & outputDirectory, double chainageSteps, InterpolationMethods interpolationMethod, bool maintainBends); //Primarily for use in the GUI implementation.
+	int BatchProfileProcessing(std::vector<std::string> & geometryList, std::string & demLocation, std::string & outputDirectory, double chainageSteps, InterpolationMethods interpolationMethod, bool maintainBends, bool processAllSubGeometries, bool overwriteOutputFile, int outputCRS, CRS outputCRSOverride); //Primarily for use in the GUI implementation.
+	int BatchProfileProcessing(ProcessingOrder &order); 
 
 	bool LoadDEM(std::string demPath); //Currently merely an interface for GeoTIFF_Parser. Need to implement verification of the GeoTIFF's DTM parameters and that the program supports them
 	bool LoadGeometry(std::string geometryPath);

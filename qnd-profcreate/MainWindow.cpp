@@ -235,12 +235,31 @@ void BeginProcessing()
 
 	Log("Begining processing."); //note: this won't appear probably because it depends on ImGui finishing drawing a window, which won't happen unless BatchPorileProcessing returns.
 
-	bool result = profileMaker->BatchProfileProcessing(_geoemetryPaths, _demPath, outputDirectory, chainageSteps, interpolationMethod, mainatainBends);
+	ProcessingOrder order(&_geoemetryPaths, &_demPath, &outputDirectory, chainageSteps, interpolationMethod, mainatainBends, false, true, 0);
 
-	if (result)
-		Log("Finished processing successfully", LOG_SUCCESS);
-	else
-		Log("Processing aborted due to errors.", LOG_ERROR);
+
+	//int result = profileMaker->BatchProfileProcessing(_geoemetryPaths, _demPath, outputDirectory, chainageSteps, interpolationMethod, mainatainBends);
+	int result = profileMaker->BatchProfileProcessing(order);
+
+	switch (result)
+	{
+	case PROCESSING_SUCCESS:
+		Log("Finished processing successfully.", LOG_SUCCESS);
+		break;
+	case PROCESSING_PARTIAL_SUCCESS:
+		Log("Finished processing with errors.", LOG_WARN);
+		break;
+	case PROCESSING_FAIL_DEM_LOAD:
+		Log("Processing failed. Could not Load DEM", LOG_WARN);
+		break;
+	case PROCESSING_FAIL_GEOMETRY_LOAD:
+		Log("Processing failed. Could not Load Geometries", LOG_WARN);
+		break;
+	default:
+		Log("Finished processing with an unknown state.", LOG_WARN);
+		break;
+	}
+
 }
 
 void DrawInterpolationMethods() //The approach with the function is ugly in more ways that one. FIX IT!
