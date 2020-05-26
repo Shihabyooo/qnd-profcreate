@@ -114,8 +114,8 @@ void DrawProcessingPopup()
 	if (!processingPopupState)
 		return;
 
-	//ImGui::OpenPopup("Processing");
-	ImGui::BeginPopupModal("Processing", &processingPopupState, ImGuiWindowFlags_NoSavedSettings);
+	//In the current implementation, it's imperative that user cannot use the program while this window is active. This is due to the fact that there are no lock guards in place when editing the values of the input.
+	ImGui::BeginPopupModal("Processing", &processingPopupState, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
 
 	ImGui::Text("Processing Profiles - Please wait.");
 	ImGui::EndPopup();
