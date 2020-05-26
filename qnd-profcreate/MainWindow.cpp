@@ -20,6 +20,9 @@ bool processingPopupState = false;
 static bool updateDimensions = false;
 static WindowDimensions dimensions;
 
+bool isProcessing = false;
+std::future<int> processingResult; //useless at this moment.
+std::mutex isProcessingMutex;
 
 void DisplayDEMSummary(std::string &path)
 {
@@ -105,6 +108,9 @@ void DrawFileList(char * filePath, std::vector<std::string> * fileNames, std::un
 
 void DrawProcessingPopup()
 {
+	std::lock_guard<std::mutex> _lock{ isProcessingMutex };
+	processingPopupState = isProcessing;
+
 	if (!processingPopupState)
 		return;
 
@@ -203,7 +209,7 @@ void BeginProcessing()
 	}
 
 	//create list of selected geometries.
-	std::vector<std::string> _geoemetryPaths;
+	static std::vector<std::string> _geoemetryPaths;
 	for (int i = 0; i < geometryNames.size(); i++)
 	{
 		if (selectedGeometry.get()[i])
@@ -211,7 +217,7 @@ void BeginProcessing()
 	}
 
 	//Extract selected DEM from list.
-	std::string _demPath;
+	static std::string _demPath;
 	for (int i = 0; i < demNames.size(); i++)
 	{
 		if (selectedDEM.get()[i])
@@ -229,18 +235,19 @@ void BeginProcessing()
 	//		can claose the popup.
 	//B:	Move prcessing calls to GuiHandler, and have this function set a flag there in addition to starting the popup. At the end of the render/message loop (i.e. after g_pSwapChain->Present(1, 0))
 	//		an if-statment checks the flag and if set, start the call BatchProfileProcessing().
+	//Later idea: B could actually be done inside MainWindow. Just have an if(isprocessing) at the begining of DrawMainWindow() with a call to batchprofileprocessing inside.
 
-	/*processingPopupState = true;
-	ImGui::OpenPopup("Processing");*/
+
+	processingPopupState = true;
+	ImGui::OpenPopup("Processing");
 
 	Log("Begining processing."); //note: this won't appear probably because it depends on ImGui finishing drawing a window, which won't happen unless BatchPorileProcessing returns.
 
-	ProcessingOrder order(&_geoemetryPaths, &_demPath, &outputDirectory, chainageSteps, interpolationMethod, mainatainBends, false, true, 0);
-
+	static ProcessingOrder order(&_geoemetryPaths, &_demPath, &outputDirectory, chainageSteps, interpolationMethod, mainatainBends, false, true, 0);
+	isProcessing = true;
 
 	//int result = profileMaker->BatchProfileProcessing(_geoemetryPaths, _demPath, outputDirectory, chainageSteps, interpolationMethod, mainatainBends);
-	int result = profileMaker->BatchProfileProcessing(order);
-
+	/*int result = profileMaker->BatchProfileProcessing(order);
 	switch (result)
 	{
 	case PROCESSING_SUCCESS:
@@ -258,7 +265,11 @@ void BeginProcessing()
 	default:
 		Log("Finished processing with an unknown state.", LOG_WARN);
 		break;
-	}
+	}*/
+
+	
+	//std::cout << "Before async, "<< order.demLocation->c_str() << std::endl;//test
+	processingResult = std::future(std::async(std::launch::async, static_cast<int(ProfileMaker::*)(ProcessingOrder&, bool*, std::mutex *)>(&ProfileMaker::BatchProfileProcessing), profileMaker, order, &isProcessing, &isProcessingMutex));
 
 }
 

@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include <functional>
+#include <mutex>
 
 #include "GeoTIFF_Parser.h"
 #include "Array2D.h"
@@ -28,9 +29,9 @@ class ProfileMaker
 public:
 	ProfileMaker();
 	~ProfileMaker();
-
+	
 	int BatchProfileProcessing(std::vector<std::string> & geometryList, std::string & demLocation, std::string & outputDirectory, double chainageSteps, InterpolationMethods interpolationMethod, bool maintainBends, bool processAllSubGeometries, bool overwriteOutputFile, int outputCRS, CRS outputCRSOverride); //Primarily for use in the GUI implementation.
-	int BatchProfileProcessing(ProcessingOrder &order); 
+	int BatchProfileProcessing(ProcessingOrder &order, bool * isProcessing, std::mutex * isProcessingMutex); 
 
 	bool LoadDEM(std::string demPath); //Currently merely an interface for GeoTIFF_Parser. Need to implement verification of the GeoTIFF's DTM parameters and that the program supports them
 	bool LoadGeometry(std::string geometryPath);

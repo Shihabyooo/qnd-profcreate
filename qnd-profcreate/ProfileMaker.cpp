@@ -151,8 +151,12 @@ int ProfileMaker::BatchProfileProcessing(	std::vector<std::string> & geometryLis
 		return PROCESSING_FAIL_GEOMETRY_LOAD;
 }
 
-int ProfileMaker::BatchProfileProcessing(ProcessingOrder & order)
+int ProfileMaker::BatchProfileProcessing(ProcessingOrder &order, bool * isProcessing, std::mutex * isProcessingMutex)
 {
+	std::cout << "Inside BatchProfileProcessing, " << std::endl; //test
+	std::cout << "Inside BatchProfileProcessing, " << order.chainageSteps << std::endl; //test
+	std::cout << "Inside BatchProfileProcessing, " << (*order.geometryList)[0] << std::endl; //test
+	std::cout << "Inside BatchProfileProcessing, " << order.demLocation->c_str() <<std::endl; //test
 
 	int result = BatchProfileProcessing(*order.geometryList,
 										*order.demLocation,
@@ -160,6 +164,28 @@ int ProfileMaker::BatchProfileProcessing(ProcessingOrder & order)
 										order.chainageSteps,
 										order.interpolationMethod,
 										order.maintainBends, order.processAllSubGeometries, order.overwriteOutputFile, order.outputCRS, order.outputCRSOverride);
+	
+	std::lock_guard<std::mutex> _lock{*isProcessingMutex };
+	*isProcessing = false;
+	
+	switch (result)
+	{
+	case PROCESSING_SUCCESS:
+		Log("Finished processing successfully.", LOG_SUCCESS);
+		break;
+	case PROCESSING_PARTIAL_SUCCESS:
+		Log("Finished processing with errors.", LOG_WARN);
+		break;
+	case PROCESSING_FAIL_DEM_LOAD:
+		Log("Processing failed. Could not Load DEM", LOG_WARN);
+		break;
+	case PROCESSING_FAIL_GEOMETRY_LOAD:
+		Log("Processing failed. Could not Load Geometries", LOG_WARN);
+		break;
+	default:
+		Log("Finished processing with an unknown state.", LOG_WARN);
+		break;
+	}
 
 	return result;
 }
