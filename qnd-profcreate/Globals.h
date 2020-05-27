@@ -11,8 +11,6 @@
 #define WGS84_ELIPSOID_FLATTENING (double)(1.0f/298.257223563f)
 
 //GUI related defines
-#define DEFAULT_WINDOW_WIDTH 1024 //XGA width
-#define DEFAULT_WINDOW_HEIGHT 768 //XGA height
 
 #define WINDOW_MAIN_MIN_WIDTH 300
 #define WINDOW_MAIN_MAX_WIDTH 500
@@ -24,7 +22,7 @@
 
 
 
-extern bool isDebug;
+//extern bool isDebug;
 //extern bool defaulSelectionState;
 
 enum class DataType

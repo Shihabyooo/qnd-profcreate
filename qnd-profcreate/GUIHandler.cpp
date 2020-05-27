@@ -123,7 +123,7 @@ int InitializeAndShowWindow()
 		return 1;
 	}
 
-	SetWindowPos(windowHandle, HWND_TOP, 0, 0, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, 0);
+	SetWindowPos(windowHandle, HWND_TOP, 0, 0, settings.windowWidth, settings.windowHeight, 0);
 
 	// Show the window
 	ShowWindow(windowHandle, SW_SHOWDEFAULT);

@@ -13,6 +13,7 @@
 #include "MainWindow.h"
 #include "LogWindow.h"
 #include "ProfileMaker.h"
+#include "Settings.h"
 
 #define PROGRAMNAME		_T("QnD_ProfCreate")
 #define WINDOWNAME		_T("QnD Profile Creator")

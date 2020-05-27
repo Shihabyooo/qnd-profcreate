@@ -101,7 +101,7 @@ int ProfileMaker::BatchProfileProcessing(	std::vector<std::string> & geometryLis
 			continue;
 		}
 
-		if (isDebug)
+		if (settings.verboseCLI)
 		{
 			std::cout << "\nBefore interpolation\n\n";
 			DisplayPath();
@@ -121,7 +121,7 @@ int ProfileMaker::BatchProfileProcessing(	std::vector<std::string> & geometryLis
 			continue;
 		}
 
-		if (isDebug)
+		if (settings.verboseCLI)
 		{
 			std::cout << "\nAfter Z calculations\n\n";
 			DisplayPath();
@@ -201,7 +201,7 @@ bool ProfileMaker::LoadDEM(std::string demPath)
 	}
 			
 	//TODO check that geoDetails are set properly and to values this code supports.
-	if (isDebug)
+	if (settings.verboseCLI)
 	{
 		DisplayTIFFDetailsOnCLI();
 		DisplayGeoTIFFDetailsOnCLI();
@@ -287,7 +287,7 @@ bool ProfileMaker::LoadGeometry(std::string geometryPath)
 	for (int i = 1; i < profile.Rows(); i++)
 		profile[i][3] = CalculateDistance(profile[i - 1][0], profile[i - 1][1], profile[i][0], profile[i][1], isPathUTM);
 
-	if (isDebug)
+	if (settings.verboseCLI)
 	{
 		std::cout << "Input path" << std::endl;
 		profile.DisplayArrayInCLI();
@@ -440,13 +440,13 @@ void ProfileMaker::InterpolateProfile(const double step, const bool maintainBend
 
 	isInterpolated = true;
 
-	if (isDebug)
+	if (settings.verboseCLI)
 		profile_i.DisplayArrayInCLI();
 }
 
 bool ProfileMaker::IsPathOOB()
 {
-	if (isDebug)
+	if (settings.verboseCLI)
 	{
 		std::cout << "Checking path OOB for DEM boundaries: " << std::endl;
 		std::cout << "Min = " << geoDetails.cornerSW[0] << ", " << geoDetails.cornerSW[1] << std::endl;
@@ -457,7 +457,7 @@ bool ProfileMaker::IsPathOOB()
 	{
 		for (int i = 0; i < profile_i.Rows(); i++)
 		{
-			if (isDebug)
+			if (settings.verboseCLI)
 				std::cout << "Testing vertex: " << profile_i[i][0] << ", " << profile_i[i][1] << std::endl;
 
 			if (profile_i[i][0] < geoDetails.cornerSW[0] || profile_i[i][0] > geoDetails.cornerNE[0])
@@ -474,7 +474,7 @@ bool ProfileMaker::IsPathOOB()
 	{
 		for (int i = 0; i < profile.Rows(); i++)
 		{
-			if (isDebug)
+			if (settings.verboseCLI)
 				std::cout << "Testing vertex: " << profile[i][0] << ", " << profile[i][1] << std::endl;
 
 			if (profile[i][0] < geoDetails.cornerSW[0] || profile[i][0] > geoDetails.cornerNE[0])
@@ -562,7 +562,7 @@ int ProfileMaker::CalculateProfile(InterpolationMethods method) //returning int 
 
 	isCalculated = true;
 
-	if (isDebug)
+	if (settings.verboseCLI)
 		profile_i.DisplayArrayInCLI();
 
 	return 0;
@@ -665,7 +665,7 @@ double ProfileMaker::CalculateDistance(double x1, double y1, double x2, double y
 	if (abs(x1 - x2) * 3600 < 0.0001 && abs(y1 - y1) * 3600 < 0.0001) //hack for when the two points are ~the same
 															//otherwise, the algorithm sends weird values (NAN)
 	{
-		if (isDebug)
+		if (settings.verboseCLI)
 			std::cout << "\n[DevWarning: In CalculateDistance(), trigered near-points check, returning 0.0]\n"; //test
 		return 0.0;
 	}
@@ -865,7 +865,7 @@ double ProfileMaker::NearestNeighbourInterpolation(unsigned long int first_large
 
 bool ProfileMaker::FileIsExist(std::string location) const
 {
-	if (isDebug)
+	if (settings.verboseCLI)
 		std::cout << "Attempting to check existence of file: " << location << std::endl;
 
 	std::ifstream file_to_check;
@@ -1076,7 +1076,7 @@ std::unique_ptr<double> ProfileMaker::ToWGS84(double easting, double northing, b
 
 void ProfileMaker::ConvertPathToUTM()
 {
-	if (isDebug)
+	if (settings.verboseCLI)
 		std::cout << "\nConverting path to UTM\n"; //test
 	
 	std::unique_ptr<double> tempreturn;
@@ -1088,7 +1088,7 @@ void ProfileMaker::ConvertPathToUTM()
 		profile_i[i][1] = tempreturn.get()[0];
 	}
 
-	if (isDebug)
+	if (settings.verboseCLI)
 	{
 		std::cout << "\nConverted path\n";
 		profile_i.DisplayArrayInCLI();
@@ -1097,7 +1097,7 @@ void ProfileMaker::ConvertPathToUTM()
 
 void ProfileMaker::ConvertPathToWGS84()
 {
-	if (isDebug) std::cout << "\nConverting path to WGS-84 GCS\n"; //test
+	if (settings.verboseCLI) std::cout << "\nConverting path to WGS-84 GCS\n"; //test
 	
 	std::unique_ptr<double> tempreturn;
 
@@ -1112,7 +1112,7 @@ void ProfileMaker::ConvertPathToWGS84()
 		//std::cout << "\n Set: " << profile_i[i][0] << " and " << profile_i[i][1];
 	}
 
-	if (isDebug)
+	if (settings.verboseCLI)
 	{
 		std::cout << "\nConverted path\n";
 		profile_i.DisplayArrayInCLI();

@@ -13,4 +13,4 @@
 #include "ProfileMaker.h"
 //#include "Globals.h"
 #include "GUIHandler.h"
-
+#include "Settings.h"

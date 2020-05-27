@@ -37,11 +37,11 @@
     <Filter Include="GUI">
       <UniqueIdentifier>{febe2679-9c75-40b7-a642-0d8fa91e3fcd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="GUI\WindowDefs">
+      <UniqueIdentifier>{6dcfd876-dad9-4146-938f-f73aace923e3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Source.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -88,13 +88,16 @@
       <Filter>GUI</Filter>
     </ClCompile>
     <ClCompile Include="FilesystemBrowser.cpp">
-      <Filter>GUI</Filter>
-    </ClCompile>
-    <ClCompile Include="MainWindow.cpp">
-      <Filter>GUI</Filter>
+      <Filter>GUI\WindowDefs</Filter>
     </ClCompile>
     <ClCompile Include="LogWindow.cpp">
-      <Filter>GUI</Filter>
+      <Filter>GUI\WindowDefs</Filter>
+    </ClCompile>
+    <ClCompile Include="MainWindow.cpp">
+      <Filter>GUI\WindowDefs</Filter>
+    </ClCompile>
+    <ClCompile Include="Settings.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -156,13 +159,16 @@
       <Filter>GUI</Filter>
     </ClInclude>
     <ClInclude Include="FilesystemBrowser.h">
-      <Filter>GUI</Filter>
-    </ClInclude>
-    <ClInclude Include="MainWindow.h">
-      <Filter>GUI</Filter>
+      <Filter>GUI\WindowDefs</Filter>
     </ClInclude>
     <ClInclude Include="LogWindow.h">
-      <Filter>GUI</Filter>
+      <Filter>GUI\WindowDefs</Filter>
+    </ClInclude>
+    <ClInclude Include="MainWindow.h">
+      <Filter>GUI\WindowDefs</Filter>
+    </ClInclude>
+    <ClInclude Include="Settings.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

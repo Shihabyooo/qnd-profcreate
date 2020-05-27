@@ -11,6 +11,7 @@
 #include "Globals.h"
 #include "FilesystemBrowser.h" //need to use the std::string ExtractFileName(std::string path) function in it
 #include "LogWindow.h"
+#include "Settings.h"
 
 #define PROCESSING_SUCCESS 0
 #define PROCESSING_PARTIAL_SUCCESS 1 //i.e. not all geometries were processed.

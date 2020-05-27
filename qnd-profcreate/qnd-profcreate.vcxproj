@@ -183,10 +183,10 @@
     <ClCompile Include="GeoTIFF-Parser\GeoTIFF_Parser_Globals.cpp" />
     <ClCompile Include="GUIHandler.cpp" />
     <ClCompile Include="KML_Parser.cpp" />
-    <ClCompile Include="main.cpp" />
     <ClCompile Include="MainWindow.cpp" />
     <ClCompile Include="LogWindow.cpp" />
     <ClCompile Include="ProfileMaker.cpp" />
+    <ClCompile Include="Settings.cpp" />
     <ClCompile Include="SHP_Parser.cpp" />
     <ClCompile Include="Source.cpp" />
   </ItemGroup>
@@ -212,6 +212,7 @@
     <ClInclude Include="MainWindow.h" />
     <ClInclude Include="LogWindow.h" />
     <ClInclude Include="ProfileMaker.h" />
+    <ClInclude Include="Settings.h" />
     <ClInclude Include="SHP_Parser.h" />
   </ItemGroup>
   <ItemGroup>

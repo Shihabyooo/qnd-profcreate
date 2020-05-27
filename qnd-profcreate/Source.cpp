@@ -1,7 +1,7 @@
 #include "main.h"
 
-bool isDebug = true;
-bool maintainBendLocations = false; //for when interpolating profile
+//bool isDebug = true;
+//bool maintainBendLocations = false; //for when interpolating profile
 
 
 //Known issues:
@@ -10,11 +10,19 @@ bool maintainBendLocations = false; //for when interpolating profile
 
 ProfileMaker instance;
 
-void GenerateProfile(std::string geometryPath, float interpolationSteps);
+//void GenerateProfile(std::string geometryPath, float interpolationSteps);
 
 
 int main(int argc, char *argv[])
 {
+	std::string settingsPath = "QnD_Config.ini";
+	
+	if (!LoadSettings(settingsPath)) //if no current settings files is found, create a new one based on default values.
+		if (!WriteCurrentSettings(settingsPath)) //if we could not create the file, warn user
+		{
+			MessageBox(NULL, L"Could not create a settings file. Using built-in default settings. Any changes to the settings during this run may not be saved for future runs,", L"WARNING!", 0);
+		}
+
 
 	int result = StartGUI(&instance);
 	std::cout << "GUI result: " << result; //test
