@@ -171,6 +171,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Array2D\Array2D.cpp" />
+    <ClCompile Include="D3d11_Renderer.cpp" />
     <ClCompile Include="DearIMGUI\imgui.cpp" />
     <ClCompile Include="DearIMGUI\imgui_demo.cpp" />
     <ClCompile Include="DearIMGUI\imgui_draw.cpp" />
@@ -186,6 +187,7 @@
     <ClCompile Include="MainWindow.cpp" />
     <ClCompile Include="LogWindow.cpp" />
     <ClCompile Include="ProfileMaker.cpp" />
+    <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Settings.cpp" />
     <ClCompile Include="SHP_Parser.cpp" />
     <ClCompile Include="Source.cpp" />
@@ -193,6 +195,7 @@
   <ItemGroup>
     <ClInclude Include="Array2D.h" />
     <ClInclude Include="Array2D\Array2D.h" />
+    <ClInclude Include="D3d11_Renderer.h" />
     <ClInclude Include="DearIMGUI\imconfig.h" />
     <ClInclude Include="DearIMGUI\imgui.h" />
     <ClInclude Include="DearIMGUI\imgui_internal.h" />
@@ -212,6 +215,7 @@
     <ClInclude Include="MainWindow.h" />
     <ClInclude Include="LogWindow.h" />
     <ClInclude Include="ProfileMaker.h" />
+    <ClInclude Include="Renderer.h" />
     <ClInclude Include="Settings.h" />
     <ClInclude Include="SHP_Parser.h" />
   </ItemGroup>

@@ -20,7 +20,10 @@
 //#define WINDOW_LOG_MAX_WIDTH 
 #define WINDOW_LOG_HEIGHT_PERCENTAGE 0.3f
 
+#define PROGRAMNAME		_T("QnD_ProfCreate")
+#define WINDOWNAME		_T("QnD Profile Creator")
 
+#define WINDOW_INIT_FAIL 100
 
 //extern bool isDebug;
 //extern bool defaulSelectionState;

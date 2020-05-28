@@ -4,7 +4,7 @@
 #include "FilesystemBrowser.h"
 
 //TODO replace this implementation with a decent (xml based?) one in future.
-#define DEFAULT_RENDERER Renderer::directX11;
+#define DEFAULT_RENDERER RenderingAPI::directX11;
 #define DEFAULT_WINDOW_WIDTH 1024 //XGA width
 #define DEFAULT_WINDOW_HEIGHT 768 //XGA height
 #define MIN_WINDOW_WIDTH 100 //minimum width less than which the default width would be forced (on startup)
@@ -17,7 +17,7 @@
 #define SET_RENDER "Renderer"
 #define SET_CLI_VERBOSE "CLIVerboseOutput"
 
-enum class Renderer
+enum class RenderingAPI
 {
 	directX10 = 0, directX11 = 1, openGL2 = 2, openGL3 = 3
 };
@@ -28,7 +28,7 @@ public:
 	size_t windowWidth = DEFAULT_WINDOW_WIDTH;
 	size_t windowHeight = DEFAULT_WINDOW_HEIGHT;
 
-	Renderer renderer = DEFAULT_RENDERER;
+	RenderingAPI renderer = DEFAULT_RENDERER;
 
 	bool verboseCLI = false;
 };

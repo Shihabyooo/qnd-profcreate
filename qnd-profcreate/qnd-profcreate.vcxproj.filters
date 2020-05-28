@@ -40,6 +40,9 @@
     <Filter Include="GUI\WindowDefs">
       <UniqueIdentifier>{6dcfd876-dad9-4146-938f-f73aace923e3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="GUI\Renderers">
+      <UniqueIdentifier>{95f3f12a-54c3-44f9-9ed4-0f10688876af}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source.cpp">
@@ -98,6 +101,12 @@
     </ClCompile>
     <ClCompile Include="Settings.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D3d11_Renderer.cpp">
+      <Filter>GUI\Renderers</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer.cpp">
+      <Filter>GUI\Renderers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -169,6 +178,12 @@
     </ClInclude>
     <ClInclude Include="Settings.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D3d11_Renderer.h">
+      <Filter>GUI\Renderers</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer.h">
+      <Filter>GUI\Renderers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

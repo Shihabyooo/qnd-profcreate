@@ -63,17 +63,17 @@ void ApplyLoadedEntry()
 	{
 		switch (entry.value)
 		{
-		case (static_cast<size_t>(Renderer::directX10)):
-			settings.renderer = Renderer::directX10;
+		case (static_cast<size_t>(RenderingAPI::directX10)):
+			settings.renderer = RenderingAPI::directX10;
 			break;
-		case (static_cast<size_t>(Renderer::directX11)):
-			settings.renderer = Renderer::directX11;
+		case (static_cast<size_t>(RenderingAPI::directX11)):
+			settings.renderer = RenderingAPI::directX11;
 			break;
-		case (static_cast<size_t>(Renderer::openGL2)):
-			settings.renderer = Renderer::openGL2;
+		case (static_cast<size_t>(RenderingAPI::openGL2)):
+			settings.renderer = RenderingAPI::openGL2;
 			break;
-		case (static_cast<size_t>(Renderer::openGL3)):
-			settings.renderer = Renderer::openGL3;
+		case (static_cast<size_t>(RenderingAPI::openGL3)):
+			settings.renderer = RenderingAPI::openGL3;
 			break;
 		default:
 			settings.renderer = DEFAULT_RENDERER;

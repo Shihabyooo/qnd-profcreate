@@ -14,6 +14,9 @@
 #include "LogWindow.h"
 #include "ProfileMaker.h"
 #include "Settings.h"
+#include "Renderer.h"
+#include "D3d11_Renderer.h"
+
 
 #define PROGRAMNAME		_T("QnD_ProfCreate")
 #define WINDOWNAME		_T("QnD Profile Creator")
